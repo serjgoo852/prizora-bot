@@ -498,6 +498,122 @@ def tr(context: ContextTypes.DEFAULT_TYPE, key: str, **kwargs) -> str:
     return template.format(**kwargs)
 
 
+def normalize_chat_reference(value: str):
+    """Accept a public @username/t.me link or a numeric Telegram chat ID."""
+    value = value.strip()
+    if "t.me/" in value:
+        value = value.split("t.me/", 1)[1].split("/", 1)[0]
+        if value.startswith("+") or value == "joinchat":
+            return None
+        value = "@" + value.lstrip("@")
+    if value.startswith("@"):
+        return value if len(value) > 1 else None
+    if value.lstrip("-").isdigit() and value not in ("", "-"):
+        return int(value)
+    return None
+
+
+async def validate_managed_chat(
+    context: ContextTypes.DEFAULT_TYPE,
+    raw_reference: str,
+    expected_type: str,
+    organizer_id: int,
+    require_post_permission: bool = False,
+):
+    """Verify chat type, bot admin rights, and organizer admin rights."""
+    reference = normalize_chat_reference(raw_reference)
+    if reference is None:
+        return None, "chat_reference_invalid"
+
+    try:
+        chat = await context.bot.get_chat(reference)
+    except TelegramError:
+        return None, "chat_not_found"
+
+    if expected_type == "group":
+        if chat.type not in ("group", "supergroup"):
+            return None, "chat_type_mismatch"
+    elif expected_type == "channel":
+        if chat.type != "channel":
+            return None, "chat_type_mismatch"
+    else:
+        return None, "chat_type_mismatch"
+
+    try:
+        bot_user = await context.bot.get_me()
+        bot_member = await context.bot.get_chat_member(chat.id, bot_user.id)
+    except TelegramError:
+        return None, "bot_not_admin"
+
+    if bot_member.status not in ("administrator", "creator"):
+        return None, "bot_not_admin"
+
+    if require_post_permission and chat.type == "channel":
+        if not getattr(bot_member, "can_post_messages", False):
+            return None, "bot_no_post_permission"
+
+    try:
+        organizer_member = await context.bot.get_chat_member(chat.id, organizer_id)
+    except TelegramError:
+        return None, "organizer_not_admin"
+
+    if organizer_member.status not in ("administrator", "creator"):
+        return None, "organizer_not_admin"
+
+    return chat, None
+
+
+def chat_display_name(chat) -> str:
+    title = chat.title or chat.username or str(chat.id)
+    if chat.username:
+        return f"{title} (@{chat.username})"
+    return title
+
+
+async def send_contest_summary(message, context: ContextTypes.DEFAULT_TYPE):
+    language = current_language(context)
+    place_key = context.user_data.get("contest_place")
+    place_name = tr(context, "group" if place_key == "group" else "channel")
+    destination = context.user_data.get("contest_destination_title", "—")
+    prize_name = context.user_data.get("contest_prize_name", "—")
+    participant_limit = context.user_data.get("contest_participant_limit", "—")
+    winner_count = context.user_data.get("contest_winner_count", "—")
+    if context.user_data.get("contest_subscription_required"):
+        subscription = tr(
+            context,
+            "subscription_required",
+            channel=context.user_data.get("contest_subscription_title", "—"),
+        )
+    else:
+        subscription = tr(context, "subscription_optional")
+
+    await message.reply_text(
+        tr(
+            context,
+            "summary",
+            format=FORMAT_NAMES[language].get(context.user_data.get("contest_format"), "—"),
+            place=place_name,
+            destination=destination,
+            prize=prize_name,
+            participants=participant_limit,
+            winners=winner_count,
+            subscription=subscription,
+        ),
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton(tr(context, "announcement_button"), callback_data="announcement_preview")],
+            [InlineKeyboardButton(tr(context, "summary_home"), callback_data="home")],
+        ]),
+    )
+
+
+def subscription_choice_menu(language: str):
+    t = I18N[language]
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton(t["subscription_yes"], callback_data="subscription:yes")],
+        [InlineKeyboardButton(t["subscription_no"], callback_data="subscription:no")],
+    ])
+
+
 def main_menu(language: str):
     t = I18N[language]
     keyboard = [
