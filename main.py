@@ -160,6 +160,7 @@ I18N = {
         "announcement_start_prompt": "📅 Укажи дату и время начала конкурса в формате ДД.ММ.ГГГГ ЧЧ:ММ (местное время).\nНапример: 14.11.2026 18:00",
         "announcement_end_prompt": "⏰ Укажи дату и время завершения конкурса в том же формате. Время завершения должно быть позже начала.",
         "announcement_rules_prompt": "📌 Напиши условия участия. Регистрация пока не подключена; это текст для тестовой публикации.",
+        "current_value": "Текущее значение: {value}\nОтправь новое значение, чтобы изменить его.",
         "announcement_datetime_invalid": "Не понял дату и время. Введи в формате ДД.ММ.ГГГГ ЧЧ:ММ, например 14.11.2026 18:00.",
         "announcement_end_invalid": "Завершение должно быть позже начала. Введи дату и время ещё раз.",
         "announcement_rules_invalid": "Напиши условия текстом (до 1000 символов).",
@@ -310,6 +311,7 @@ I18N = {
         "announcement_start_prompt": "📅 Enter the start date and time as DD.MM.YYYY HH:MM (your local time).\nExample: 14.11.2026 18:00",
         "announcement_end_prompt": "⏰ Enter the end date and time in the same format. The end must be later than the start.",
         "announcement_rules_prompt": "📌 Enter the participation rules. Registration is not connected yet; this is test announcement text.",
+        "current_value": "Current value: {value}\nSend a new value to change it.",
         "announcement_datetime_invalid": "I couldn't read that date and time. Use DD.MM.YYYY HH:MM, for example 14.11.2026 18:00.",
         "announcement_end_invalid": "The end date and time must be later than the start. Please enter it again.",
         "announcement_rules_invalid": "Enter the rules as text (up to 1,000 characters).",
@@ -460,6 +462,7 @@ I18N = {
         "announcement_start_prompt": "📅 Gib Startdatum und Uhrzeit als TT.MM.JJJJ HH:MM ein (Ortszeit).\nBeispiel: 14.11.2026 18:00",
         "announcement_end_prompt": "⏰ Gib Enddatum und Uhrzeit im selben Format ein. Das Ende muss nach dem Beginn liegen.",
         "announcement_rules_prompt": "📌 Gib die Teilnahmebedingungen ein. Die Registrierung ist noch nicht verbunden; dies ist zunächst Test-Ankündigungstext.",
+        "current_value": "Aktueller Wert: {value}\nSende einen neuen Wert, um ihn zu ändern.",
         "announcement_datetime_invalid": "Das Datum wurde nicht erkannt. Verwende TT.MM.JJJJ HH:MM, zum Beispiel 14.11.2026 18:00.",
         "announcement_end_invalid": "Das Ende muss nach dem Beginn liegen. Bitte gib es erneut ein.",
         "announcement_rules_invalid": "Gib die Bedingungen als Text ein (bis zu 1.000 Zeichen).",
@@ -848,6 +851,7 @@ async def button_handler(
             "awaiting_announcement_rules",
         ):
             context.user_data[state_key] = False
+        context.user_data["contest_publish_pending"] = False
         await query.edit_message_text(
             tr(context, "home_title"),
             reply_markup=main_menu(language),
@@ -918,7 +922,9 @@ async def button_handler(
         context.user_data["awaiting_prize_name"] = True
         context.user_data["awaiting_participant_limit"] = False
         await query.edit_message_text(
-            tr(context, "prize_prompt", prize=selected_prize_label(context)),
+            tr(context, "prize_prompt", prize=selected_prize_label(context))
+            + "\n\n"
+            + tr(context, "current_value", value=context.user_data.get("contest_prize_name", "—")),
             reply_markup=step_navigation(context, "back:prizes"),
         )
 
@@ -926,7 +932,9 @@ async def button_handler(
         context.user_data["awaiting_participant_limit"] = True
         context.user_data["awaiting_winner_count"] = False
         await query.edit_message_text(
-            tr(context, "prize_saved_ask_limit", prize=context.user_data.get("contest_prize_name", "—")),
+            tr(context, "prize_saved_ask_limit", prize=context.user_data.get("contest_prize_name", "—"))
+            + "\n\n"
+            + tr(context, "current_value", value=context.user_data.get("contest_participant_limit", "—")),
             reply_markup=step_navigation(context, "back:prize_name"),
         )
 
@@ -939,7 +947,9 @@ async def button_handler(
                 context,
                 "participants_saved_ask_winners",
                 count=context.user_data.get("contest_participant_limit", 1),
-            ),
+            )
+            + "\n\n"
+            + tr(context, "current_value", value=context.user_data.get("contest_winner_count", "—")),
             reply_markup=step_navigation(context, "back:participant_limit"),
         )
 
@@ -967,7 +977,11 @@ async def button_handler(
         context.user_data["awaiting_announcement_rules"] = False
         context.user_data["contest_publish_pending"] = False
         await query.edit_message_text(
-            tr(context, "announcement_start_prompt"),
+            tr(context, "announcement_start_prompt")
+            + (
+                "\n\n" + tr(context, "current_value", value=context.user_data["contest_start_at"])
+                if context.user_data.get("contest_start_at") else ""
+            ),
             reply_markup=step_navigation(context, "back:summary"),
         )
 
@@ -977,7 +991,11 @@ async def button_handler(
         context.user_data["awaiting_announcement_rules"] = False
         context.user_data["contest_publish_pending"] = False
         await query.edit_message_text(
-            tr(context, "announcement_end_prompt"),
+            tr(context, "announcement_end_prompt")
+            + (
+                "\n\n" + tr(context, "current_value", value=context.user_data["contest_end_at"])
+                if context.user_data.get("contest_end_at") else ""
+            ),
             reply_markup=step_navigation(context, "back:announcement_start"),
         )
 
@@ -987,7 +1005,11 @@ async def button_handler(
         context.user_data["awaiting_announcement_rules"] = True
         context.user_data["contest_publish_pending"] = False
         await query.edit_message_text(
-            tr(context, "announcement_rules_prompt"),
+            tr(context, "announcement_rules_prompt")
+            + (
+                "\n\n" + tr(context, "current_value", value=context.user_data["contest_rules"])
+                if context.user_data.get("contest_rules") else ""
+            ),
             reply_markup=step_navigation(context, "back:announcement_end"),
         )
 
