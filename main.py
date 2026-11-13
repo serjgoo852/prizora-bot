@@ -8,6 +8,8 @@ from telegram.ext import (
     CommandHandler,
     CallbackQueryHandler,
     ContextTypes,
+    MessageHandler,
+    filters,
 )
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
@@ -65,6 +67,19 @@ def formats_menu():
     keyboard.append(
         [InlineKeyboardButton("⬅️ Главное меню", callback_data="home")]
     )
+    return InlineKeyboardMarkup(keyboard)
+
+
+def prizes_menu():
+    keyboard = [
+        [InlineKeyboardButton("💰 Денежный приз", callback_data="prize:money")],
+        [InlineKeyboardButton("📱 Техника и гаджеты", callback_data="prize:tech")],
+        [InlineKeyboardButton("🎟️ Сертификат или промокод", callback_data="prize:certificate")],
+        [InlineKeyboardButton("🎁 Подарок или набор", callback_data="prize:gift")],
+        [InlineKeyboardButton("👑 Цифровой приз / VIP", callback_data="prize:digital")],
+        [InlineKeyboardButton("✍️ Свой вариант", callback_data="prize:custom")],
+        [InlineKeyboardButton("⬅️ Главное меню", callback_data="home")],
+    ]
     return InlineKeyboardMarkup(keyboard)
 
 
@@ -209,14 +224,58 @@ async def button_handler(
             "в группе" if place == "group" else "в канале"
         )
 
+        context.user_data["contest_place"] = place
         await query.edit_message_text(
             f"✅ Выбрано: {place_name}\n\n"
-            "Следующий этап — настройка приза, "
-            "участников и количества победителей.\n\n"
-            "Конструктор конкурсов будет расширен "
-            "на следующих этапах разработки.",
-            reply_markup=main_menu()
+            "🎁 Теперь выбери категорию приза:",
+            reply_markup=prizes_menu()
         )
+
+    elif data.startswith("prize:"):
+        prize_key = data.split(":", 1)[1]
+        prize_names = {
+            "money": "💰 Денежный приз",
+            "tech": "📱 Техника и гаджеты",
+            "certificate": "🎟️ Сертификат или промокод",
+            "gift": "🎁 Подарок или набор",
+            "digital": "👑 Цифровой приз / VIP",
+            "custom": "✍️ Свой вариант",
+        }
+        prize_name = prize_names.get(prize_key)
+        if not prize_name:
+            return
+        context.user_data["contest_prize_category"] = prize_key
+        context.user_data["awaiting_prize_name"] = True
+        await query.edit_message_text(
+            f"Выбрана категория: {prize_name}\\n\\n"
+            "✍️ Напиши название приза и, если нужно, его описание.\\n"
+            "Например: «Подарочный сертификат на 5 000 рублей».",
+            reply_markup=InlineKeyboardMarkup([[
+                InlineKeyboardButton("⬅️ Главное меню", callback_data="home")
+            ]])
+        )
+
+
+async def prize_text_handler(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+    if not context.user_data.get("awaiting_prize_name"):
+        return
+    prize_text = (update.message.text or "").strip()
+    if not prize_text:
+        await update.message.reply_text("Напиши название приза текстом.")
+        return
+    if len(prize_text) > 300:
+        await update.message.reply_text("Слишком длинное описание. Умести его, пожалуйста, в 300 символов.")
+        return
+    context.user_data["contest_prize_name"] = prize_text
+    context.user_data["awaiting_prize_name"] = False
+    await update.message.reply_text(
+        f"✅ Приз сохранён: {prize_text}\\n\\n"
+        "Следующий этап — количество участников и победителей. "
+        "Пока это тестовый конструктор: публикация и проведение розыгрыша ещё не подключены."
+    )
 
 
 def main():
