@@ -31,11 +31,11 @@ I18N = {
         "language_detected": "Язык Telegram: {language}. Можешь выбрать другой.",
         "language_saved": "✅ Язык интерфейса: Русский.",
         "welcome": (
-            "👑 Добро пожаловать в PRIZORA!\\n\\n"
-            "🎁 Создавай конкурсы и розыгрыши.\\n"
-            "🎡 Выбирай интересный формат.\\n"
-            "🏆 Определяй победителей!\\n\\n"
-            "Для новых пользователей предусмотрен пробный период PRO на 7 дней.\\n\\n"
+            "👑 Добро пожаловать в PRIZORA!\n\n"
+            "🎁 Создавай конкурсы и розыгрыши.\n"
+            "🎡 Выбирай интересный формат.\n"
+            "🏆 Определяй победителей!\n\n"
+            "Для новых пользователей предусмотрен пробный период PRO на 7 дней.\n\n"
             "Выбери действие:"
         ),
         "menu_create": "🏆 Создать конкурс",
@@ -43,9 +43,9 @@ I18N = {
         "menu_plans": "💎 Мои тарифы",
         "menu_help": "📖 Помощь",
         "menu_language": "🌐 Язык",
-        "home_title": "👑 PRIZORA\\n\\nВыбери действие:",
+        "home_title": "👑 PRIZORA\n\nВыбери действие:",
         "formats_title": "🎮 Выбери формат конкурса:",
-        "create_title": "🏆 Создание конкурса\\n\\nВыбери формат:",
+        "create_title": "🏆 Создание конкурса\n\nВыбери формат:",
         "back_home": "⬅️ Главное меню",
         "back": "⬅️ Назад",
         "unknown_format": "Неизвестный формат.",
@@ -54,7 +54,7 @@ I18N = {
         "channel": "Канал",
         "selected_group": "в группе",
         "selected_channel": "в канале",
-        "place_selected": "✅ Выбрано: {place}\\n\\n🎁 Теперь выбери категорию приза:",
+        "place_selected": "✅ Выбрано: {place}\n\n🎁 Теперь выбери категорию приза:",
         "prize_money": "💰 Денежный приз",
         "prize_tech": "📱 Техника и гаджеты",
         "prize_certificate": "🎟️ Сертификат или промокод",
@@ -62,43 +62,43 @@ I18N = {
         "prize_digital": "👑 Цифровой приз / VIP",
         "prize_custom": "✍️ Свой вариант",
         "prize_prompt": (
-            "Выбрана категория: {prize}\\n\\n"
-            "✍️ Напиши название приза и, если нужно, его описание.\\n"
+            "Выбрана категория: {prize}\n\n"
+            "✍️ Напиши название приза и, если нужно, его описание.\n"
             "Например: «Подарочный сертификат на 5 000 рублей»."
         ),
         "prize_empty": "Напиши название приза текстом.",
         "prize_too_long": "Слишком длинное описание. Умести его, пожалуйста, в 300 символов.",
         "prize_saved_ask_limit": (
-            "✅ Приз сохранён: {prize}\\n\\n"
-            "👥 Сколько участников максимум сможет принять конкурс?\\n"
+            "✅ Приз сохранён: {prize}\n\n"
+            "👥 Сколько участников максимум сможет принять конкурс?\n"
             "Введи целое число от 1 до 100 000."
         ),
         "number_participants_invalid": "Введи, пожалуйста, целое число участников, например 100.",
         "number_participants_range": "Количество участников должно быть от 1 до 100 000. Попробуй ещё раз.",
         "participants_saved_ask_winners": (
-            "👥 Максимум участников: {count}\\n\\n"
-            "🏆 Сколько победителей нужно выбрать?\\n"
+            "👥 Максимум участников: {count}\n\n"
+            "🏆 Сколько победителей нужно выбрать?\n"
             "Введи целое число от 1 до {count}."
         ),
         "number_winners_invalid": "Введи, пожалуйста, целое число победителей, например 3.",
         "number_winners_range": "Количество победителей должно быть от 1 до {count}. Попробуй ещё раз.",
         "summary": (
-            "✅ Параметры конкурса сохранены!\\n\\n"
-            "🎡 Формат: {format}\\n"
-            "📍 Место проведения: {place}\\n"
-            "🎁 Приз: {prize}\\n"
-            "👥 Максимум участников: {participants}\\n"
-            "🏆 Победителей: {winners}\\n\\n"
+            "✅ Параметры конкурса сохранены!\n\n"
+            "🎡 Формат: {format}\n"
+            "📍 Место проведения: {place}\n"
+            "🎁 Приз: {prize}\n"
+            "👥 Максимум участников: {participants}\n"
+            "🏆 Победителей: {winners}\n\n"
             "Следующий этап — подготовка публикации. "
             "Пока это тестовый конструктор: публикация и проведение розыгрыша ещё не подключены. "
             "Тарифные ограничения пока не применяются."
         ),
         "summary_home": "🏠 Главное меню",
-        "plans_title": "💎 Тарифы PRIZORA\\n\\nВыбери тариф, чтобы узнать подробности:",
+        "plans_title": "💎 Тарифы PRIZORA\n\nВыбери тариф, чтобы узнать подробности:",
         "plan_detail": (
-            "{name}\\n\\n"
-            "👥 Участники: {limit}\\n\\n"
-            "✨ Возможности: {features}\\n\\n"
+            "{name}\n\n"
+            "👥 Участники: {limit}\n\n"
+            "✨ Возможности: {features}\n\n"
             "{trial}{notice}"
         ),
         "plan_free_limit": "100 участников",
@@ -107,13 +107,13 @@ I18N = {
         "plan_pro_features": "Все форматы, история и несколько победителей",
         "plan_premium_limit": "Без установленного лимита",
         "plan_premium_features": "Все возможности и расширенная статистика",
-        "plan_trial": "🎁 Новым пользователям предусмотрено 7 дней PRO.\\n\\n",
+        "plan_trial": "🎁 Новым пользователям предусмотрено 7 дней PRO.\n\n",
         "plan_notice": "Настоящее подключение подписок и оплата будут реализованы отдельным этапом.",
         "help_text": (
-            "📖 PRIZORA — международный конструктор конкурсов и розыгрышей.\\n\\n"
-            "1. Выбери язык интерфейса.\\n"
-            "2. Выбери формат и место проведения конкурса.\\n"
-            "3. Укажи приз, лимит участников и количество победителей.\\n\\n"
+            "📖 PRIZORA — международный конструктор конкурсов и розыгрышей.\n\n"
+            "1. Выбери язык интерфейса.\n"
+            "2. Выбери формат и место проведения конкурса.\n"
+            "3. Укажи приз, лимит участников и количество победителей.\n\n"
             "Сейчас доступна настройка тестового конкурса. Публикация и проведение розыгрыша будут добавлены позже."
         ),
     },
@@ -122,11 +122,11 @@ I18N = {
         "language_detected": "Telegram language detected: {language}. You can choose another language.",
         "language_saved": "✅ Interface language set to English.",
         "welcome": (
-            "👑 Welcome to PRIZORA!\\n\\n"
-            "🎁 Create contests and giveaways.\\n"
-            "🎡 Choose an engaging format.\\n"
-            "🏆 Set up your winners!\\n\\n"
-            "New users get a 7-day PRO trial.\\n\\n"
+            "👑 Welcome to PRIZORA!\n\n"
+            "🎁 Create contests and giveaways.\n"
+            "🎡 Choose an engaging format.\n"
+            "🏆 Set up your winners!\n\n"
+            "New users get a 7-day PRO trial.\n\n"
             "Choose an action:"
         ),
         "menu_create": "🏆 Create a contest",
@@ -134,9 +134,9 @@ I18N = {
         "menu_plans": "💎 My plans",
         "menu_help": "📖 Help",
         "menu_language": "🌐 Language",
-        "home_title": "👑 PRIZORA\\n\\nChoose an action:",
+        "home_title": "👑 PRIZORA\n\nChoose an action:",
         "formats_title": "🎮 Choose a contest format:",
-        "create_title": "🏆 Create a contest\\n\\nChoose a format:",
+        "create_title": "🏆 Create a contest\n\nChoose a format:",
         "back_home": "⬅️ Main menu",
         "back": "⬅️ Back",
         "unknown_format": "Unknown format.",
@@ -145,7 +145,7 @@ I18N = {
         "channel": "Channel",
         "selected_group": "in a group",
         "selected_channel": "in a channel",
-        "place_selected": "✅ Selected: {place}\\n\\n🎁 Now choose a prize category:",
+        "place_selected": "✅ Selected: {place}\n\n🎁 Now choose a prize category:",
         "prize_money": "💰 Cash prize",
         "prize_tech": "📱 Tech and gadgets",
         "prize_certificate": "🎟️ Gift card or promo code",
@@ -153,43 +153,43 @@ I18N = {
         "prize_digital": "👑 Digital prize / VIP",
         "prize_custom": "✍️ Custom prize",
         "prize_prompt": (
-            "Selected category: {prize}\\n\\n"
-            "✍️ Enter the prize name and, optionally, a description.\\n"
+            "Selected category: {prize}\n\n"
+            "✍️ Enter the prize name and, optionally, a description.\n"
             "Example: “A €50 gift card”."
         ),
         "prize_empty": "Please enter the prize name as text.",
         "prize_too_long": "That description is too long. Please keep it within 300 characters.",
         "prize_saved_ask_limit": (
-            "✅ Prize saved: {prize}\\n\\n"
-            "👥 What is the maximum number of participants?\\n"
+            "✅ Prize saved: {prize}\n\n"
+            "👥 What is the maximum number of participants?\n"
             "Enter a whole number from 1 to 100,000."
         ),
         "number_participants_invalid": "Please enter a whole number of participants, for example 100.",
         "number_participants_range": "The participant limit must be between 1 and 100,000. Please try again.",
         "participants_saved_ask_winners": (
-            "👥 Participant limit: {count}\\n\\n"
-            "🏆 How many winners should be selected?\\n"
+            "👥 Participant limit: {count}\n\n"
+            "🏆 How many winners should be selected?\n"
             "Enter a whole number from 1 to {count}."
         ),
         "number_winners_invalid": "Please enter a whole number of winners, for example 3.",
         "number_winners_range": "The number of winners must be between 1 and {count}. Please try again.",
         "summary": (
-            "✅ Contest settings saved!\\n\\n"
-            "🎡 Format: {format}\\n"
-            "📍 Location: {place}\\n"
-            "🎁 Prize: {prize}\\n"
-            "👥 Participant limit: {participants}\\n"
-            "🏆 Winners: {winners}\\n\\n"
+            "✅ Contest settings saved!\n\n"
+            "🎡 Format: {format}\n"
+            "📍 Location: {place}\n"
+            "🎁 Prize: {prize}\n"
+            "👥 Participant limit: {participants}\n"
+            "🏆 Winners: {winners}\n\n"
             "Next step: prepare the contest announcement. "
             "This is still a setup prototype; publishing and running the giveaway are not connected yet. "
             "Plan limits are not enforced yet."
         ),
         "summary_home": "🏠 Main menu",
-        "plans_title": "💎 PRIZORA plans\\n\\nChoose a plan to see its details:",
+        "plans_title": "💎 PRIZORA plans\n\nChoose a plan to see its details:",
         "plan_detail": (
-            "{name}\\n\\n"
-            "👥 Participants: {limit}\\n\\n"
-            "✨ Features: {features}\\n\\n"
+            "{name}\n\n"
+            "👥 Participants: {limit}\n\n"
+            "✨ Features: {features}\n\n"
             "{trial}{notice}"
         ),
         "plan_free_limit": "100 participants",
@@ -198,13 +198,13 @@ I18N = {
         "plan_pro_features": "All formats, history, and multiple winners",
         "plan_premium_limit": "No fixed limit",
         "plan_premium_features": "All features and extended statistics",
-        "plan_trial": "🎁 New users are eligible for a 7-day PRO trial.\\n\\n",
+        "plan_trial": "🎁 New users are eligible for a 7-day PRO trial.\n\n",
         "plan_notice": "Subscription activation and payments will be implemented in a later stage.",
         "help_text": (
-            "📖 PRIZORA is an international contest and giveaway builder.\\n\\n"
-            "1. Choose your interface language.\\n"
-            "2. Select a contest format and where it will run.\\n"
-            "3. Enter the prize, participant limit, and number of winners.\\n\\n"
+            "📖 PRIZORA is an international contest and giveaway builder.\n\n"
+            "1. Choose your interface language.\n"
+            "2. Select a contest format and where it will run.\n"
+            "3. Enter the prize, participant limit, and number of winners.\n\n"
             "Contest setup is currently in prototype mode. Publishing and running giveaways will be added later."
         ),
     },
@@ -213,11 +213,11 @@ I18N = {
         "language_detected": "Erkannte Telegram-Sprache: {language}. Du kannst eine andere Sprache wählen.",
         "language_saved": "✅ Die Oberflächensprache ist jetzt Deutsch.",
         "welcome": (
-            "👑 Willkommen bei PRIZORA!\\n\\n"
-            "🎁 Erstelle Wettbewerbe und Verlosungen.\\n"
-            "🎡 Wähle ein passendes Format.\\n"
-            "🏆 Lege die Gewinner fest!\\n\\n"
-            "Neue Nutzer erhalten eine 7-tägige PRO-Testphase.\\n\\n"
+            "👑 Willkommen bei PRIZORA!\n\n"
+            "🎁 Erstelle Wettbewerbe und Verlosungen.\n"
+            "🎡 Wähle ein passendes Format.\n"
+            "🏆 Lege die Gewinner fest!\n\n"
+            "Neue Nutzer erhalten eine 7-tägige PRO-Testphase.\n\n"
             "Wähle eine Aktion:"
         ),
         "menu_create": "🏆 Wettbewerb erstellen",
@@ -225,9 +225,9 @@ I18N = {
         "menu_plans": "💎 Meine Tarife",
         "menu_help": "📖 Hilfe",
         "menu_language": "🌐 Sprache",
-        "home_title": "👑 PRIZORA\\n\\nWähle eine Aktion:",
+        "home_title": "👑 PRIZORA\n\nWähle eine Aktion:",
         "formats_title": "🎮 Wähle ein Wettbewerbsformat:",
-        "create_title": "🏆 Wettbewerb erstellen\\n\\nWähle ein Format:",
+        "create_title": "🏆 Wettbewerb erstellen\n\nWähle ein Format:",
         "back_home": "⬅️ Hauptmenü",
         "back": "⬅️ Zurück",
         "unknown_format": "Unbekanntes Format.",
@@ -236,7 +236,7 @@ I18N = {
         "channel": "Kanal",
         "selected_group": "in einer Gruppe",
         "selected_channel": "in einem Kanal",
-        "place_selected": "✅ Ausgewählt: {place}\\n\\n🎁 Wähle jetzt die Preiskategorie:",
+        "place_selected": "✅ Ausgewählt: {place}\n\n🎁 Wähle jetzt die Preiskategorie:",
         "prize_money": "💰 Geldpreis",
         "prize_tech": "📱 Technik und Gadgets",
         "prize_certificate": "🎟️ Gutschein oder Promo-Code",
@@ -244,43 +244,43 @@ I18N = {
         "prize_digital": "👑 Digitaler Preis / VIP",
         "prize_custom": "✍️ Eigener Preis",
         "prize_prompt": (
-            "Ausgewählte Kategorie: {prize}\\n\\n"
-            "✍️ Gib den Namen des Preises und optional eine Beschreibung ein.\\n"
+            "Ausgewählte Kategorie: {prize}\n\n"
+            "✍️ Gib den Namen des Preises und optional eine Beschreibung ein.\n"
             "Beispiel: „Geschenkgutschein im Wert von 50 €“."
         ),
         "prize_empty": "Bitte gib den Namen des Preises als Text ein.",
         "prize_too_long": "Die Beschreibung ist zu lang. Bitte verwende höchstens 300 Zeichen.",
         "prize_saved_ask_limit": (
-            "✅ Preis gespeichert: {prize}\\n\\n"
-            "👥 Wie viele Teilnehmer darf der Wettbewerb maximal haben?\\n"
+            "✅ Preis gespeichert: {prize}\n\n"
+            "👥 Wie viele Teilnehmer darf der Wettbewerb maximal haben?\n"
             "Gib eine ganze Zahl von 1 bis 100.000 ein."
         ),
         "number_participants_invalid": "Bitte gib eine ganze Teilnehmerzahl ein, zum Beispiel 100.",
         "number_participants_range": "Die Teilnehmerzahl muss zwischen 1 und 100.000 liegen. Bitte versuche es erneut.",
         "participants_saved_ask_winners": (
-            "👥 Maximale Teilnehmerzahl: {count}\\n\\n"
-            "🏆 Wie viele Gewinner sollen ausgewählt werden?\\n"
+            "👥 Maximale Teilnehmerzahl: {count}\n\n"
+            "🏆 Wie viele Gewinner sollen ausgewählt werden?\n"
             "Gib eine ganze Zahl von 1 bis {count} ein."
         ),
         "number_winners_invalid": "Bitte gib eine ganze Anzahl von Gewinnern ein, zum Beispiel 3.",
         "number_winners_range": "Die Anzahl der Gewinner muss zwischen 1 und {count} liegen. Bitte versuche es erneut.",
         "summary": (
-            "✅ Wettbewerbseinstellungen gespeichert!\\n\\n"
-            "🎡 Format: {format}\\n"
-            "📍 Ort: {place}\\n"
-            "🎁 Preis: {prize}\\n"
-            "👥 Maximale Teilnehmerzahl: {participants}\\n"
-            "🏆 Gewinner: {winners}\\n\\n"
+            "✅ Wettbewerbseinstellungen gespeichert!\n\n"
+            "🎡 Format: {format}\n"
+            "📍 Ort: {place}\n"
+            "🎁 Preis: {prize}\n"
+            "👥 Maximale Teilnehmerzahl: {participants}\n"
+            "🏆 Gewinner: {winners}\n\n"
             "Nächster Schritt: die Ankündigung vorbereiten. "
             "Dies ist derzeit ein Einrichtungsprototyp; Veröffentlichung und Durchführung der Verlosung sind noch nicht verbunden. "
             "Tariflimits werden noch nicht angewendet."
         ),
         "summary_home": "🏠 Hauptmenü",
-        "plans_title": "💎 PRIZORA-Tarife\\n\\nWähle einen Tarif für weitere Informationen:",
+        "plans_title": "💎 PRIZORA-Tarife\n\nWähle einen Tarif für weitere Informationen:",
         "plan_detail": (
-            "{name}\\n\\n"
-            "👥 Teilnehmer: {limit}\\n\\n"
-            "✨ Funktionen: {features}\\n\\n"
+            "{name}\n\n"
+            "👥 Teilnehmer: {limit}\n\n"
+            "✨ Funktionen: {features}\n\n"
             "{trial}{notice}"
         ),
         "plan_free_limit": "100 Teilnehmer",
@@ -289,13 +289,13 @@ I18N = {
         "plan_pro_features": "Alle Formate, Verlauf und mehrere Gewinner",
         "plan_premium_limit": "Kein festes Limit",
         "plan_premium_features": "Alle Funktionen und erweiterte Statistiken",
-        "plan_trial": "🎁 Neue Nutzer können eine 7-tägige PRO-Testphase nutzen.\\n\\n",
+        "plan_trial": "🎁 Neue Nutzer können eine 7-tägige PRO-Testphase nutzen.\n\n",
         "plan_notice": "Die Aktivierung von Abonnements und Zahlungen wird später umgesetzt.",
         "help_text": (
-            "📖 PRIZORA ist ein internationaler Baukasten für Wettbewerbe und Verlosungen.\\n\\n"
-            "1. Wähle die Sprache der Oberfläche.\\n"
-            "2. Wähle ein Format und den Veranstaltungsort.\\n"
-            "3. Gib den Preis, die Teilnehmergrenze und die Anzahl der Gewinner ein.\\n\\n"
+            "📖 PRIZORA ist ein internationaler Baukasten für Wettbewerbe und Verlosungen.\n\n"
+            "1. Wähle die Sprache der Oberfläche.\n"
+            "2. Wähle ein Format und den Veranstaltungsort.\n"
+            "3. Gib den Preis, die Teilnehmergrenze und die Anzahl der Gewinner ein.\n\n"
             "Die Einrichtung befindet sich derzeit im Prototyp-Stadium. Veröffentlichung und Durchführung folgen später."
         ),
     },
@@ -424,7 +424,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["suggested_language"] = language
         await update.message.reply_text(
             tr(context, "language_detected", language=SUPPORTED_LANGUAGES[language])
-            + "\\n\\n"
+            + "\n\n"
             + tr(context, "language_prompt"),
             reply_markup=language_menu(),
         )
@@ -536,7 +536,7 @@ async def button_handler(
             [InlineKeyboardButton(I18N[language]["back"], callback_data="formats")],
         ]
         await query.edit_message_text(
-            f"{FORMAT_NAMES[language][format_key]}\\n\\n{tr(context, 'place_prompt')}",
+            f"{FORMAT_NAMES[language][format_key]}\n\n{tr(context, 'place_prompt')}",
             reply_markup=InlineKeyboardMarkup(keyboard),
         )
 
