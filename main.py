@@ -260,22 +260,99 @@ async def prize_text_handler(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE
 ):
-    if not context.user_data.get("awaiting_prize_name"):
+    message_text = (update.message.text or "").strip()
+
+    if context.user_data.get("awaiting_prize_name"):
+        if not message_text:
+            await update.message.reply_text("Напиши название приза текстом.")
+            return
+        if len(message_text) > 300:
+            await update.message.reply_text(
+                "Слишком длинное описание. Умести его, пожалуйста, в 300 символов."
+            )
+            return
+
+        context.user_data["contest_prize_name"] = message_text
+        context.user_data["awaiting_prize_name"] = False
+        context.user_data["awaiting_participant_limit"] = True
+        await update.message.reply_text(
+            f"✅ Приз сохранён: {message_text}\n\n"
+            "👥 Сколько участников максимум сможет принять конкурс?\n"
+            "Введи целое число от 1 до 100 000."
+        )
         return
-    prize_text = (update.message.text or "").strip()
-    if not prize_text:
-        await update.message.reply_text("Напиши название приза текстом.")
+
+    if context.user_data.get("awaiting_participant_limit"):
+        try:
+            participant_limit = int(message_text)
+        except ValueError:
+            await update.message.reply_text(
+                "Введи, пожалуйста, целое число участников, например 100."
+            )
+            return
+
+        if participant_limit < 1 or participant_limit > 100000:
+            await update.message.reply_text(
+                "Количество участников должно быть от 1 до 100 000. Попробуй ещё раз."
+            )
+            return
+
+        context.user_data["contest_participant_limit"] = participant_limit
+        context.user_data["awaiting_participant_limit"] = False
+        context.user_data["awaiting_winner_count"] = True
+        await update.message.reply_text(
+            f"👥 Максимум участников: {participant_limit}\n\n"
+            "🏆 Сколько победителей нужно выбрать?\n"
+            f"Введи целое число от 1 до {participant_limit}."
+        )
         return
-    if len(prize_text) > 300:
-        await update.message.reply_text("Слишком длинное описание. Умести его, пожалуйста, в 300 символов.")
-        return
-    context.user_data["contest_prize_name"] = prize_text
-    context.user_data["awaiting_prize_name"] = False
-    await update.message.reply_text(
-        f"✅ Приз сохранён: {prize_text}\n\n"
-        "Следующий этап — количество участников и победителей. "
-        "Пока это тестовый конструктор: публикация и проведение розыгрыша ещё не подключены."
-    )
+
+    if context.user_data.get("awaiting_winner_count"):
+        try:
+            winner_count = int(message_text)
+        except ValueError:
+            await update.message.reply_text(
+                "Введи, пожалуйста, целое число победителей, например 3."
+            )
+            return
+
+        participant_limit = context.user_data.get("contest_participant_limit", 0)
+        if winner_count < 1 or winner_count > participant_limit:
+            await update.message.reply_text(
+                f"Количество победителей должно быть от 1 до {participant_limit}. Попробуй ещё раз."
+            )
+            return
+
+        context.user_data["contest_winner_count"] = winner_count
+        context.user_data["awaiting_winner_count"] = False
+
+        format_name = FORMATS.get(
+            context.user_data.get("contest_format"), "Не выбран"
+        )
+        place_name = (
+            "Группа"
+            if context.user_data.get("contest_place") == "group"
+            else "Канал"
+        )
+        prize_name = context.user_data.get("contest_prize_name", "Не указан")
+
+        summary = (
+            "✅ Параметры конкурса сохранены!\n\n"
+            f"🎡 Формат: {format_name}\n"
+            f"📍 Место проведения: {place_name}\n"
+            f"🎁 Приз: {prize_name}\n"
+            f"👥 Максимум участников: {participant_limit}\n"
+            f"🏆 Победителей: {winner_count}\n\n"
+            "Следующий этап — подготовка публикации. "
+            "Пока это тестовый конструктор: публикация и проведение розыгрыша ещё не подключены. "
+            "Тарифные ограничения пока не применяются."
+        )
+        await update.message.reply_text(
+            summary,
+            reply_markup=InlineKeyboardMarkup([[
+                InlineKeyboardButton("🏠 Главное меню", callback_data="home")
+            ]])
+        )
 
 
 def main():
