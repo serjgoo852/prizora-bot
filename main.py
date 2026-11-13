@@ -142,7 +142,7 @@ I18N = {
         "plan_premium_features": "Все возможности и расширенная статистика",
         "plan_trial": "🎁 Новым пользователям предусмотрено 7 дней PRO.\n\n",
         "plan_notice": "Настоящее подключение подписок и оплата будут реализованы отдельным этапом.",
-        "announcement_button": "📣 Предпросмотр публикации",
+        "announcement_button": "📣 Заполнить даты и подготовить",
         "announcement_title": "📣 Черновик объявления",
         "announcement_text": (
             "🎉 РОЗЫГРЫШ!\n\n"
@@ -175,7 +175,7 @@ I18N = {
             "1. Выбери язык интерфейса.\n"
             "2. Выбери формат и место проведения конкурса.\n"
             "3. Укажи приз, лимит участников и количество победителей.\n\n"
-            "Сейчас доступна настройка тестового конкурса. Публикация и проведение розыгрыша будут добавлены позже."
+            "Подготовка и публикация тестового объявления уже доступны. Регистрация участников и выбор победителей будут добавлены позже."
         ),
     },
     "en": {
@@ -292,7 +292,7 @@ I18N = {
         "plan_premium_features": "All features and extended statistics",
         "plan_trial": "🎁 New users are eligible for a 7-day PRO trial.\n\n",
         "plan_notice": "Subscription activation and payments will be implemented in a later stage.",
-        "announcement_button": "📣 Preview announcement",
+        "announcement_button": "📣 Add dates and prepare",
         "announcement_title": "📣 Announcement draft",
         "announcement_text": (
             "🎉 GIVEAWAY!\n\n"
@@ -325,7 +325,7 @@ I18N = {
             "1. Choose your interface language.\n"
             "2. Select a contest format and where it will run.\n"
             "3. Enter the prize, participant limit, and number of winners.\n\n"
-            "Contest setup is currently in prototype mode. Publishing and running giveaways will be added later."
+            "Preparing and publishing a test announcement is now available. Participant registration and winner selection will be added later."
         ),
     },
     "de": {
@@ -442,7 +442,7 @@ I18N = {
         "plan_premium_features": "Alle Funktionen und erweiterte Statistiken",
         "plan_trial": "🎁 Neue Nutzer können eine 7-tägige PRO-Testphase nutzen.\n\n",
         "plan_notice": "Die Aktivierung von Abonnements und Zahlungen wird später umgesetzt.",
-        "announcement_button": "📣 Ankündigungsvorschau",
+        "announcement_button": "📣 Daten eingeben und vorbereiten",
         "announcement_title": "📣 Entwurf der Ankündigung",
         "announcement_text": (
             "🎉 GEWINNSPIEL!\n\n"
@@ -475,7 +475,7 @@ I18N = {
             "1. Wähle die Sprache der Oberfläche.\n"
             "2. Wähle ein Format und den Veranstaltungsort.\n"
             "3. Gib den Preis, die Teilnehmergrenze und die Anzahl der Gewinner ein.\n\n"
-            "Die Einrichtung befindet sich derzeit im Prototyp-Stadium. Veröffentlichung und Durchführung folgen später."
+            "Vorbereitung und Veröffentlichung einer Testankündigung sind jetzt möglich. Teilnehmerregistrierung und Gewinnerauswahl folgen später."
         ),
     },
 }
