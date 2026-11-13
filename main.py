@@ -55,6 +55,35 @@ I18N = {
         "channel": "Канал",
         "selected_group": "в группе",
         "selected_channel": "в канале",
+        "destination_prompt_group": (
+            "📍 Отправь @username публичной группы или её числовой ID.\n\n"
+            "Сначала добавь @Prizora_GlobalBot в группу администратором. "
+            "Я проверю, что ты тоже администратор и бот сможет работать с группой."
+        ),
+        "destination_prompt_channel": (
+            "📣 Отправь @username публичного канала или его числовой ID.\n\n"
+            "Сначала добавь @Prizora_GlobalBot в канал администратором с правом публиковать сообщения. "
+            "Я проверю права канала и твои права администратора."
+        ),
+        "chat_reference_invalid": "Не удалось распознать чат. Отправь @username или числовой ID (для закрытого чата).",
+        "chat_not_found": "Не удалось получить доступ к этому чату. Проверь @username/ID и убедись, что бот уже добавлен туда.",
+        "chat_type_mismatch": "Тип чата не совпадает с выбранным. Выбери группу для группы или канал для канала.",
+        "bot_not_admin": "Бот PRIZORA не является администратором этого чата. Добавь @Prizora_GlobalBot администратором и попробуй снова.",
+        "bot_no_post_permission": "У бота нет права публиковать сообщения в этом канале. Включи право «Публикация сообщений» и попробуй снова.",
+        "organizer_not_admin": "Твой аккаунт не найден среди администраторов этого чата. Подключить его может владелец или администратор.",
+        "destination_verified": "✅ Чат подтверждён: {title}\n\nТеперь выбери категорию приза:",
+        "subscription_prompt": "🔐 Нужно ли требовать подписку на отдельный Telegram-канал для участия?",
+        "subscription_yes": "✅ Да, подписка обязательна",
+        "subscription_no": "Нет, подписка не нужна",
+        "subscription_channel_prompt": (
+            "📢 Укажи @username канала или его числовой ID.\n\n"
+            "Добавь @Prizora_GlobalBot в этот канал администратором. "
+            "Для проверки подписки бот должен быть администратором канала. "
+            "Ты также должен быть владельцем или администратором."
+        ),
+        "subscription_channel_verified": "✅ Канал для проверки подписки подтверждён: {title}",
+        "subscription_required": "Обязательна — {channel}",
+        "subscription_optional": "Не обязательна",
         "place_selected": "✅ Выбрано: {place}\n\n🎁 Теперь выбери категорию приза:",
         "prize_money": "💰 Денежный приз",
         "prize_tech": "📱 Техника и гаджеты",
@@ -87,9 +116,11 @@ I18N = {
             "✅ Параметры конкурса сохранены!\n\n"
             "🎡 Формат: {format}\n"
             "📍 Место проведения: {place}\n"
+            "📣 Чат: {destination}\n"
             "🎁 Приз: {prize}\n"
             "👥 Максимум участников: {participants}\n"
-            "🏆 Победителей: {winners}\n\n"
+            "🏆 Победителей: {winners}\n"
+            "🔐 Подписка: {subscription}\n\n"
             "Следующий этап — подготовка публикации. "
             "Пока это тестовый конструктор: публикация и проведение розыгрыша ещё не подключены. "
             "Тарифные ограничения пока не применяются."
@@ -116,8 +147,10 @@ I18N = {
             "🎉 РОЗЫГРЫШ!\n\n"
             "🎁 Приз: {prize}\n"
             "🎡 Формат: {format}\n"
+            "📣 Площадка: {destination}\n"
             "👥 Количество мест: {participants}\n"
-            "🏆 Победителей: {winners}\n\n"
+            "🏆 Победителей: {winners}\n"
+            "🔐 Подписка: {subscription}\n\n"
             "📅 Начало: [укажите дату и время]\n"
             "⏰ Завершение: [укажите дату и время]\n"
             "📌 Условия участия: [добавьте условия]\n\n"
@@ -159,6 +192,35 @@ I18N = {
         "channel": "Channel",
         "selected_group": "in a group",
         "selected_channel": "in a channel",
+        "destination_prompt_group": (
+            "📍 Send the public group's @username or numeric chat ID.\n\n"
+            "First add @Prizora_GlobalBot to the group as an administrator. "
+            "I'll check that you are also an administrator and that the bot can work with the group."
+        ),
+        "destination_prompt_channel": (
+            "📣 Send the public channel's @username or numeric chat ID.\n\n"
+            "First add @Prizora_GlobalBot as a channel administrator with permission to post messages. "
+            "I'll check the channel and your administrator rights."
+        ),
+        "chat_reference_invalid": "I couldn't recognize that chat. Send an @username or numeric ID (for a private chat).",
+        "chat_not_found": "I couldn't access this chat. Check the @username/ID and make sure the bot has already been added.",
+        "chat_type_mismatch": "The chat type doesn't match your selection. Choose a group for group, or a channel for channel.",
+        "bot_not_admin": "PRIZORA is not an administrator in this chat. Add @Prizora_GlobalBot as an administrator and try again.",
+        "bot_no_post_permission": "The bot cannot post in this channel. Enable the 'Post Messages' permission and try again.",
+        "organizer_not_admin": "Your account is not listed as an administrator in this chat. Only its owner or an administrator can connect it.",
+        "destination_verified": "✅ Chat verified: {title}\n\nNow choose a prize category:",
+        "subscription_prompt": "🔐 Should participants be required to subscribe to a separate Telegram channel?",
+        "subscription_yes": "✅ Yes, subscription is required",
+        "subscription_no": "No subscription required",
+        "subscription_channel_prompt": (
+            "📢 Send the channel's @username or numeric ID.\n\n"
+            "Add @Prizora_GlobalBot to that channel as an administrator. "
+            "The bot must be an administrator to verify subscriptions. "
+            "You must also be the owner or an administrator."
+        ),
+        "subscription_channel_verified": "✅ Subscription channel verified: {title}",
+        "subscription_required": "Required — {channel}",
+        "subscription_optional": "Not required",
         "place_selected": "✅ Selected: {place}\n\n🎁 Now choose a prize category:",
         "prize_money": "💰 Cash prize",
         "prize_tech": "📱 Tech and gadgets",
@@ -191,9 +253,11 @@ I18N = {
             "✅ Contest settings saved!\n\n"
             "🎡 Format: {format}\n"
             "📍 Location: {place}\n"
+            "📣 Chat: {destination}\n"
             "🎁 Prize: {prize}\n"
             "👥 Participant limit: {participants}\n"
-            "🏆 Winners: {winners}\n\n"
+            "🏆 Winners: {winners}\n"
+            "🔐 Subscription: {subscription}\n\n"
             "Next step: prepare the contest announcement. "
             "This is still a setup prototype; publishing and running the giveaway are not connected yet. "
             "Plan limits are not enforced yet."
@@ -220,8 +284,10 @@ I18N = {
             "🎉 GIVEAWAY!\n\n"
             "🎁 Prize: {prize}\n"
             "🎡 Format: {format}\n"
+            "📣 Venue: {destination}\n"
             "👥 Available spots: {participants}\n"
-            "🏆 Winners: {winners}\n\n"
+            "🏆 Winners: {winners}\n"
+            "🔐 Subscription: {subscription}\n\n"
             "📅 Starts: [add date and time]\n"
             "⏰ Ends: [add date and time]\n"
             "📌 How to enter: [add participation rules]\n\n"
@@ -263,6 +329,35 @@ I18N = {
         "channel": "Kanal",
         "selected_group": "in einer Gruppe",
         "selected_channel": "in einem Kanal",
+        "destination_prompt_group": (
+            "📍 Sende den öffentlichen @username der Gruppe oder ihre numerische Chat-ID.\n\n"
+            "Füge zuerst @Prizora_GlobalBot als Administrator zur Gruppe hinzu. "
+            "Ich prüfe, ob du ebenfalls Administrator bist und der Bot mit der Gruppe arbeiten kann."
+        ),
+        "destination_prompt_channel": (
+            "📣 Sende den öffentlichen @username des Kanals oder seine numerische Chat-ID.\n\n"
+            "Füge zuerst @Prizora_GlobalBot als Kanaladministrator mit dem Recht zum Veröffentlichen hinzu. "
+            "Ich prüfe die Rechte des Kanals und deine Administratorrechte."
+        ),
+        "chat_reference_invalid": "Der Chat konnte nicht erkannt werden. Sende einen @username oder eine numerische ID (für private Chats).",
+        "chat_not_found": "Der Bot kann diesen Chat nicht erreichen. Prüfe @username/ID und füge den Bot zuerst hinzu.",
+        "chat_type_mismatch": "Der Chattyp passt nicht zur Auswahl. Wähle eine Gruppe für Gruppe oder einen Kanal für Kanal.",
+        "bot_not_admin": "PRIZORA ist in diesem Chat kein Administrator. Füge @Prizora_GlobalBot als Administrator hinzu und versuche es erneut.",
+        "bot_no_post_permission": "Der Bot darf in diesem Kanal nicht veröffentlichen. Aktiviere das Recht „Nachrichten veröffentlichen“ und versuche es erneut.",
+        "organizer_not_admin": "Dein Konto ist in diesem Chat nicht als Administrator eingetragen. Nur Eigentümer oder Administratoren können ihn verbinden.",
+        "destination_verified": "✅ Chat bestätigt: {title}\n\nWähle jetzt die Preiskategorie:",
+        "subscription_prompt": "🔐 Soll für die Teilnahme ein Abonnement eines separaten Telegram-Kanals erforderlich sein?",
+        "subscription_yes": "✅ Ja, Abonnement erforderlich",
+        "subscription_no": "Kein Abonnement erforderlich",
+        "subscription_channel_prompt": (
+            "📢 Sende den @username des Kanals oder seine numerische ID.\n\n"
+            "Füge @Prizora_GlobalBot als Administrator zu diesem Kanal hinzu. "
+            "Der Bot muss Administrator sein, um Abonnements zu prüfen. "
+            "Du musst ebenfalls Eigentümer oder Administrator sein."
+        ),
+        "subscription_channel_verified": "✅ Kanal für die Abonnementprüfung bestätigt: {title}",
+        "subscription_required": "Erforderlich — {channel}",
+        "subscription_optional": "Nicht erforderlich",
         "place_selected": "✅ Ausgewählt: {place}\n\n🎁 Wähle jetzt die Preiskategorie:",
         "prize_money": "💰 Geldpreis",
         "prize_tech": "📱 Technik und Gadgets",
@@ -295,9 +390,11 @@ I18N = {
             "✅ Wettbewerbseinstellungen gespeichert!\n\n"
             "🎡 Format: {format}\n"
             "📍 Ort: {place}\n"
+            "📣 Chat: {destination}\n"
             "🎁 Preis: {prize}\n"
             "👥 Maximale Teilnehmerzahl: {participants}\n"
-            "🏆 Gewinner: {winners}\n\n"
+            "🏆 Gewinner: {winners}\n"
+            "🔐 Abonnement: {subscription}\n\n"
             "Nächster Schritt: die Ankündigung vorbereiten. "
             "Dies ist derzeit ein Einrichtungsprototyp; Veröffentlichung und Durchführung der Verlosung sind noch nicht verbunden. "
             "Tariflimits werden noch nicht angewendet."
@@ -324,8 +421,10 @@ I18N = {
             "🎉 GEWINNSPIEL!\n\n"
             "🎁 Preis: {prize}\n"
             "🎡 Format: {format}\n"
+            "📣 Ort: {destination}\n"
             "👥 Teilnehmerplätze: {participants}\n"
-            "🏆 Gewinner: {winners}\n\n"
+            "🏆 Gewinner: {winners}\n"
+            "🔐 Abonnement: {subscription}\n\n"
             "📅 Beginn: [Datum und Uhrzeit eintragen]\n"
             "⏰ Ende: [Datum und Uhrzeit eintragen]\n"
             "📌 Teilnahmebedingungen: [Bedingungen ergänzen]\n\n"
