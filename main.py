@@ -1,6 +1,7 @@
 
 import os
 import logging
+from datetime import datetime
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
@@ -122,7 +123,7 @@ I18N = {
             "🏆 Победителей: {winners}\n"
             "🔐 Подписка: {subscription}\n\n"
             "Следующий этап — подготовка публикации. "
-            "Пока это тестовый конструктор: публикация и проведение розыгрыша ещё не подключены. "
+            "Публикация объявления подключена. Регистрация участников и выбор победителей будут добавлены отдельно. "
             "Тарифные ограничения пока не применяются."
         ),
         "summary_home": "🏠 Главное меню",
@@ -144,18 +145,31 @@ I18N = {
         "announcement_button": "📣 Предпросмотр публикации",
         "announcement_title": "📣 Черновик объявления",
         "announcement_text": (
-            "🎉 РОЗЫГРЫШ!\n\n"
-            "🎁 Приз: {prize}\n"
-            "🎡 Формат: {format}\n"
-            "📣 Площадка: {destination}\n"
-            "👥 Количество мест: {participants}\n"
-            "🏆 Победителей: {winners}\n"
-            "🔐 Подписка: {subscription}\n\n"
-            "📅 Начало: [укажите дату и время]\n"
-            "⏰ Завершение: [укажите дату и время]\n"
-            "📌 Условия участия: [добавьте условия]\n\n"
-            "Черновик подготовлен в PRIZORA. Заполните даты и условия перед публикацией."
+            "🎉 РОЗЫГРЫШ!\\n\\n"
+            "🎁 Приз: {prize}\\n"
+            "🎡 Формат: {format}\\n"
+            "📣 Площадка: {destination}\\n"
+            "👥 Количество мест: {participants}\\n"
+            "🏆 Победителей: {winners}\\n"
+            "🔐 Подписка: {subscription}\\n\\n"
+            "📅 Начало: {start_at}\\n"
+            "⏰ Завершение: {end_at}\\n"
+            "📌 Условия участия: {rules}\\n\\n"
+            "⚠️ Публикация тестовая: регистрация участников и выбор победителей пока не подключены."
         ),
+        "announcement_start_prompt": "📅 Укажи дату и время начала конкурса в формате ДД.ММ.ГГГГ ЧЧ:ММ (местное время).\\nНапример: 14.11.2026 18:00",
+        "announcement_end_prompt": "⏰ Укажи дату и время завершения конкурса в том же формате. Время завершения должно быть позже начала.",
+        "announcement_rules_prompt": "📌 Напиши условия участия. Регистрация пока не подключена; это текст для тестовой публикации.",
+        "announcement_datetime_invalid": "Не понял дату и время. Введи в формате ДД.ММ.ГГГГ ЧЧ:ММ, например 14.11.2026 18:00.",
+        "announcement_end_invalid": "Завершение должно быть позже начала. Введи дату и время ещё раз.",
+        "announcement_rules_invalid": "Напиши условия текстом (до 1000 символов).",
+        "announcement_review_prompt": "Проверь объявление. Оно будет отправлено в выбранный чат только после твоего подтверждения.",
+        "announcement_publish_button": "✅ Опубликовать в чат",
+        "announcement_cancel_button": "Отмена",
+        "announcement_publish_success": "✅ Объявление отправлено в чат: {destination}.\\n\\nВажно: регистрация участников и выбор победителей пока не подключены.",
+        "announcement_publish_error": "Не удалось отправить объявление. Проверь, что бот всё ещё администратор чата и имеет право публиковать сообщения. Можно попробовать ещё раз.",
+        "announcement_cancelled": "Публикация отменена. Объявление не отправлялось.",
+        "announcement_already_published": "Это объявление уже было отправлено. Повторно публиковать его не буду.",
         "help_text": (
             "📖 PRIZORA — международный конструктор конкурсов и розыгрышей.\n\n"
             "1. Выбери язык интерфейса.\n"
@@ -259,7 +273,7 @@ I18N = {
             "🏆 Winners: {winners}\n"
             "🔐 Subscription: {subscription}\n\n"
             "Next step: prepare the contest announcement. "
-            "This is still a setup prototype; publishing and running the giveaway are not connected yet. "
+            "Announcement publishing is connected. Participant registration and winner selection will be added separately. "
             "Plan limits are not enforced yet."
         ),
         "summary_home": "🏠 Main menu",
@@ -281,18 +295,31 @@ I18N = {
         "announcement_button": "📣 Preview announcement",
         "announcement_title": "📣 Announcement draft",
         "announcement_text": (
-            "🎉 GIVEAWAY!\n\n"
-            "🎁 Prize: {prize}\n"
-            "🎡 Format: {format}\n"
-            "📣 Venue: {destination}\n"
-            "👥 Available spots: {participants}\n"
-            "🏆 Winners: {winners}\n"
-            "🔐 Subscription: {subscription}\n\n"
-            "📅 Starts: [add date and time]\n"
-            "⏰ Ends: [add date and time]\n"
-            "📌 How to enter: [add participation rules]\n\n"
-            "Draft prepared with PRIZORA. Add the dates and rules before publishing."
+            "🎉 GIVEAWAY!\\n\\n"
+            "🎁 Prize: {prize}\\n"
+            "🎡 Format: {format}\\n"
+            "📣 Venue: {destination}\\n"
+            "👥 Available spots: {participants}\\n"
+            "🏆 Winners: {winners}\\n"
+            "🔐 Subscription: {subscription}\\n\\n"
+            "📅 Starts: {start_at}\\n"
+            "⏰ Ends: {end_at}\\n"
+            "📌 How to enter: {rules}\\n\\n"
+            "⚠️ Test announcement: participant registration and winner selection are not connected yet."
         ),
+        "announcement_start_prompt": "📅 Enter the start date and time as DD.MM.YYYY HH:MM (your local time).\\nExample: 14.11.2026 18:00",
+        "announcement_end_prompt": "⏰ Enter the end date and time in the same format. The end must be later than the start.",
+        "announcement_rules_prompt": "📌 Enter the participation rules. Registration is not connected yet; this is test announcement text.",
+        "announcement_datetime_invalid": "I couldn't read that date and time. Use DD.MM.YYYY HH:MM, for example 14.11.2026 18:00.",
+        "announcement_end_invalid": "The end date and time must be later than the start. Please enter it again.",
+        "announcement_rules_invalid": "Enter the rules as text (up to 1,000 characters).",
+        "announcement_review_prompt": "Review the announcement. It will be sent to the selected chat only after you confirm.",
+        "announcement_publish_button": "✅ Publish to chat",
+        "announcement_cancel_button": "Cancel",
+        "announcement_publish_success": "✅ Announcement sent to: {destination}.\\n\\nImportant: participant registration and winner selection are not connected yet.",
+        "announcement_publish_error": "The announcement could not be sent. Check that the bot is still an administrator and can post in the chat. You can retry.",
+        "announcement_cancelled": "Publication cancelled. The announcement was not sent.",
+        "announcement_already_published": "This announcement has already been sent. I won't publish it again.",
         "help_text": (
             "📖 PRIZORA is an international contest and giveaway builder.\n\n"
             "1. Choose your interface language.\n"
@@ -396,7 +423,7 @@ I18N = {
             "🏆 Gewinner: {winners}\n"
             "🔐 Abonnement: {subscription}\n\n"
             "Nächster Schritt: die Ankündigung vorbereiten. "
-            "Dies ist derzeit ein Einrichtungsprototyp; Veröffentlichung und Durchführung der Verlosung sind noch nicht verbunden. "
+            "Die Veröffentlichung der Ankündigung ist verbunden. Teilnehmerregistrierung und Gewinnerauswahl folgen später. "
             "Tariflimits werden noch nicht angewendet."
         ),
         "summary_home": "🏠 Hauptmenü",
@@ -418,18 +445,31 @@ I18N = {
         "announcement_button": "📣 Ankündigungsvorschau",
         "announcement_title": "📣 Entwurf der Ankündigung",
         "announcement_text": (
-            "🎉 GEWINNSPIEL!\n\n"
-            "🎁 Preis: {prize}\n"
-            "🎡 Format: {format}\n"
-            "📣 Ort: {destination}\n"
-            "👥 Teilnehmerplätze: {participants}\n"
-            "🏆 Gewinner: {winners}\n"
-            "🔐 Abonnement: {subscription}\n\n"
-            "📅 Beginn: [Datum und Uhrzeit eintragen]\n"
-            "⏰ Ende: [Datum und Uhrzeit eintragen]\n"
-            "📌 Teilnahmebedingungen: [Bedingungen ergänzen]\n\n"
-            "Entwurf mit PRIZORA erstellt. Bitte Datum und Bedingungen vor der Veröffentlichung ergänzen."
+            "🎉 GEWINNSPIEL!\\n\\n"
+            "🎁 Preis: {prize}\\n"
+            "🎡 Format: {format}\\n"
+            "📣 Ort: {destination}\\n"
+            "👥 Teilnehmerplätze: {participants}\\n"
+            "🏆 Gewinner: {winners}\\n"
+            "🔐 Abonnement: {subscription}\\n\\n"
+            "📅 Beginn: {start_at}\\n"
+            "⏰ Ende: {end_at}\\n"
+            "📌 Teilnahmebedingungen: {rules}\\n\\n"
+            "⚠️ Testveröffentlichung: Teilnehmerregistrierung und Gewinnerauswahl sind noch nicht verfügbar."
         ),
+        "announcement_start_prompt": "📅 Gib Startdatum und Uhrzeit als TT.MM.JJJJ HH:MM ein (Ortszeit).\\nBeispiel: 14.11.2026 18:00",
+        "announcement_end_prompt": "⏰ Gib Enddatum und Uhrzeit im selben Format ein. Das Ende muss nach dem Beginn liegen.",
+        "announcement_rules_prompt": "📌 Gib die Teilnahmebedingungen ein. Die Registrierung ist noch nicht verbunden; dies ist zunächst Test-Ankündigungstext.",
+        "announcement_datetime_invalid": "Das Datum wurde nicht erkannt. Verwende TT.MM.JJJJ HH:MM, zum Beispiel 14.11.2026 18:00.",
+        "announcement_end_invalid": "Das Ende muss nach dem Beginn liegen. Bitte gib es erneut ein.",
+        "announcement_rules_invalid": "Gib die Bedingungen als Text ein (bis zu 1.000 Zeichen).",
+        "announcement_review_prompt": "Prüfe die Ankündigung. Sie wird erst nach deiner Bestätigung im ausgewählten Chat veröffentlicht.",
+        "announcement_publish_button": "✅ Im Chat veröffentlichen",
+        "announcement_cancel_button": "Abbrechen",
+        "announcement_publish_success": "✅ Ankündigung gesendet an: {destination}.\\n\\nWichtig: Teilnehmerregistrierung und Gewinnerauswahl sind noch nicht verbunden.",
+        "announcement_publish_error": "Die Ankündigung konnte nicht gesendet werden. Prüfe, ob der Bot noch Administrator ist und veröffentlichen darf. Du kannst es erneut versuchen.",
+        "announcement_cancelled": "Veröffentlichung abgebrochen. Die Ankündigung wurde nicht gesendet.",
+        "announcement_already_published": "Diese Ankündigung wurde bereits gesendet. Ich veröffentliche sie nicht erneut.",
         "help_text": (
             "📖 PRIZORA ist ein internationaler Baukasten für Wettbewerbe und Verlosungen.\n\n"
             "1. Wähle die Sprache der Oberfläche.\n"
@@ -606,6 +646,33 @@ async def send_contest_summary(message, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+def build_announcement_text(context: ContextTypes.DEFAULT_TYPE) -> str:
+    language = current_language(context)
+    format_key = context.user_data.get("contest_format")
+    if context.user_data.get("contest_subscription_required"):
+        subscription = tr(
+            context,
+            "subscription_required",
+            channel=context.user_data.get("contest_subscription_title", "—"),
+        )
+    else:
+        subscription = tr(context, "subscription_optional")
+
+    return tr(
+        context,
+        "announcement_text",
+        prize=context.user_data.get("contest_prize_name", "—"),
+        format=FORMAT_NAMES[language].get(format_key, "—"),
+        destination=context.user_data.get("contest_destination_title", "—"),
+        participants=context.user_data.get("contest_participant_limit", "—"),
+        winners=context.user_data.get("contest_winner_count", "—"),
+        subscription=subscription,
+        start_at=context.user_data.get("contest_start_at", "—"),
+        end_at=context.user_data.get("contest_end_at", "—"),
+        rules=context.user_data.get("contest_rules", "—"),
+    )
+
+
 def subscription_choice_menu(language: str):
     t = I18N[language]
     return InlineKeyboardMarkup([
@@ -770,36 +837,84 @@ async def button_handler(
         )
 
     elif data == "announcement_preview":
-        format_key = context.user_data.get("contest_format")
-        prize_name = context.user_data.get("contest_prize_name", "—")
-        participant_limit = context.user_data.get("contest_participant_limit", "—")
-        winner_count = context.user_data.get("contest_winner_count", "—")
-        destination = context.user_data.get("contest_destination_title", "—")
-        if context.user_data.get("contest_subscription_required"):
-            subscription = tr(
-                context,
-                "subscription_required",
-                channel=context.user_data.get("contest_subscription_title", "—"),
-            )
-        else:
-            subscription = tr(context, "subscription_optional")
+        for state_key in (
+            "awaiting_prize_name",
+            "awaiting_participant_limit",
+            "awaiting_winner_count",
+            "awaiting_destination_chat",
+            "awaiting_subscription_choice",
+            "awaiting_subscription_channel",
+            "awaiting_announcement_start",
+            "awaiting_announcement_end",
+            "awaiting_announcement_rules",
+        ):
+            context.user_data[state_key] = False
+        context.user_data["awaiting_announcement_start"] = True
+        context.user_data["contest_publish_pending"] = False
+        context.user_data["contest_published"] = False
+        await query.edit_message_text(tr(context, "announcement_start_prompt"))
 
-        await query.edit_message_text(
-            tr(
-                context,
-                "announcement_title",
+    elif data == "publish_confirm":
+        if context.user_data.get("contest_published"):
+            await query.edit_message_text(
+                tr(context, "announcement_already_published"),
+                reply_markup=InlineKeyboardMarkup([[
+                    InlineKeyboardButton(tr(context, "back_home"), callback_data="home")
+                ]]),
             )
-            + "\n\n"
-            + tr(
-                context,
-                "announcement_text",
-                prize=prize_name,
-                format=FORMAT_NAMES[language].get(format_key, "—"),
-                participants=participant_limit,
-                winners=winner_count,
-                destination=destination,
-                subscription=subscription,
-            ),
+            return
+        if not context.user_data.get("contest_publish_pending"):
+            await query.edit_message_text(tr(context, "announcement_cancelled"))
+            return
+        chat_id = context.user_data.get("contest_destination_chat_id")
+        place = context.user_data.get("contest_place")
+        if not chat_id or place not in ("group", "channel"):
+            await query.edit_message_text(tr(context, "chat_not_found"))
+            return
+        chat, error_key = await validate_managed_chat(
+            context,
+            str(chat_id),
+            expected_type=place,
+            organizer_id=query.from_user.id,
+            require_post_permission=(place == "channel"),
+        )
+        if error_key:
+            await query.edit_message_text(
+                tr(context, error_key),
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton(tr(context, "announcement_publish_button"), callback_data="publish_confirm")],
+                    [InlineKeyboardButton(tr(context, "announcement_cancel_button"), callback_data="publish_cancel")],
+                ]),
+            )
+            return
+        try:
+            await context.bot.send_message(chat_id=chat.id, text=build_announcement_text(context))
+        except TelegramError:
+            logging.exception("Failed to publish contest announcement")
+            await query.edit_message_text(
+                tr(context, "announcement_publish_error"),
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton(tr(context, "announcement_publish_button"), callback_data="publish_confirm")],
+                    [InlineKeyboardButton(tr(context, "announcement_cancel_button"), callback_data="publish_cancel")],
+                ]),
+            )
+            return
+        context.user_data["contest_publish_pending"] = False
+        context.user_data["contest_published"] = True
+        await query.edit_message_text(
+            tr(context, "announcement_publish_success", destination=chat_display_name(chat)),
+            reply_markup=InlineKeyboardMarkup([[
+                InlineKeyboardButton(tr(context, "back_home"), callback_data="home")
+            ]]),
+        )
+
+    elif data == "publish_cancel":
+        context.user_data["contest_publish_pending"] = False
+        context.user_data["awaiting_announcement_start"] = False
+        context.user_data["awaiting_announcement_end"] = False
+        context.user_data["awaiting_announcement_rules"] = False
+        await query.edit_message_text(
+            tr(context, "announcement_cancelled"),
             reply_markup=InlineKeyboardMarkup([[
                 InlineKeyboardButton(tr(context, "back_home"), callback_data="home")
             ]]),
@@ -886,6 +1001,52 @@ async def prize_text_handler(
     context: ContextTypes.DEFAULT_TYPE
 ):
     message_text = (update.message.text or "").strip()
+
+    if context.user_data.get("awaiting_announcement_start"):
+        try:
+            start_value = datetime.strptime(message_text, "%d.%m.%Y %H:%M")
+        except ValueError:
+            await update.message.reply_text(tr(context, "announcement_datetime_invalid"))
+            return
+        context.user_data["contest_start_at"] = start_value.strftime("%d.%m.%Y %H:%M")
+        context.user_data["awaiting_announcement_start"] = False
+        context.user_data["awaiting_announcement_end"] = True
+        await update.message.reply_text(tr(context, "announcement_end_prompt"))
+        return
+
+    if context.user_data.get("awaiting_announcement_end"):
+        try:
+            end_value = datetime.strptime(message_text, "%d.%m.%Y %H:%M")
+            start_value = datetime.strptime(context.user_data.get("contest_start_at", ""), "%d.%m.%Y %H:%M")
+        except ValueError:
+            await update.message.reply_text(tr(context, "announcement_datetime_invalid"))
+            return
+        if end_value <= start_value:
+            await update.message.reply_text(tr(context, "announcement_end_invalid"))
+            return
+        context.user_data["contest_end_at"] = end_value.strftime("%d.%m.%Y %H:%M")
+        context.user_data["awaiting_announcement_end"] = False
+        context.user_data["awaiting_announcement_rules"] = True
+        await update.message.reply_text(tr(context, "announcement_rules_prompt"))
+        return
+
+    if context.user_data.get("awaiting_announcement_rules"):
+        if not message_text or len(message_text) > 1000:
+            await update.message.reply_text(tr(context, "announcement_rules_invalid"))
+            return
+        context.user_data["contest_rules"] = message_text
+        context.user_data["awaiting_announcement_rules"] = False
+        context.user_data["contest_publish_pending"] = True
+        await update.message.reply_text(
+            tr(context, "announcement_review_prompt")
+            + "\\n\\n"
+            + build_announcement_text(context),
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton(tr(context, "announcement_publish_button"), callback_data="publish_confirm")],
+                [InlineKeyboardButton(tr(context, "announcement_cancel_button"), callback_data="publish_cancel")],
+            ]),
+        )
+        return
 
     if context.user_data.get("awaiting_destination_chat"):
         place = context.user_data.get("contest_place")
