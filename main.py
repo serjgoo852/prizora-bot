@@ -145,19 +145,19 @@ I18N = {
         "announcement_button": "📣 Предпросмотр публикации",
         "announcement_title": "📣 Черновик объявления",
         "announcement_text": (
-            "🎉 РОЗЫГРЫШ!\\n\\n"
-            "🎁 Приз: {prize}\\n"
-            "🎡 Формат: {format}\\n"
-            "📣 Площадка: {destination}\\n"
-            "👥 Количество мест: {participants}\\n"
-            "🏆 Победителей: {winners}\\n"
-            "🔐 Подписка: {subscription}\\n\\n"
-            "📅 Начало: {start_at}\\n"
-            "⏰ Завершение: {end_at}\\n"
-            "📌 Условия участия: {rules}\\n\\n"
+            "🎉 РОЗЫГРЫШ!\n\n"
+            "🎁 Приз: {prize}\n"
+            "🎡 Формат: {format}\n"
+            "📣 Площадка: {destination}\n"
+            "👥 Количество мест: {participants}\n"
+            "🏆 Победителей: {winners}\n"
+            "🔐 Подписка: {subscription}\n\n"
+            "📅 Начало: {start_at}\n"
+            "⏰ Завершение: {end_at}\n"
+            "📌 Условия участия: {rules}\n\n"
             "⚠️ Публикация тестовая: регистрация участников и выбор победителей пока не подключены."
         ),
-        "announcement_start_prompt": "📅 Укажи дату и время начала конкурса в формате ДД.ММ.ГГГГ ЧЧ:ММ (местное время).\\nНапример: 14.11.2026 18:00",
+        "announcement_start_prompt": "📅 Укажи дату и время начала конкурса в формате ДД.ММ.ГГГГ ЧЧ:ММ (местное время).\nНапример: 14.11.2026 18:00",
         "announcement_end_prompt": "⏰ Укажи дату и время завершения конкурса в том же формате. Время завершения должно быть позже начала.",
         "announcement_rules_prompt": "📌 Напиши условия участия. Регистрация пока не подключена; это текст для тестовой публикации.",
         "announcement_datetime_invalid": "Не понял дату и время. Введи в формате ДД.ММ.ГГГГ ЧЧ:ММ, например 14.11.2026 18:00.",
@@ -166,7 +166,7 @@ I18N = {
         "announcement_review_prompt": "Проверь объявление. Оно будет отправлено в выбранный чат только после твоего подтверждения.",
         "announcement_publish_button": "✅ Опубликовать в чат",
         "announcement_cancel_button": "Отмена",
-        "announcement_publish_success": "✅ Объявление отправлено в чат: {destination}.\\n\\nВажно: регистрация участников и выбор победителей пока не подключены.",
+        "announcement_publish_success": "✅ Объявление отправлено в чат: {destination}.\n\nВажно: регистрация участников и выбор победителей пока не подключены.",
         "announcement_publish_error": "Не удалось отправить объявление. Проверь, что бот всё ещё администратор чата и имеет право публиковать сообщения. Можно попробовать ещё раз.",
         "announcement_cancelled": "Публикация отменена. Объявление не отправлялось.",
         "announcement_already_published": "Это объявление уже было отправлено. Повторно публиковать его не буду.",
@@ -295,19 +295,19 @@ I18N = {
         "announcement_button": "📣 Preview announcement",
         "announcement_title": "📣 Announcement draft",
         "announcement_text": (
-            "🎉 GIVEAWAY!\\n\\n"
-            "🎁 Prize: {prize}\\n"
-            "🎡 Format: {format}\\n"
-            "📣 Venue: {destination}\\n"
-            "👥 Available spots: {participants}\\n"
-            "🏆 Winners: {winners}\\n"
-            "🔐 Subscription: {subscription}\\n\\n"
-            "📅 Starts: {start_at}\\n"
-            "⏰ Ends: {end_at}\\n"
-            "📌 How to enter: {rules}\\n\\n"
+            "🎉 GIVEAWAY!\n\n"
+            "🎁 Prize: {prize}\n"
+            "🎡 Format: {format}\n"
+            "📣 Venue: {destination}\n"
+            "👥 Available spots: {participants}\n"
+            "🏆 Winners: {winners}\n"
+            "🔐 Subscription: {subscription}\n\n"
+            "📅 Starts: {start_at}\n"
+            "⏰ Ends: {end_at}\n"
+            "📌 How to enter: {rules}\n\n"
             "⚠️ Test announcement: participant registration and winner selection are not connected yet."
         ),
-        "announcement_start_prompt": "📅 Enter the start date and time as DD.MM.YYYY HH:MM (your local time).\\nExample: 14.11.2026 18:00",
+        "announcement_start_prompt": "📅 Enter the start date and time as DD.MM.YYYY HH:MM (your local time).\nExample: 14.11.2026 18:00",
         "announcement_end_prompt": "⏰ Enter the end date and time in the same format. The end must be later than the start.",
         "announcement_rules_prompt": "📌 Enter the participation rules. Registration is not connected yet; this is test announcement text.",
         "announcement_datetime_invalid": "I couldn't read that date and time. Use DD.MM.YYYY HH:MM, for example 14.11.2026 18:00.",
@@ -316,7 +316,7 @@ I18N = {
         "announcement_review_prompt": "Review the announcement. It will be sent to the selected chat only after you confirm.",
         "announcement_publish_button": "✅ Publish to chat",
         "announcement_cancel_button": "Cancel",
-        "announcement_publish_success": "✅ Announcement sent to: {destination}.\\n\\nImportant: participant registration and winner selection are not connected yet.",
+        "announcement_publish_success": "✅ Announcement sent to: {destination}.\n\nImportant: participant registration and winner selection are not connected yet.",
         "announcement_publish_error": "The announcement could not be sent. Check that the bot is still an administrator and can post in the chat. You can retry.",
         "announcement_cancelled": "Publication cancelled. The announcement was not sent.",
         "announcement_already_published": "This announcement has already been sent. I won't publish it again.",
@@ -445,19 +445,19 @@ I18N = {
         "announcement_button": "📣 Ankündigungsvorschau",
         "announcement_title": "📣 Entwurf der Ankündigung",
         "announcement_text": (
-            "🎉 GEWINNSPIEL!\\n\\n"
-            "🎁 Preis: {prize}\\n"
-            "🎡 Format: {format}\\n"
-            "📣 Ort: {destination}\\n"
-            "👥 Teilnehmerplätze: {participants}\\n"
-            "🏆 Gewinner: {winners}\\n"
-            "🔐 Abonnement: {subscription}\\n\\n"
-            "📅 Beginn: {start_at}\\n"
-            "⏰ Ende: {end_at}\\n"
-            "📌 Teilnahmebedingungen: {rules}\\n\\n"
+            "🎉 GEWINNSPIEL!\n\n"
+            "🎁 Preis: {prize}\n"
+            "🎡 Format: {format}\n"
+            "📣 Ort: {destination}\n"
+            "👥 Teilnehmerplätze: {participants}\n"
+            "🏆 Gewinner: {winners}\n"
+            "🔐 Abonnement: {subscription}\n\n"
+            "📅 Beginn: {start_at}\n"
+            "⏰ Ende: {end_at}\n"
+            "📌 Teilnahmebedingungen: {rules}\n\n"
             "⚠️ Testveröffentlichung: Teilnehmerregistrierung und Gewinnerauswahl sind noch nicht verfügbar."
         ),
-        "announcement_start_prompt": "📅 Gib Startdatum und Uhrzeit als TT.MM.JJJJ HH:MM ein (Ortszeit).\\nBeispiel: 14.11.2026 18:00",
+        "announcement_start_prompt": "📅 Gib Startdatum und Uhrzeit als TT.MM.JJJJ HH:MM ein (Ortszeit).\nBeispiel: 14.11.2026 18:00",
         "announcement_end_prompt": "⏰ Gib Enddatum und Uhrzeit im selben Format ein. Das Ende muss nach dem Beginn liegen.",
         "announcement_rules_prompt": "📌 Gib die Teilnahmebedingungen ein. Die Registrierung ist noch nicht verbunden; dies ist zunächst Test-Ankündigungstext.",
         "announcement_datetime_invalid": "Das Datum wurde nicht erkannt. Verwende TT.MM.JJJJ HH:MM, zum Beispiel 14.11.2026 18:00.",
@@ -466,7 +466,7 @@ I18N = {
         "announcement_review_prompt": "Prüfe die Ankündigung. Sie wird erst nach deiner Bestätigung im ausgewählten Chat veröffentlicht.",
         "announcement_publish_button": "✅ Im Chat veröffentlichen",
         "announcement_cancel_button": "Abbrechen",
-        "announcement_publish_success": "✅ Ankündigung gesendet an: {destination}.\\n\\nWichtig: Teilnehmerregistrierung und Gewinnerauswahl sind noch nicht verbunden.",
+        "announcement_publish_success": "✅ Ankündigung gesendet an: {destination}.\n\nWichtig: Teilnehmerregistrierung und Gewinnerauswahl sind noch nicht verbunden.",
         "announcement_publish_error": "Die Ankündigung konnte nicht gesendet werden. Prüfe, ob der Bot noch Administrator ist und veröffentlichen darf. Du kannst es erneut versuchen.",
         "announcement_cancelled": "Veröffentlichung abgebrochen. Die Ankündigung wurde nicht gesendet.",
         "announcement_already_published": "Diese Ankündigung wurde bereits gesendet. Ich veröffentliche sie nicht erneut.",
@@ -851,7 +851,6 @@ async def button_handler(
             context.user_data[state_key] = False
         context.user_data["awaiting_announcement_start"] = True
         context.user_data["contest_publish_pending"] = False
-        context.user_data["contest_published"] = False
         await query.edit_message_text(tr(context, "announcement_start_prompt"))
 
     elif data == "publish_confirm":
@@ -949,6 +948,8 @@ async def button_handler(
             return
 
         context.user_data["contest_format"] = format_key
+        context.user_data["contest_published"] = False
+        context.user_data["contest_publish_pending"] = False
         keyboard = [
             [InlineKeyboardButton(I18N[language]["group"], callback_data="place:group")],
             [InlineKeyboardButton(I18N[language]["channel"], callback_data="place:channel")],
@@ -1039,7 +1040,7 @@ async def prize_text_handler(
         context.user_data["contest_publish_pending"] = True
         await update.message.reply_text(
             tr(context, "announcement_review_prompt")
-            + "\\n\\n"
+            + "\n\n"
             + build_announcement_text(context),
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton(tr(context, "announcement_publish_button"), callback_data="publish_confirm")],
