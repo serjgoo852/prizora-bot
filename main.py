@@ -247,8 +247,8 @@ async def button_handler(
         context.user_data["contest_prize_category"] = prize_key
         context.user_data["awaiting_prize_name"] = True
         await query.edit_message_text(
-            f"Выбрана категория: {prize_name}\\n\\n"
-            "✍️ Напиши название приза и, если нужно, его описание.\\n"
+            f"Выбрана категория: {prize_name}\n\n"
+            "✍️ Напиши название приза и, если нужно, его описание.\n"
             "Например: «Подарочный сертификат на 5 000 рублей».",
             reply_markup=InlineKeyboardMarkup([[
                 InlineKeyboardButton("⬅️ Главное меню", callback_data="home")
@@ -272,7 +272,7 @@ async def prize_text_handler(
     context.user_data["contest_prize_name"] = prize_text
     context.user_data["awaiting_prize_name"] = False
     await update.message.reply_text(
-        f"✅ Приз сохранён: {prize_text}\\n\\n"
+        f"✅ Приз сохранён: {prize_text}\n\n"
         "Следующий этап — количество участников и победителей. "
         "Пока это тестовый конструктор: публикация и проведение розыгрыша ещё не подключены."
     )
@@ -290,6 +290,9 @@ def main():
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(
         CallbackQueryHandler(button_handler)
+    )
+    application.add_handler(
+        MessageHandler(filters.TEXT & ~filters.COMMAND, prize_text_handler)
     )
 
     logging.info("PRIZORA запускается...")
