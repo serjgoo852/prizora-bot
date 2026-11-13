@@ -565,7 +565,7 @@ async def button_handler(
                 context,
                 "announcement_title",
             )
-            + "\\n\\n"
+            + "\n\n"
             + tr(
                 context,
                 "announcement_text",
