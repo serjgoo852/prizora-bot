@@ -502,7 +502,7 @@ def normalize_chat_reference(value: str):
     """Accept a public @username/t.me link or a numeric Telegram chat ID."""
     value = value.strip()
     if "t.me/" in value:
-        value = value.split("t.me/", 1)[1].split("/", 1)[0]
+        value = value.split("t.me/", 1)[1].split("/", 1)[0].split("?", 1)[0]
         if value.startswith("+") or value == "joinchat":
             return None
         value = "@" + value.lstrip("@")
