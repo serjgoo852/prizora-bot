@@ -1096,9 +1096,10 @@ async def button_handler(
         context.user_data["awaiting_announcement_rules"] = False
         await query.edit_message_text(
             tr(context, "announcement_cancelled"),
-            reply_markup=InlineKeyboardMarkup([[
-                InlineKeyboardButton(tr(context, "back_home"), callback_data="home")
-            ]]),
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton(tr(context, "back"), callback_data="back:announcement_rules")],
+                [InlineKeyboardButton(tr(context, "back_home"), callback_data="home")],
+            ]),
         )
 
     elif data == "subscription:yes":
