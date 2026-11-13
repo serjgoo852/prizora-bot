@@ -887,6 +887,58 @@ async def prize_text_handler(
 ):
     message_text = (update.message.text or "").strip()
 
+    if context.user_data.get("awaiting_destination_chat"):
+        place = context.user_data.get("contest_place")
+        chat, error_key = await validate_managed_chat(
+            context,
+            message_text,
+            expected_type=place,
+            organizer_id=update.effective_user.id,
+            require_post_permission=(place == "channel"),
+        )
+        if error_key:
+            await update.message.reply_text(tr(context, error_key))
+            return
+
+        context.user_data["awaiting_destination_chat"] = False
+        context.user_data["contest_destination_chat_id"] = chat.id
+        context.user_data["contest_destination_type"] = chat.type
+        context.user_data["contest_destination_title"] = chat_display_name(chat)
+        await update.message.reply_text(
+            tr(context, "destination_verified", title=chat_display_name(chat)),
+            reply_markup=prizes_menu(current_language(context)),
+        )
+        return
+
+    if context.user_data.get("awaiting_subscription_choice"):
+        await update.message.reply_text(
+            tr(context, "subscription_prompt"),
+            reply_markup=subscription_choice_menu(current_language(context)),
+        )
+        return
+
+    if context.user_data.get("awaiting_subscription_channel"):
+        chat, error_key = await validate_managed_chat(
+            context,
+            message_text,
+            expected_type="channel",
+            organizer_id=update.effective_user.id,
+            require_post_permission=False,
+        )
+        if error_key:
+            await update.message.reply_text(tr(context, error_key))
+            return
+
+        context.user_data["awaiting_subscription_channel"] = False
+        context.user_data["contest_subscription_required"] = True
+        context.user_data["contest_subscription_chat_id"] = chat.id
+        context.user_data["contest_subscription_title"] = chat_display_name(chat)
+        await update.message.reply_text(
+            tr(context, "subscription_channel_verified", title=chat_display_name(chat))
+        )
+        await send_contest_summary(update.message, context)
+        return
+
     if context.user_data.get("awaiting_prize_name"):
         if not message_text:
             await update.message.reply_text(tr(context, "prize_empty"))
@@ -938,29 +990,15 @@ async def prize_text_handler(
 
         context.user_data["contest_winner_count"] = winner_count
         context.user_data["awaiting_winner_count"] = False
-
-        language = current_language(context)
-        format_name = FORMAT_NAMES[language].get(
-            context.user_data.get("contest_format"), "—"
-        )
-        place_key = context.user_data.get("contest_place")
-        place_name = tr(context, "group" if place_key == "group" else "channel")
-        prize_name = context.user_data.get("contest_prize_name", "—")
+        context.user_data["awaiting_subscription_choice"] = True
+        context.user_data["awaiting_subscription_channel"] = False
+        context.user_data["contest_subscription_required"] = False
+        context.user_data.pop("contest_subscription_chat_id", None)
+        context.user_data.pop("contest_subscription_title", None)
 
         await update.message.reply_text(
-            tr(
-                context,
-                "summary",
-                format=format_name,
-                place=place_name,
-                prize=prize_name,
-                participants=participant_limit,
-                winners=winner_count,
-            ),
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton(tr(context, "announcement_button"), callback_data="announcement_preview")],
-                [InlineKeyboardButton(tr(context, "summary_home"), callback_data="home")],
-            ]),
+            tr(context, "subscription_prompt"),
+            reply_markup=subscription_choice_menu(current_language(context)),
         )
 
 
