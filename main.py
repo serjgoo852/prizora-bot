@@ -109,6 +109,19 @@ I18N = {
         "plan_premium_features": "Все возможности и расширенная статистика",
         "plan_trial": "🎁 Новым пользователям предусмотрено 7 дней PRO.\n\n",
         "plan_notice": "Настоящее подключение подписок и оплата будут реализованы отдельным этапом.",
+        "announcement_button": "📣 Предпросмотр публикации",
+        "announcement_title": "📣 Черновик объявления",
+        "announcement_text": (
+            "🎉 РОЗЫГРЫШ!\n\n"
+            "🎁 Приз: {prize}\n"
+            "🎡 Формат: {format}\n"
+            "👥 Количество мест: {participants}\n"
+            "🏆 Победителей: {winners}\n\n"
+            "📅 Начало: [укажите дату и время]\n"
+            "⏰ Завершение: [укажите дату и время]\n"
+            "📌 Условия участия: [добавьте условия]\n\n"
+            "Черновик подготовлен в PRIZORA. Заполните даты и условия перед публикацией."
+        ),
         "help_text": (
             "📖 PRIZORA — международный конструктор конкурсов и розыгрышей.\n\n"
             "1. Выбери язык интерфейса.\n"
@@ -200,6 +213,19 @@ I18N = {
         "plan_premium_features": "All features and extended statistics",
         "plan_trial": "🎁 New users are eligible for a 7-day PRO trial.\n\n",
         "plan_notice": "Subscription activation and payments will be implemented in a later stage.",
+        "announcement_button": "📣 Preview announcement",
+        "announcement_title": "📣 Announcement draft",
+        "announcement_text": (
+            "🎉 GIVEAWAY!\n\n"
+            "🎁 Prize: {prize}\n"
+            "🎡 Format: {format}\n"
+            "👥 Available spots: {participants}\n"
+            "🏆 Winners: {winners}\n\n"
+            "📅 Starts: [add date and time]\n"
+            "⏰ Ends: [add date and time]\n"
+            "📌 How to enter: [add participation rules]\n\n"
+            "Draft prepared with PRIZORA. Add the dates and rules before publishing."
+        ),
         "help_text": (
             "📖 PRIZORA is an international contest and giveaway builder.\n\n"
             "1. Choose your interface language.\n"
@@ -291,6 +317,19 @@ I18N = {
         "plan_premium_features": "Alle Funktionen und erweiterte Statistiken",
         "plan_trial": "🎁 Neue Nutzer können eine 7-tägige PRO-Testphase nutzen.\n\n",
         "plan_notice": "Die Aktivierung von Abonnements und Zahlungen wird später umgesetzt.",
+        "announcement_button": "📣 Ankündigungsvorschau",
+        "announcement_title": "📣 Entwurf der Ankündigung",
+        "announcement_text": (
+            "🎉 GEWINNSPIEL!\n\n"
+            "🎁 Preis: {prize}\n"
+            "🎡 Format: {format}\n"
+            "👥 Teilnehmerplätze: {participants}\n"
+            "🏆 Gewinner: {winners}\n\n"
+            "📅 Beginn: [Datum und Uhrzeit eintragen]\n"
+            "⏰ Ende: [Datum und Uhrzeit eintragen]\n"
+            "📌 Teilnahmebedingungen: [Bedingungen ergänzen]\n\n"
+            "Entwurf mit PRIZORA erstellt. Bitte Datum und Bedingungen vor der Veröffentlichung ergänzen."
+        ),
         "help_text": (
             "📖 PRIZORA ist ein internationaler Baukasten für Wettbewerbe und Verlosungen.\n\n"
             "1. Wähle die Sprache der Oberfläche.\n"
@@ -514,6 +553,32 @@ async def button_handler(
             reply_markup=plans_menu(language),
         )
 
+    elif data == "announcement_preview":
+        place_key = context.user_data.get("contest_place")
+        format_key = context.user_data.get("contest_format")
+        prize_name = context.user_data.get("contest_prize_name", "—")
+        participant_limit = context.user_data.get("contest_participant_limit", "—")
+        winner_count = context.user_data.get("contest_winner_count", "—")
+
+        await query.edit_message_text(
+            tr(
+                context,
+                "announcement_title",
+            )
+            + "\\n\\n"
+            + tr(
+                context,
+                "announcement_text",
+                prize=prize_name,
+                format=FORMAT_NAMES[language].get(format_key, "—"),
+                participants=participant_limit,
+                winners=winner_count,
+            ),
+            reply_markup=InlineKeyboardMarkup([[
+                InlineKeyboardButton(tr(context, "back_home"), callback_data="home")
+            ]]),
+        )
+
     elif data == "help":
         await query.edit_message_text(
             tr(context, "help_text"),
@@ -652,9 +717,10 @@ async def prize_text_handler(
                 participants=participant_limit,
                 winners=winner_count,
             ),
-            reply_markup=InlineKeyboardMarkup([[
-                InlineKeyboardButton(tr(context, "summary_home"), callback_data="home")
-            ]]),
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton(tr(context, "announcement_button"), callback_data="announcement_preview")],
+                [InlineKeyboardButton(tr(context, "summary_home"), callback_data="home")],
+            ]),
         )
 
 
