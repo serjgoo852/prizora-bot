@@ -770,11 +770,19 @@ async def button_handler(
         )
 
     elif data == "announcement_preview":
-        place_key = context.user_data.get("contest_place")
         format_key = context.user_data.get("contest_format")
         prize_name = context.user_data.get("contest_prize_name", "—")
         participant_limit = context.user_data.get("contest_participant_limit", "—")
         winner_count = context.user_data.get("contest_winner_count", "—")
+        destination = context.user_data.get("contest_destination_title", "—")
+        if context.user_data.get("contest_subscription_required"):
+            subscription = tr(
+                context,
+                "subscription_required",
+                channel=context.user_data.get("contest_subscription_title", "—"),
+            )
+        else:
+            subscription = tr(context, "subscription_optional")
 
         await query.edit_message_text(
             tr(
@@ -789,11 +797,26 @@ async def button_handler(
                 format=FORMAT_NAMES[language].get(format_key, "—"),
                 participants=participant_limit,
                 winners=winner_count,
+                destination=destination,
+                subscription=subscription,
             ),
             reply_markup=InlineKeyboardMarkup([[
                 InlineKeyboardButton(tr(context, "back_home"), callback_data="home")
             ]]),
         )
+
+    elif data == "subscription:yes":
+        context.user_data["awaiting_subscription_choice"] = False
+        context.user_data["awaiting_subscription_channel"] = True
+        await query.edit_message_text(tr(context, "subscription_channel_prompt"))
+
+    elif data == "subscription:no":
+        context.user_data["awaiting_subscription_choice"] = False
+        context.user_data["awaiting_subscription_channel"] = False
+        context.user_data["contest_subscription_required"] = False
+        context.user_data.pop("contest_subscription_chat_id", None)
+        context.user_data.pop("contest_subscription_title", None)
+        await send_contest_summary(query.message, context)
 
     elif data == "help":
         await query.edit_message_text(
@@ -826,11 +849,12 @@ async def button_handler(
         if place not in ("group", "channel"):
             return
         context.user_data["contest_place"] = place
-        selected_place = tr(context, "selected_group" if place == "group" else "selected_channel")
-        await query.edit_message_text(
-            tr(context, "place_selected", place=selected_place),
-            reply_markup=prizes_menu(language),
-        )
+        context.user_data["awaiting_destination_chat"] = True
+        context.user_data["awaiting_prize_name"] = False
+        context.user_data["awaiting_participant_limit"] = False
+        context.user_data["awaiting_winner_count"] = False
+        prompt_key = "destination_prompt_group" if place == "group" else "destination_prompt_channel"
+        await query.edit_message_text(tr(context, prompt_key))
 
     elif data.startswith("prize:"):
         prize_key = data.split(":", 1)[1]
