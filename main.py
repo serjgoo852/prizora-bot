@@ -11,6 +11,7 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
+from telegram.error import TelegramError
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
 
