@@ -1040,6 +1040,7 @@ async def button_handler(
                 tr(context, error_key),
                 reply_markup=InlineKeyboardMarkup([
                     [InlineKeyboardButton(tr(context, "announcement_publish_button"), callback_data="publish_confirm")],
+                    [InlineKeyboardButton(tr(context, "back"), callback_data="back:announcement_rules")],
                     [InlineKeyboardButton(tr(context, "announcement_cancel_button"), callback_data="publish_cancel")],
                 ]),
             )
@@ -1052,6 +1053,7 @@ async def button_handler(
                 tr(context, "announcement_publish_error"),
                 reply_markup=InlineKeyboardMarkup([
                     [InlineKeyboardButton(tr(context, "announcement_publish_button"), callback_data="publish_confirm")],
+                    [InlineKeyboardButton(tr(context, "back"), callback_data="back:announcement_rules")],
                     [InlineKeyboardButton(tr(context, "announcement_cancel_button"), callback_data="publish_cancel")],
                 ]),
             )
@@ -1272,7 +1274,10 @@ async def prize_text_handler(
             require_post_permission=False,
         )
         if error_key:
-            await update.message.reply_text(tr(context, error_key))
+            await update.message.reply_text(
+                tr(context, error_key),
+                reply_markup=step_navigation(context, "back:subscription_choice"),
+            )
             return
 
         context.user_data["awaiting_subscription_channel"] = False
@@ -1287,10 +1292,16 @@ async def prize_text_handler(
 
     if context.user_data.get("awaiting_prize_name"):
         if not message_text:
-            await update.message.reply_text(tr(context, "prize_empty"))
+            await update.message.reply_text(
+                tr(context, "prize_empty"),
+                reply_markup=step_navigation(context, "back:prizes"),
+            )
             return
         if len(message_text) > 300:
-            await update.message.reply_text(tr(context, "prize_too_long"))
+            await update.message.reply_text(
+                tr(context, "prize_too_long"),
+                reply_markup=step_navigation(context, "back:prizes"),
+            )
             return
 
         context.user_data["contest_prize_name"] = message_text
@@ -1306,11 +1317,17 @@ async def prize_text_handler(
         try:
             participant_limit = int(message_text)
         except ValueError:
-            await update.message.reply_text(tr(context, "number_participants_invalid"))
+            await update.message.reply_text(
+                tr(context, "number_participants_invalid"),
+                reply_markup=step_navigation(context, "back:prize_name"),
+            )
             return
 
         if participant_limit < 1 or participant_limit > 100000:
-            await update.message.reply_text(tr(context, "number_participants_range"))
+            await update.message.reply_text(
+                tr(context, "number_participants_range"),
+                reply_markup=step_navigation(context, "back:prize_name"),
+            )
             return
 
         context.user_data["contest_participant_limit"] = participant_limit
@@ -1326,13 +1343,17 @@ async def prize_text_handler(
         try:
             winner_count = int(message_text)
         except ValueError:
-            await update.message.reply_text(tr(context, "number_winners_invalid"))
+            await update.message.reply_text(
+                tr(context, "number_winners_invalid"),
+                reply_markup=step_navigation(context, "back:participant_limit"),
+            )
             return
 
         participant_limit = context.user_data.get("contest_participant_limit", 0)
         if winner_count < 1 or winner_count > participant_limit:
             await update.message.reply_text(
-                tr(context, "number_winners_range", count=participant_limit)
+                tr(context, "number_winners_range", count=participant_limit),
+                reply_markup=step_navigation(context, "back:participant_limit"),
             )
             return
 
