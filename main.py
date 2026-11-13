@@ -610,7 +610,44 @@ def chat_display_name(chat) -> str:
     return title
 
 
-async def send_contest_summary(message, context: ContextTypes.DEFAULT_TYPE):
+def step_navigation(context: ContextTypes.DEFAULT_TYPE, back_callback: str):
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton(tr(context, "back"), callback_data=back_callback)],
+        [InlineKeyboardButton(tr(context, "back_home"), callback_data="home")],
+    ])
+
+
+def place_menu(language: str):
+    t = I18N[language]
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton(t["group"], callback_data="place:group")],
+        [InlineKeyboardButton(t["channel"], callback_data="place:channel")],
+        [InlineKeyboardButton(t["back"], callback_data="formats")],
+        [InlineKeyboardButton(t["back_home"], callback_data="home")],
+    ])
+
+
+def destination_prompt_key(context: ContextTypes.DEFAULT_TYPE) -> str:
+    return "destination_prompt_group" if context.user_data.get("contest_place") == "group" else "destination_prompt_channel"
+
+
+def selected_prize_label(context: ContextTypes.DEFAULT_TYPE) -> str:
+    labels = {
+        "money": "prize_money",
+        "tech": "prize_tech",
+        "certificate": "prize_certificate",
+        "gift": "prize_gift",
+        "digital": "prize_digital",
+        "custom": "prize_custom",
+    }
+    return tr(context, labels.get(context.user_data.get("contest_prize_category"), "prize_custom"))
+
+
+async def send_contest_summary(
+    message,
+    context: ContextTypes.DEFAULT_TYPE,
+    edit: bool = False,
+):
     language = current_language(context)
     place_key = context.user_data.get("contest_place")
     place_name = tr(context, "group" if place_key == "group" else "channel")
@@ -627,23 +664,26 @@ async def send_contest_summary(message, context: ContextTypes.DEFAULT_TYPE):
     else:
         subscription = tr(context, "subscription_optional")
 
-    await message.reply_text(
-        tr(
-            context,
-            "summary",
-            format=FORMAT_NAMES[language].get(context.user_data.get("contest_format"), "—"),
-            place=place_name,
-            destination=destination,
-            prize=prize_name,
-            participants=participant_limit,
-            winners=winner_count,
-            subscription=subscription,
-        ),
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton(tr(context, "announcement_button"), callback_data="announcement_preview")],
-            [InlineKeyboardButton(tr(context, "summary_home"), callback_data="home")],
-        ]),
+    text = tr(
+        context,
+        "summary",
+        format=FORMAT_NAMES[language].get(context.user_data.get("contest_format"), "—"),
+        place=place_name,
+        destination=destination,
+        prize=prize_name,
+        participants=participant_limit,
+        winners=winner_count,
+        subscription=subscription,
     )
+    markup = InlineKeyboardMarkup([
+        [InlineKeyboardButton(tr(context, "announcement_button"), callback_data="announcement_preview")],
+        [InlineKeyboardButton(tr(context, "back"), callback_data="back:subscription_choice")],
+        [InlineKeyboardButton(tr(context, "summary_home"), callback_data="home")],
+    ])
+    if edit:
+        await message.edit_text(text, reply_markup=markup)
+    else:
+        await message.reply_text(text, reply_markup=markup)
 
 
 def build_announcement_text(context: ContextTypes.DEFAULT_TYPE) -> str:
@@ -678,6 +718,8 @@ def subscription_choice_menu(language: str):
     return InlineKeyboardMarkup([
         [InlineKeyboardButton(t["subscription_yes"], callback_data="subscription:yes")],
         [InlineKeyboardButton(t["subscription_no"], callback_data="subscription:no")],
+        [InlineKeyboardButton(t["back"], callback_data="back:winner_count")],
+        [InlineKeyboardButton(t["back_home"], callback_data="home")],
     ])
 
 
@@ -724,6 +766,7 @@ def prizes_menu(language: str):
         [InlineKeyboardButton(t["prize_gift"], callback_data="prize:gift")],
         [InlineKeyboardButton(t["prize_digital"], callback_data="prize:digital")],
         [InlineKeyboardButton(t["prize_custom"], callback_data="prize:custom")],
+        [InlineKeyboardButton(t["back"], callback_data="back:destination")],
         [InlineKeyboardButton(t["back_home"], callback_data="home")],
     ]
     return InlineKeyboardMarkup(keyboard)
@@ -793,6 +836,18 @@ async def button_handler(
         )
 
     elif data == "home":
+        for state_key in (
+            "awaiting_destination_chat",
+            "awaiting_prize_name",
+            "awaiting_participant_limit",
+            "awaiting_winner_count",
+            "awaiting_subscription_choice",
+            "awaiting_subscription_channel",
+            "awaiting_announcement_start",
+            "awaiting_announcement_end",
+            "awaiting_announcement_rules",
+        ):
+            context.user_data[state_key] = False
         await query.edit_message_text(
             tr(context, "home_title"),
             reply_markup=main_menu(language),
@@ -836,6 +891,106 @@ async def button_handler(
             reply_markup=plans_menu(language),
         )
 
+    elif data == "back:place":
+        context.user_data["awaiting_destination_chat"] = False
+        format_key = context.user_data.get("contest_format")
+        await query.edit_message_text(
+            f"{FORMAT_NAMES[language].get(format_key, '')}\n\n{tr(context, 'place_prompt')}",
+            reply_markup=place_menu(language),
+        )
+
+    elif data == "back:destination":
+        context.user_data["awaiting_destination_chat"] = True
+        context.user_data["awaiting_prize_name"] = False
+        await query.edit_message_text(
+            tr(context, destination_prompt_key(context)),
+            reply_markup=step_navigation(context, "back:place"),
+        )
+
+    elif data == "back:prizes":
+        context.user_data["awaiting_prize_name"] = False
+        await query.edit_message_text(
+            tr(context, "destination_verified", title=context.user_data.get("contest_destination_title", "—")),
+            reply_markup=prizes_menu(language),
+        )
+
+    elif data == "back:prize_name":
+        context.user_data["awaiting_prize_name"] = True
+        context.user_data["awaiting_participant_limit"] = False
+        await query.edit_message_text(
+            tr(context, "prize_prompt", prize=selected_prize_label(context)),
+            reply_markup=step_navigation(context, "back:prizes"),
+        )
+
+    elif data == "back:participant_limit":
+        context.user_data["awaiting_participant_limit"] = True
+        context.user_data["awaiting_winner_count"] = False
+        await query.edit_message_text(
+            tr(context, "prize_saved_ask_limit", prize=context.user_data.get("contest_prize_name", "—")),
+            reply_markup=step_navigation(context, "back:prize_name"),
+        )
+
+    elif data == "back:winner_count":
+        context.user_data["awaiting_winner_count"] = True
+        context.user_data["awaiting_subscription_choice"] = False
+        context.user_data["awaiting_subscription_channel"] = False
+        await query.edit_message_text(
+            tr(
+                context,
+                "participants_saved_ask_winners",
+                count=context.user_data.get("contest_participant_limit", 1),
+            ),
+            reply_markup=step_navigation(context, "back:participant_limit"),
+        )
+
+    elif data == "back:subscription_choice":
+        context.user_data["awaiting_subscription_choice"] = True
+        context.user_data["awaiting_subscription_channel"] = False
+        await query.edit_message_text(
+            tr(context, "subscription_prompt"),
+            reply_markup=subscription_choice_menu(language),
+        )
+
+    elif data == "back:summary":
+        for state_key in (
+            "awaiting_announcement_start",
+            "awaiting_announcement_end",
+            "awaiting_announcement_rules",
+        ):
+            context.user_data[state_key] = False
+        context.user_data["contest_publish_pending"] = False
+        await send_contest_summary(query.message, context, edit=True)
+
+    elif data == "back:announcement_start":
+        context.user_data["awaiting_announcement_start"] = True
+        context.user_data["awaiting_announcement_end"] = False
+        context.user_data["awaiting_announcement_rules"] = False
+        context.user_data["contest_publish_pending"] = False
+        await query.edit_message_text(
+            tr(context, "announcement_start_prompt"),
+            reply_markup=step_navigation(context, "back:summary"),
+        )
+
+    elif data == "back:announcement_end":
+        context.user_data["awaiting_announcement_start"] = False
+        context.user_data["awaiting_announcement_end"] = True
+        context.user_data["awaiting_announcement_rules"] = False
+        context.user_data["contest_publish_pending"] = False
+        await query.edit_message_text(
+            tr(context, "announcement_end_prompt"),
+            reply_markup=step_navigation(context, "back:announcement_start"),
+        )
+
+    elif data == "back:announcement_rules":
+        context.user_data["awaiting_announcement_start"] = False
+        context.user_data["awaiting_announcement_end"] = False
+        context.user_data["awaiting_announcement_rules"] = True
+        context.user_data["contest_publish_pending"] = False
+        await query.edit_message_text(
+            tr(context, "announcement_rules_prompt"),
+            reply_markup=step_navigation(context, "back:announcement_end"),
+        )
+
     elif data == "announcement_preview":
         for state_key in (
             "awaiting_prize_name",
@@ -851,7 +1006,10 @@ async def button_handler(
             context.user_data[state_key] = False
         context.user_data["awaiting_announcement_start"] = True
         context.user_data["contest_publish_pending"] = False
-        await query.edit_message_text(tr(context, "announcement_start_prompt"))
+        await query.edit_message_text(
+            tr(context, "announcement_start_prompt"),
+            reply_markup=step_navigation(context, "back:summary"),
+        )
 
     elif data == "publish_confirm":
         if context.user_data.get("contest_published"):
@@ -922,7 +1080,10 @@ async def button_handler(
     elif data == "subscription:yes":
         context.user_data["awaiting_subscription_choice"] = False
         context.user_data["awaiting_subscription_channel"] = True
-        await query.edit_message_text(tr(context, "subscription_channel_prompt"))
+        await query.edit_message_text(
+            tr(context, "subscription_channel_prompt"),
+            reply_markup=step_navigation(context, "back:subscription_choice"),
+        )
 
     elif data == "subscription:no":
         context.user_data["awaiting_subscription_choice"] = False
@@ -950,14 +1111,14 @@ async def button_handler(
         context.user_data["contest_format"] = format_key
         context.user_data["contest_published"] = False
         context.user_data["contest_publish_pending"] = False
-        keyboard = [
-            [InlineKeyboardButton(I18N[language]["group"], callback_data="place:group")],
-            [InlineKeyboardButton(I18N[language]["channel"], callback_data="place:channel")],
-            [InlineKeyboardButton(I18N[language]["back"], callback_data="formats")],
-        ]
+        context.user_data["contest_subscription_required"] = False
+        context.user_data.pop("contest_subscription_chat_id", None)
+        context.user_data.pop("contest_subscription_title", None)
+        for contest_field in ("contest_start_at", "contest_end_at", "contest_rules"):
+            context.user_data.pop(contest_field, None)
         await query.edit_message_text(
             f"{FORMAT_NAMES[language][format_key]}\n\n{tr(context, 'place_prompt')}",
-            reply_markup=InlineKeyboardMarkup(keyboard),
+            reply_markup=place_menu(language),
         )
 
     elif data.startswith("place:"):
@@ -970,7 +1131,10 @@ async def button_handler(
         context.user_data["awaiting_participant_limit"] = False
         context.user_data["awaiting_winner_count"] = False
         prompt_key = "destination_prompt_group" if place == "group" else "destination_prompt_channel"
-        await query.edit_message_text(tr(context, prompt_key))
+        await query.edit_message_text(
+            tr(context, prompt_key),
+            reply_markup=step_navigation(context, "back:place"),
+        )
 
     elif data.startswith("prize:"):
         prize_key = data.split(":", 1)[1]
@@ -991,9 +1155,7 @@ async def button_handler(
         context.user_data["awaiting_winner_count"] = False
         await query.edit_message_text(
             tr(context, "prize_prompt", prize=prize_name),
-            reply_markup=InlineKeyboardMarkup([[
-                InlineKeyboardButton(tr(context, "back_home"), callback_data="home")
-            ]]),
+            reply_markup=step_navigation(context, "back:prizes"),
         )
 
 
@@ -1007,12 +1169,18 @@ async def prize_text_handler(
         try:
             start_value = datetime.strptime(message_text, "%d.%m.%Y %H:%M")
         except ValueError:
-            await update.message.reply_text(tr(context, "announcement_datetime_invalid"))
+            await update.message.reply_text(
+                tr(context, "announcement_datetime_invalid"),
+                reply_markup=step_navigation(context, "back:summary"),
+            )
             return
         context.user_data["contest_start_at"] = start_value.strftime("%d.%m.%Y %H:%M")
         context.user_data["awaiting_announcement_start"] = False
         context.user_data["awaiting_announcement_end"] = True
-        await update.message.reply_text(tr(context, "announcement_end_prompt"))
+        await update.message.reply_text(
+            tr(context, "announcement_end_prompt"),
+            reply_markup=step_navigation(context, "back:announcement_start"),
+        )
         return
 
     if context.user_data.get("awaiting_announcement_end"):
@@ -1020,20 +1188,32 @@ async def prize_text_handler(
             end_value = datetime.strptime(message_text, "%d.%m.%Y %H:%M")
             start_value = datetime.strptime(context.user_data.get("contest_start_at", ""), "%d.%m.%Y %H:%M")
         except ValueError:
-            await update.message.reply_text(tr(context, "announcement_datetime_invalid"))
+            await update.message.reply_text(
+                tr(context, "announcement_datetime_invalid"),
+                reply_markup=step_navigation(context, "back:announcement_start"),
+            )
             return
         if end_value <= start_value:
-            await update.message.reply_text(tr(context, "announcement_end_invalid"))
+            await update.message.reply_text(
+                tr(context, "announcement_end_invalid"),
+                reply_markup=step_navigation(context, "back:announcement_start"),
+            )
             return
         context.user_data["contest_end_at"] = end_value.strftime("%d.%m.%Y %H:%M")
         context.user_data["awaiting_announcement_end"] = False
         context.user_data["awaiting_announcement_rules"] = True
-        await update.message.reply_text(tr(context, "announcement_rules_prompt"))
+        await update.message.reply_text(
+            tr(context, "announcement_rules_prompt"),
+            reply_markup=step_navigation(context, "back:announcement_end"),
+        )
         return
 
     if context.user_data.get("awaiting_announcement_rules"):
         if not message_text or len(message_text) > 1000:
-            await update.message.reply_text(tr(context, "announcement_rules_invalid"))
+            await update.message.reply_text(
+                tr(context, "announcement_rules_invalid"),
+                reply_markup=step_navigation(context, "back:announcement_end"),
+            )
             return
         context.user_data["contest_rules"] = message_text
         context.user_data["awaiting_announcement_rules"] = False
@@ -1044,6 +1224,7 @@ async def prize_text_handler(
             + build_announcement_text(context),
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton(tr(context, "announcement_publish_button"), callback_data="publish_confirm")],
+                [InlineKeyboardButton(tr(context, "back"), callback_data="back:announcement_rules")],
                 [InlineKeyboardButton(tr(context, "announcement_cancel_button"), callback_data="publish_cancel")],
             ]),
         )
@@ -1059,7 +1240,10 @@ async def prize_text_handler(
             require_post_permission=(place == "channel"),
         )
         if error_key:
-            await update.message.reply_text(tr(context, error_key))
+            await update.message.reply_text(
+                tr(context, error_key),
+                reply_markup=step_navigation(context, "back:place"),
+            )
             return
 
         context.user_data["awaiting_destination_chat"] = False
@@ -1113,7 +1297,8 @@ async def prize_text_handler(
         context.user_data["awaiting_prize_name"] = False
         context.user_data["awaiting_participant_limit"] = True
         await update.message.reply_text(
-            tr(context, "prize_saved_ask_limit", prize=message_text)
+            tr(context, "prize_saved_ask_limit", prize=message_text),
+            reply_markup=step_navigation(context, "back:prize_name"),
         )
         return
 
@@ -1132,7 +1317,8 @@ async def prize_text_handler(
         context.user_data["awaiting_participant_limit"] = False
         context.user_data["awaiting_winner_count"] = True
         await update.message.reply_text(
-            tr(context, "participants_saved_ask_winners", count=participant_limit)
+            tr(context, "participants_saved_ask_winners", count=participant_limit),
+            reply_markup=step_navigation(context, "back:participant_limit"),
         )
         return
 
@@ -1154,10 +1340,6 @@ async def prize_text_handler(
         context.user_data["awaiting_winner_count"] = False
         context.user_data["awaiting_subscription_choice"] = True
         context.user_data["awaiting_subscription_channel"] = False
-        context.user_data["contest_subscription_required"] = False
-        context.user_data.pop("contest_subscription_chat_id", None)
-        context.user_data.pop("contest_subscription_title", None)
-
         await update.message.reply_text(
             tr(context, "subscription_prompt"),
             reply_markup=subscription_choice_menu(current_language(context)),
