@@ -169,6 +169,18 @@ I18N = {
         "announcement_cancel_button": "Отмена",
         "announcement_publish_success": "✅ Объявление отправлено в чат: {destination}.\n\nВажно: регистрация участников и выбор победителей пока не подключены.",
         "announcement_publish_error": "Не удалось отправить объявление. Проверь, что бот всё ещё администратор чата и имеет право публиковать сообщения. Можно попробовать ещё раз.",
+        "artwork_button": "🎨 Оформление конкурса",
+        "artwork_title": "🎨 Оформление конкурса\\n\\nДобавь логотип и/или баннер. Оба изображения необязательны.\\n\\nЛоготип: {logo}\\nБаннер: {banner}",
+        "artwork_logo": "🟡 Загрузить логотип", "artwork_banner": "🖼 Загрузить баннер",
+        "artwork_done": "✅ Готово", "artwork_skip": "Пропустить оформление",
+        "artwork_remove_logo": "Удалить логотип", "artwork_remove_banner": "Удалить баннер",
+        "artwork_logo_prompt": "Отправь логотип как фото или изображение-файл PNG/JPG. Рекомендуемый размер — квадрат 512 × 512 px, до 5 МБ.",
+        "artwork_banner_prompt": "Отправь баннер как фото или изображение-файл PNG/JPG. Рекомендуемый размер — 1200 × 675 px (горизонтальный), до 5 МБ.",
+        "artwork_photo_invalid": "Отправь фото или файл PNG/JPG размером не более 5 МБ.",
+        "artwork_logo_ratio": "Для логотипа нужно квадратное изображение (примерно 1:1). Попробуй другое.",
+        "artwork_banner_ratio": "Для баннера нужно горизонтальное изображение (примерно 16:9). Попробуй другое.",
+        "artwork_logo_saved": "✅ Логотип сохранён.", "artwork_banner_saved": "✅ Баннер сохранён.",
+        "artwork_removed": "Изображение удалено.", "artwork_status_yes": "добавлено", "artwork_status_no": "не добавлено",
         "announcement_cancelled": "Публикация отменена. Объявление не отправлялось.",
         "announcement_already_published": "Это объявление уже было отправлено. Повторно публиковать его не буду.",
         "help_text": (
@@ -320,6 +332,18 @@ I18N = {
         "announcement_cancel_button": "Cancel",
         "announcement_publish_success": "✅ Announcement sent to: {destination}.\n\nImportant: participant registration and winner selection are not connected yet.",
         "announcement_publish_error": "The announcement could not be sent. Check that the bot is still an administrator and can post in the chat. You can retry.",
+        "artwork_button": "🎨 Contest branding",
+        "artwork_title": "🎨 Contest branding\\n\\nAdd a logo and/or banner. Both images are optional.\\n\\nLogo: {logo}\\nBanner: {banner}",
+        "artwork_logo": "🟡 Upload logo", "artwork_banner": "🖼 Upload banner",
+        "artwork_done": "✅ Done", "artwork_skip": "Skip branding",
+        "artwork_remove_logo": "Remove logo", "artwork_remove_banner": "Remove banner",
+        "artwork_logo_prompt": "Send the logo as a photo or PNG/JPG file. Recommended: square 512 × 512 px, up to 5 MB.",
+        "artwork_banner_prompt": "Send the banner as a photo or PNG/JPG file. Recommended: landscape 1200 × 675 px, up to 5 MB.",
+        "artwork_photo_invalid": "Send a photo or PNG/JPG file no larger than 5 MB.",
+        "artwork_logo_ratio": "The logo should be square (approximately 1:1). Please try another image.",
+        "artwork_banner_ratio": "The banner should be landscape (approximately 16:9). Please try another image.",
+        "artwork_logo_saved": "✅ Logo saved.", "artwork_banner_saved": "✅ Banner saved.",
+        "artwork_removed": "Image removed.", "artwork_status_yes": "added", "artwork_status_no": "not added",
         "announcement_cancelled": "Publication cancelled. The announcement was not sent.",
         "announcement_already_published": "This announcement has already been sent. I won't publish it again.",
         "help_text": (
@@ -471,6 +495,18 @@ I18N = {
         "announcement_cancel_button": "Abbrechen",
         "announcement_publish_success": "✅ Ankündigung gesendet an: {destination}.\n\nWichtig: Teilnehmerregistrierung und Gewinnerauswahl sind noch nicht verbunden.",
         "announcement_publish_error": "Die Ankündigung konnte nicht gesendet werden. Prüfe, ob der Bot noch Administrator ist und veröffentlichen darf. Du kannst es erneut versuchen.",
+        "artwork_button": "🎨 Wettbewerbsdesign",
+        "artwork_title": "🎨 Wettbewerbsdesign\\n\\nFüge ein Logo und/oder Banner hinzu. Beide Bilder sind optional.\\n\\nLogo: {logo}\\nBanner: {banner}",
+        "artwork_logo": "🟡 Logo hochladen", "artwork_banner": "🖼 Banner hochladen",
+        "artwork_done": "✅ Fertig", "artwork_skip": "Design überspringen",
+        "artwork_remove_logo": "Logo entfernen", "artwork_remove_banner": "Banner entfernen",
+        "artwork_logo_prompt": "Sende das Logo als Foto oder PNG/JPG-Datei. Empfohlen: quadratisch 512 × 512 px, bis 5 MB.",
+        "artwork_banner_prompt": "Sende das Banner als Foto oder PNG/JPG-Datei. Empfohlen: Querformat 1200 × 675 px, bis 5 MB.",
+        "artwork_photo_invalid": "Sende ein Foto oder eine PNG/JPG-Datei bis 5 MB.",
+        "artwork_logo_ratio": "Das Logo sollte quadratisch sein (ungefähr 1:1). Bitte versuche ein anderes Bild.",
+        "artwork_banner_ratio": "Das Banner sollte im Querformat sein (ungefähr 16:9). Bitte versuche ein anderes Bild.",
+        "artwork_logo_saved": "✅ Logo gespeichert.", "artwork_banner_saved": "✅ Banner gespeichert.",
+        "artwork_removed": "Bild entfernt.", "artwork_status_yes": "hinzugefügt", "artwork_status_no": "nicht hinzugefügt",
         "announcement_cancelled": "Veröffentlichung abgebrochen. Die Ankündigung wurde nicht gesendet.",
         "announcement_already_published": "Diese Ankündigung wurde bereits gesendet. Ich veröffentliche sie nicht erneut.",
         "help_text": (
@@ -646,6 +682,57 @@ def selected_prize_label(context: ContextTypes.DEFAULT_TYPE) -> str:
     return tr(context, labels.get(context.user_data.get("contest_prize_category"), "prize_custom"))
 
 
+def artwork_menu(context: ContextTypes.DEFAULT_TYPE):
+    t = I18N[current_language(context)]
+    logo = t["artwork_status_yes"] if context.user_data.get("contest_logo_file_id") else t["artwork_status_no"]
+    banner = t["artwork_status_yes"] if context.user_data.get("contest_banner_file_id") else t["artwork_status_no"]
+    keyboard = [[InlineKeyboardButton(t["artwork_logo"], callback_data="artwork:logo")],
+                [InlineKeyboardButton(t["artwork_banner"], callback_data="artwork:banner")]]
+    if context.user_data.get("contest_logo_file_id"):
+        keyboard.append([InlineKeyboardButton(t["artwork_remove_logo"], callback_data="artwork:remove_logo")])
+    if context.user_data.get("contest_banner_file_id"):
+        keyboard.append([InlineKeyboardButton(t["artwork_remove_banner"], callback_data="artwork:remove_banner")])
+    keyboard.extend([[InlineKeyboardButton(t["artwork_done"], callback_data="artwork:done")],
+                     [InlineKeyboardButton(t["artwork_skip"], callback_data="artwork:skip")],
+                     [InlineKeyboardButton(t["back"], callback_data="back:summary")]])
+    return t["artwork_title"].format(logo=logo, banner=banner), InlineKeyboardMarkup(keyboard)
+
+
+async def artwork_photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    message = update.message
+    is_logo = context.user_data.get("awaiting_contest_logo")
+    is_banner = context.user_data.get("awaiting_contest_banner")
+    if not is_logo and not is_banner:
+        return
+    photo = message.photo[-1] if message.photo else None
+    document = message.document
+    file_id = file_size = None
+    width = height = None
+    if photo:
+        file_id, file_size, width, height = photo.file_id, photo.file_size, photo.width, photo.height
+    elif document:
+        mime, name = (document.mime_type or "").lower(), (document.file_name or "").lower()
+        if mime not in ("image/jpeg", "image/png") and not name.endswith((".jpg", ".jpeg", ".png")):
+            await message.reply_text(tr(context, "artwork_photo_invalid")); return
+        file_id, file_size = document.file_id, document.file_size
+    if not file_id or (file_size is not None and file_size > 5 * 1024 * 1024):
+        await message.reply_text(tr(context, "artwork_photo_invalid")); return
+    if photo and is_logo and width and height and not (0.8 <= width / height <= 1.2):
+        await message.reply_text(tr(context, "artwork_logo_ratio")); return
+    if photo and is_banner and width and height and not (1.4 <= width / height <= 2.0):
+        await message.reply_text(tr(context, "artwork_banner_ratio")); return
+    if is_logo:
+        context.user_data["contest_logo_file_id"] = file_id
+        context.user_data["awaiting_contest_logo"] = False
+        await message.reply_text(tr(context, "artwork_logo_saved"))
+    else:
+        context.user_data["contest_banner_file_id"] = file_id
+        context.user_data["awaiting_contest_banner"] = False
+        await message.reply_text(tr(context, "artwork_banner_saved"))
+    text, markup = artwork_menu(context)
+    await message.reply_text(text, reply_markup=markup)
+
+
 async def send_contest_summary(
     message,
     context: ContextTypes.DEFAULT_TYPE,
@@ -679,6 +766,7 @@ async def send_contest_summary(
         subscription=subscription,
     )
     markup = InlineKeyboardMarkup([
+        [InlineKeyboardButton(tr(context, "artwork_button"), callback_data="artwork:menu")],
         [InlineKeyboardButton(tr(context, "announcement_button"), callback_data="announcement_preview")],
         [InlineKeyboardButton(tr(context, "back"), callback_data="back:subscription_choice")],
         [InlineKeyboardButton(tr(context, "summary_home"), callback_data="home")],
@@ -849,6 +937,8 @@ async def button_handler(
             "awaiting_announcement_start",
             "awaiting_announcement_end",
             "awaiting_announcement_rules",
+            "awaiting_contest_logo",
+            "awaiting_contest_banner",
         ):
             context.user_data[state_key] = False
         context.user_data["contest_publish_pending"] = False
@@ -1013,6 +1103,37 @@ async def button_handler(
             reply_markup=step_navigation(context, "back:announcement_end"),
         )
 
+    elif data == "artwork:menu":
+        context.user_data["awaiting_contest_logo"] = False
+        context.user_data["awaiting_contest_banner"] = False
+        text, markup = artwork_menu(context)
+        await query.edit_message_text(text, reply_markup=markup)
+
+    elif data == "artwork:logo":
+        context.user_data["awaiting_contest_logo"] = True
+        context.user_data["awaiting_contest_banner"] = False
+        await query.edit_message_text(tr(context, "artwork_logo_prompt"), reply_markup=step_navigation(context, "artwork:menu"))
+
+    elif data == "artwork:banner":
+        context.user_data["awaiting_contest_logo"] = False
+        context.user_data["awaiting_contest_banner"] = True
+        await query.edit_message_text(tr(context, "artwork_banner_prompt"), reply_markup=step_navigation(context, "artwork:menu"))
+
+    elif data == "artwork:remove_logo":
+        context.user_data.pop("contest_logo_file_id", None)
+        text, markup = artwork_menu(context)
+        await query.edit_message_text(tr(context, "artwork_removed") + "\\n\\n" + text, reply_markup=markup)
+
+    elif data == "artwork:remove_banner":
+        context.user_data.pop("contest_banner_file_id", None)
+        text, markup = artwork_menu(context)
+        await query.edit_message_text(tr(context, "artwork_removed") + "\\n\\n" + text, reply_markup=markup)
+
+    elif data in ("artwork:done", "artwork:skip"):
+        context.user_data["awaiting_contest_logo"] = False
+        context.user_data["awaiting_contest_banner"] = False
+        await send_contest_summary(query.message, context, edit=True)
+
     elif data == "announcement_preview":
         for state_key in (
             "awaiting_prize_name",
@@ -1068,6 +1189,10 @@ async def button_handler(
             )
             return
         try:
+            if context.user_data.get("contest_logo_file_id"):
+                await context.bot.send_photo(chat_id=chat.id, photo=context.user_data["contest_logo_file_id"])
+            if context.user_data.get("contest_banner_file_id"):
+                await context.bot.send_photo(chat_id=chat.id, photo=context.user_data["contest_banner_file_id"])
             await context.bot.send_message(chat_id=chat.id, text=build_announcement_text(context))
         except TelegramError:
             logging.exception("Failed to publish contest announcement")
@@ -1139,7 +1264,7 @@ async def button_handler(
         context.user_data["contest_subscription_required"] = False
         context.user_data.pop("contest_subscription_chat_id", None)
         context.user_data.pop("contest_subscription_title", None)
-        for contest_field in ("contest_start_at", "contest_end_at", "contest_rules"):
+        for contest_field in ("contest_start_at", "contest_end_at", "contest_rules", "contest_logo_file_id", "contest_banner_file_id"):
             context.user_data.pop(contest_field, None)
         await query.edit_message_text(
             f"{FORMAT_NAMES[language][format_key]}\n\n{tr(context, 'place_prompt')}",
@@ -1399,9 +1524,8 @@ def main():
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CallbackQueryHandler(button_handler))
-    application.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND, prize_text_handler)
-    )
+    application.add_handler(MessageHandler(filters.PHOTO | filters.Document.IMAGE, artwork_photo_handler))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, prize_text_handler))
 
     logging.info("PRIZORA is starting...")
     application.run_polling()
