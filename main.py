@@ -1027,6 +1027,9 @@ def register_participant(contest_id: str, user) -> str:
         ).fetchone()
         if contest is None:
             return "not_found"
+        starts_at = datetime.fromisoformat(contest["starts_at"])
+        if now < starts_at.astimezone(timezone.utc):
+            return "not_started"
         ends_at = datetime.fromisoformat(contest["ends_at"])
         if now >= ends_at.astimezone(timezone.utc):
             return "ended"
@@ -1710,6 +1713,9 @@ async def prize_text_handler(
                 await context.bot.send_document(chat_id=update.effective_chat.id, document=artwork_id, caption=announcement_text)
             else:
                 await context.bot.send_photo(chat_id=update.effective_chat.id, photo=artwork_id, caption=announcement_text)
+        else:
+            # The uploaded artwork is optional: always show the full preview text.
+            await update.message.reply_text(announcement_text)
 
         await update.message.reply_text(
             tr(context, "announcement_review_prompt"),
