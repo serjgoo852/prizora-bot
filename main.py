@@ -1542,6 +1542,7 @@ async def button_handler(
             return
 
         context.user_data["contest_format"] = format_key
+        context.user_data.pop("contest_id", None)
         context.user_data["contest_published"] = False
         context.user_data["contest_publish_pending"] = False
         context.user_data["contest_subscription_required"] = False
