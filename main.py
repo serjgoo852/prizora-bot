@@ -756,6 +756,40 @@ async def send_contest_summary(
     else:
         subscription = tr(context, "subscription_optional")
 
+    # Show uploaded contest artwork as real Telegram media previews above the summary.
+    logo_id = context.user_data.get("contest_logo_file_id")
+    banner_id = context.user_data.get("contest_banner_file_id")
+    if logo_id:
+        if context.user_data.get("contest_logo_as_document"):
+            await context.bot.send_document(
+                chat_id=message.chat_id,
+                document=logo_id,
+                caption="🟡 Логотип конкурса" if language == "ru" else
+                        "🟡 Contest logo" if language == "en" else "🟡 Wettbewerbslogo",
+            )
+        else:
+            await context.bot.send_photo(
+                chat_id=message.chat_id,
+                photo=logo_id,
+                caption="🟡 Логотип конкурса" if language == "ru" else
+                        "🟡 Contest logo" if language == "en" else "🟡 Wettbewerbslogo",
+            )
+    if banner_id:
+        if context.user_data.get("contest_banner_as_document"):
+            await context.bot.send_document(
+                chat_id=message.chat_id,
+                document=banner_id,
+                caption="🖼 Баннер конкурса" if language == "ru" else
+                        "🖼 Contest banner" if language == "en" else "🖼 Wettbewerbsbanner",
+            )
+        else:
+            await context.bot.send_photo(
+                chat_id=message.chat_id,
+                photo=banner_id,
+                caption="🖼 Баннер конкурса" if language == "ru" else
+                        "🖼 Contest banner" if language == "en" else "🖼 Wettbewerbsbanner",
+            )
+
     text = tr(
         context,
         "summary",
