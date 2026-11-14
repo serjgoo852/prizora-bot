@@ -1227,17 +1227,35 @@ async def button_handler(
             )
             return
         try:
-            if context.user_data.get("contest_logo_file_id"):
+            logo_id = context.user_data.get("contest_logo_file_id")
+            banner_id = context.user_data.get("contest_banner_file_id")
+            announcement_text = build_announcement_text(context)
+            if len(announcement_text) > 1024:
+                await query.edit_message_text(
+                    "Текст объявления превышает лимит подписи Telegram (1024 символа). Вернись назад и сократи условия участия.",
+                    reply_markup=InlineKeyboardMarkup([
+                        [InlineKeyboardButton(tr(context, "back"), callback_data="back:announcement_rules")],
+                        [InlineKeyboardButton(tr(context, "announcement_cancel_button"), callback_data="publish_cancel")],
+                    ]),
+                )
+                return
+            if logo_id and banner_id:
                 if context.user_data.get("contest_logo_as_document"):
-                    await context.bot.send_document(chat_id=chat.id, document=context.user_data["contest_logo_file_id"])
+                    await context.bot.send_document(chat_id=chat.id, document=logo_id, caption="🟡 Логотип конкурса")
                 else:
-                    await context.bot.send_photo(chat_id=chat.id, photo=context.user_data["contest_logo_file_id"])
-            if context.user_data.get("contest_banner_file_id"):
-                if context.user_data.get("contest_banner_as_document"):
-                    await context.bot.send_document(chat_id=chat.id, document=context.user_data["contest_banner_file_id"])
+                    await context.bot.send_photo(chat_id=chat.id, photo=logo_id, caption="🟡 Логотип конкурса")
+            artwork_id = banner_id or logo_id
+            artwork_is_document = (
+                context.user_data.get("contest_banner_as_document")
+                if banner_id else context.user_data.get("contest_logo_as_document")
+            )
+            if artwork_id:
+                if artwork_is_document:
+                    await context.bot.send_document(chat_id=chat.id, document=artwork_id, caption=announcement_text)
                 else:
-                    await context.bot.send_photo(chat_id=chat.id, photo=context.user_data["contest_banner_file_id"])
-            await context.bot.send_message(chat_id=chat.id, text=build_announcement_text(context))
+                    await context.bot.send_photo(chat_id=chat.id, photo=artwork_id, caption=announcement_text)
+            else:
+                await context.bot.send_message(chat_id=chat.id, text=announcement_text)
         except TelegramError:
             logging.exception("Failed to publish contest announcement")
             await query.edit_message_text(
@@ -1413,40 +1431,33 @@ async def prize_text_handler(
         context.user_data["awaiting_announcement_rules"] = False
         context.user_data["contest_publish_pending"] = True
 
-        # Show uploaded contest artwork in the final announcement review.
-        language = current_language(context)
+        # Show the banner and announcement together as one Telegram media message.
         logo_id = context.user_data.get("contest_logo_file_id")
         banner_id = context.user_data.get("contest_banner_file_id")
-        if logo_id:
+        announcement_text = build_announcement_text(context)
+        if len(announcement_text) > 1024:
+            context.user_data["awaiting_announcement_rules"] = True
+            context.user_data["contest_publish_pending"] = False
+            await update.message.reply_text(
+                "Текст объявления вместе с баннером превышает лимит подписи Telegram (1024 символа). Сократи условия участия и отправь их ещё раз.",
+                reply_markup=step_navigation(context, "back:announcement_end"),
+            )
+            return
+        if logo_id and banner_id:
             if context.user_data.get("contest_logo_as_document"):
-                await context.bot.send_document(
-                    chat_id=update.effective_chat.id,
-                    document=logo_id,
-                    caption="🟡 Логотип конкурса" if language == "ru" else
-                            "🟡 Contest logo" if language == "en" else "🟡 Wettbewerbslogo",
-                )
+                await context.bot.send_document(chat_id=update.effective_chat.id, document=logo_id, caption="🟡 Логотип конкурса")
             else:
-                await context.bot.send_photo(
-                    chat_id=update.effective_chat.id,
-                    photo=logo_id,
-                    caption="🟡 Логотип конкурса" if language == "ru" else
-                            "🟡 Contest logo" if language == "en" else "🟡 Wettbewerbslogo",
-                )
-        if banner_id:
-            if context.user_data.get("contest_banner_as_document"):
-                await context.bot.send_document(
-                    chat_id=update.effective_chat.id,
-                    document=banner_id,
-                    caption="🖼 Баннер конкурса" if language == "ru" else
-                            "🖼 Contest banner" if language == "en" else "🖼 Wettbewerbsbanner",
-                )
+                await context.bot.send_photo(chat_id=update.effective_chat.id, photo=logo_id, caption="🟡 Логотип конкурса")
+        artwork_id = banner_id or logo_id
+        artwork_is_document = (
+            context.user_data.get("contest_banner_as_document")
+            if banner_id else context.user_data.get("contest_logo_as_document")
+        )
+        if artwork_id:
+            if artwork_is_document:
+                await context.bot.send_document(chat_id=update.effective_chat.id, document=artwork_id, caption=announcement_text)
             else:
-                await context.bot.send_photo(
-                    chat_id=update.effective_chat.id,
-                    photo=banner_id,
-                    caption="🖼 Баннер конкурса" if language == "ru" else
-                            "🖼 Contest banner" if language == "en" else "🖼 Wettbewerbsbanner",
-                )
+                await context.bot.send_photo(chat_id=update.effective_chat.id, photo=artwork_id, caption=announcement_text)
 
         await update.message.reply_text(
             tr(context, "announcement_review_prompt")
