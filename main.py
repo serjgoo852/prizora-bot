@@ -158,7 +158,7 @@ I18N = {
             "📅 Начало: {start_at} МСК\n"
             "⏰ Завершение: {end_at} МСК\n"
             "📌 Условия участия: {rules}\n\n"
-            "⚠️ Публикация тестовая: регистрация участников и выбор победителей пока не подключены."
+            "👇 Нажми кнопку «Участвовать» под объявлением. Регистрация доступна в указанные даты; победителей пока выбирает организатор."
         ),
         "announcement_start_prompt": "📅 Укажи дату и время начала конкурса в формате ДД.ММ.ГГГГ ЧЧ:ММ (московское время, МСК UTC+3).\nНапример: 14.11.2026 18:00",
         "announcement_end_prompt": "⏰ Укажи дату и время завершения конкурса в том же формате. Время завершения должно быть позже начала.",
@@ -322,7 +322,7 @@ I18N = {
             "📅 Starts: {start_at} MSK\n"
             "⏰ Ends: {end_at} MSK\n"
             "📌 How to enter: {rules}\n\n"
-            "⚠️ Test announcement: participant registration and winner selection are not connected yet."
+            "👇 Use the Join contest button below. Registration is open during the announced dates; the organizer currently selects the winners."
         ),
         "announcement_start_prompt": "📅 Enter the start date and time as DD.MM.YYYY HH:MM (Moscow time, MSK, UTC+3).\nExample: 14.11.2026 18:00",
         "announcement_end_prompt": "⏰ Enter the end date and time in the same format. The end must be later than the start.",
