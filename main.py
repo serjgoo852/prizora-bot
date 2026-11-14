@@ -1,6 +1,8 @@
 
 import os
 import logging
+import sqlite3
+import uuid
 from datetime import datetime
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -560,6 +562,79 @@ PLAN_NAMES = {
     "pro": "🥇 PRO",
     "premium": "👑 PREMIUM",
 }
+
+DATABASE_PATH = os.getenv("DATABASE_PATH", "/data/prizora.sqlite3")
+
+
+def init_database():
+    os.makedirs(os.path.dirname(DATABASE_PATH) or ".", exist_ok=True)
+    with sqlite3.connect(DATABASE_PATH) as connection:
+        connection.execute("""
+            CREATE TABLE IF NOT EXISTS contests (
+                contest_id TEXT PRIMARY KEY,
+                organizer_id INTEGER NOT NULL,
+                destination_chat_id INTEGER NOT NULL,
+                destination_title TEXT NOT NULL,
+                prize_name TEXT NOT NULL,
+                contest_format TEXT NOT NULL,
+                participant_limit INTEGER NOT NULL,
+                winner_count INTEGER NOT NULL,
+                subscription_chat_id INTEGER,
+                starts_at TEXT NOT NULL,
+                ends_at TEXT NOT NULL,
+                rules TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                published_at TEXT NOT NULL
+            )
+        """)
+        connection.execute("""
+            CREATE TABLE IF NOT EXISTS participants (
+                contest_id TEXT NOT NULL,
+                user_id INTEGER NOT NULL,
+                username TEXT,
+                full_name TEXT NOT NULL,
+                joined_at TEXT NOT NULL,
+                PRIMARY KEY (contest_id, user_id),
+                FOREIGN KEY (contest_id) REFERENCES contests(contest_id)
+            )
+        """)
+
+
+def save_published_contest(context: ContextTypes.DEFAULT_TYPE, organizer_id: int) -> str:
+    contest_id = context.user_data.get("contest_id") or uuid.uuid4().hex[:12]
+    starts_at = datetime.strptime(
+        context.user_data["contest_start_at"], "%d.%m.%Y %H:%M"
+    ).isoformat()
+    ends_at = datetime.strptime(
+        context.user_data["contest_end_at"], "%d.%m.%Y %H:%M"
+    ).isoformat()
+    with sqlite3.connect(DATABASE_PATH) as connection:
+        connection.execute(
+            """INSERT INTO contests (
+                contest_id, organizer_id, destination_chat_id, destination_title,
+                prize_name, contest_format, participant_limit, winner_count,
+                subscription_chat_id, starts_at, ends_at, rules, created_at, published_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                contest_id,
+                organizer_id,
+                context.user_data["contest_destination_chat_id"],
+                context.user_data.get("contest_destination_title", ""),
+                context.user_data.get("contest_prize_name", ""),
+                context.user_data.get("contest_format", ""),
+                int(context.user_data.get("contest_participant_limit", 0)),
+                int(context.user_data.get("contest_winner_count", 0)),
+                context.user_data.get("contest_subscription_chat_id"),
+                starts_at,
+                ends_at,
+                context.user_data.get("contest_rules", ""),
+                datetime.utcnow().isoformat(timespec="seconds"),
+                datetime.utcnow().isoformat(timespec="seconds"),
+            ),
+        )
+    context.user_data["contest_id"] = contest_id
+    return contest_id
+
 
 def detected_language(update: Update) -> str:
     telegram_code = (update.effective_user.language_code or "").lower()
@@ -1270,6 +1345,17 @@ async def button_handler(
                 ]),
             )
             return
+        try:
+            save_published_contest(context, update.effective_user.id)
+        except (sqlite3.Error, ValueError, KeyError):
+            logging.exception("Announcement was published but contest could not be saved")
+            await query.edit_message_text(
+                "Объявление отправлено, но сохранить конкурс в базе не удалось. Не публикуй его повторно; сообщи об этой ошибке.",
+                reply_markup=InlineKeyboardMarkup([[
+                    InlineKeyboardButton(tr(context, "back_home"), callback_data="home")
+                ]]),
+            )
+            return
         context.user_data["contest_publish_pending"] = False
         context.user_data["contest_published"] = True
         await query.edit_message_text(
@@ -1613,6 +1699,7 @@ def main():
     if not BOT_TOKEN:
         raise RuntimeError("BOT_TOKEN environment variable is not set.")
 
+    init_database()
     application = Application.builder().token(BOT_TOKEN).build()
 
     application.add_handler(CommandHandler("start", start))
