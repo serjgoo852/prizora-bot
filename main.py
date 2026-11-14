@@ -35,12 +35,15 @@ I18N = {
         "language_detected": "Язык Telegram: {language}. Можешь выбрать другой.",
         "language_saved": "✅ Язык интерфейса: Русский.",
         "welcome": (
-            "👑 Добро пожаловать в PRIZORA!\n\n"
-            "🎁 Создавай конкурсы и розыгрыши.\n"
-            "🎡 Выбирай интересный формат.\n"
-            "🏆 Определяй победителей!\n\n"
-            "Для новых пользователей предусмотрен пробный период PRO на 7 дней.\n\n"
-            "Выбери действие:"
+            "👑 PRIZORA\n"
+            "━━━━━━━━━━━━━━━━━━\n"
+            "✨ ТВОЯ ПРЕМИАЛЬНАЯ ПЛОЩАДКА КОНКУРСОВ\n"
+            "━━━━━━━━━━━━━━━━━━\n\n"
+            "🎁 Создавай яркие конкурсы и розыгрыши.\n"
+            "🎡 Выбирай формат под свою аудиторию.\n"
+            "🏆 Собирай участников и определяй победителей.\n\n"
+            "💎 Новым пользователям доступен пробный период PRO — 7 дней.\n\n"
+            "👇 Выбери, с чего начнём:"
         ),
         "menu_create": "👑 Создать конкурс",
         "menu_formats": "✨ Форматы конкурсов",
@@ -199,12 +202,15 @@ I18N = {
         "language_detected": "Telegram language detected: {language}. You can choose another language.",
         "language_saved": "✅ Interface language set to English.",
         "welcome": (
-            "👑 Welcome to PRIZORA!\n\n"
-            "🎁 Create contests and giveaways.\n"
-            "🎡 Choose an engaging format.\n"
-            "🏆 Set up your winners!\n\n"
-            "New users get a 7-day PRO trial.\n\n"
-            "Choose an action:"
+            "👑 PRIZORA\n"
+            "━━━━━━━━━━━━━━━━━━\n"
+            "✨ YOUR PREMIUM GIVEAWAY STUDIO\n"
+            "━━━━━━━━━━━━━━━━━━\n\n"
+            "🎁 Create engaging contests and giveaways.\n"
+            "🎡 Choose a format for your audience.\n"
+            "🏆 Bring participants together and pick winners.\n\n"
+            "💎 New users get a 7-day PRO trial.\n\n"
+            "👇 Choose where to begin:"
         ),
         "menu_create": "👑 Create a contest",
         "menu_formats": "✨ Contest formats",
@@ -363,12 +369,15 @@ I18N = {
         "language_detected": "Erkannte Telegram-Sprache: {language}. Du kannst eine andere Sprache wählen.",
         "language_saved": "✅ Die Oberflächensprache ist jetzt Deutsch.",
         "welcome": (
-            "👑 Willkommen bei PRIZORA!\n\n"
-            "🎁 Erstelle Wettbewerbe und Verlosungen.\n"
-            "🎡 Wähle ein passendes Format.\n"
-            "🏆 Lege die Gewinner fest!\n\n"
-            "Neue Nutzer erhalten eine 7-tägige PRO-Testphase.\n\n"
-            "Wähle eine Aktion:"
+            "👑 PRIZORA\n"
+            "━━━━━━━━━━━━━━━━━━\n"
+            "✨ DEIN PREMIUM-GEWINNSPIELSTUDIO\n"
+            "━━━━━━━━━━━━━━━━━━\n\n"
+            "🎁 Erstelle besondere Wettbewerbe und Verlosungen.\n"
+            "🎡 Wähle das passende Format für deine Community.\n"
+            "🏆 Ermittle die Gewinner deiner Aktionen.\n\n"
+            "💎 Neue Nutzer erhalten 7 Tage PRO zum Testen.\n\n"
+            "👇 Wähle, womit du beginnen möchtest:"
         ),
         "menu_create": "🏆 Wettbewerb erstellen",
         "menu_formats": "🎮 Wettbewerbsformate",
