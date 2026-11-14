@@ -991,7 +991,128 @@ def plans_menu(language: str):
     return InlineKeyboardMarkup(keyboard)
 
 
+def register_participant(contest_id: str, user) -> str:
+    now = datetime.now(timezone.utc)
+    with sqlite3.connect(DATABASE_PATH, timeout=15) as connection:
+        connection.row_factory = sqlite3.Row
+        connection.execute("PRAGMA foreign_keys = ON")
+        connection.execute("BEGIN IMMEDIATE")
+        contest = connection.execute(
+            "SELECT * FROM contests WHERE contest_id = ?", (contest_id,)
+        ).fetchone()
+        if contest is None:
+            return "not_found"
+        starts_at = datetime.fromisoformat(contest["starts_at"])
+        ends_at = datetime.fromisoformat(contest["ends_at"])
+        if now < starts_at.astimezone(timezone.utc):
+            return "not_started"
+        if now >= ends_at.astimezone(timezone.utc):
+            return "ended"
+        existing = connection.execute(
+            "SELECT 1 FROM participants WHERE contest_id = ? AND user_id = ?",
+            (contest_id, user.id),
+        ).fetchone()
+        if existing:
+            return "already_joined"
+        count = connection.execute(
+            "SELECT COUNT(*) FROM participants WHERE contest_id = ?", (contest_id,)
+        ).fetchone()[0]
+        if count >= contest["participant_limit"]:
+            return "full"
+        connection.execute(
+            """INSERT INTO participants
+               (contest_id, user_id, username, full_name, joined_at)
+               VALUES (?, ?, ?, ?, ?)""",
+            (
+                contest_id,
+                user.id,
+                user.username,
+                user.full_name,
+                now.isoformat(timespec="seconds"),
+            ),
+        )
+    return "joined"
+
+
+async def handle_join_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    language = current_language(context)
+    messages = {
+        "ru": {
+            "not_found": "Не удалось найти этот конкурс. Проверь ссылку у организатора.",
+            "not_started": "Регистрация ещё не началась. Попробуй позже.",
+            "ended": "Регистрация на этот конкурс уже завершена.",
+            "already_joined": "✅ Ты уже зарегистрирован в этом конкурсе.",
+            "full": "К сожалению, все места участников уже заняты.",
+            "joined": "🎉 Готово! Ты зарегистрирован в конкурсе.",
+            "subscription": "Чтобы участвовать, сначала подпишись на канал {channel}, затем нажми /start по ссылке конкурса ещё раз.",
+            "subscription_error": "Не удалось проверить подписку. Сообщи организатору: возможно, боту нужны права администратора в канале.",
+        },
+        "en": {
+            "not_found": "This contest could not be found. Please check the organizer's link.",
+            "not_started": "Registration has not started yet. Please try again later.",
+            "ended": "Registration for this contest has ended.",
+            "already_joined": "✅ You are already registered for this contest.",
+            "full": "Sorry, all participant places have been taken.",
+            "joined": "🎉 You're in! Your contest registration is confirmed.",
+            "subscription": "To enter, subscribe to {channel}, then open the contest link again.",
+            "subscription_error": "I couldn't verify your subscription. Please contact the organizer; the bot may need admin rights in the channel.",
+        },
+        "de": {
+            "not_found": "Dieser Wettbewerb wurde nicht gefunden. Bitte prüfe den Link.",
+            "not_started": "Die Anmeldung hat noch nicht begonnen. Bitte versuche es später erneut.",
+            "ended": "Die Anmeldung für diesen Wettbewerb ist beendet.",
+            "already_joined": "✅ Du bist für diesen Wettbewerb bereits angemeldet.",
+            "full": "Leider sind bereits alle Teilnehmerplätze vergeben.",
+            "joined": "🎉 Geschafft! Du bist für den Wettbewerb angemeldet.",
+            "subscription": "Abonniere zuerst {channel} und öffne danach den Wettbewerbslink erneut.",
+            "subscription_error": "Dein Abonnement konnte nicht geprüft werden. Bitte kontaktiere den Veranstalter; der Bot benötigt möglicherweise Adminrechte im Kanal.",
+        },
+    }
+    messages = messages.get(language, messages["en"])
+    contest_id = context.args[0][5:] if context.args and context.args[0].startswith("join_") else ""
+    if not contest_id or len(contest_id) > 32:
+        await update.message.reply_text(tr(context, "welcome"), reply_markup=main_menu(language))
+        return
+    try:
+        with sqlite3.connect(DATABASE_PATH) as connection:
+            connection.row_factory = sqlite3.Row
+            contest = connection.execute(
+                "SELECT subscription_chat_id FROM contests WHERE contest_id = ?",
+                (contest_id,),
+            ).fetchone()
+        if contest is None:
+            await update.message.reply_text(messages["not_found"])
+            return
+        subscription_chat_id = contest["subscription_chat_id"]
+        if subscription_chat_id:
+            try:
+                member = await context.bot.get_chat_member(subscription_chat_id, update.effective_user.id)
+                is_member = member.status in ("member", "administrator", "creator")
+                if member.status == "restricted":
+                    is_member = bool(getattr(member, "is_member", False))
+                if not is_member:
+                    channel = await context.bot.get_chat(subscription_chat_id)
+                    channel_name = ("@" + channel.username) if channel.username else channel.title
+                    await update.message.reply_text(
+                        messages["subscription"].format(channel=channel_name)
+                    )
+                    return
+            except TelegramError:
+                logging.exception("Could not verify contest subscription")
+                await update.message.reply_text(messages["subscription_error"])
+                return
+        result = register_participant(contest_id, update.effective_user)
+        await update.message.reply_text(messages.get(result, messages["not_found"]))
+    except sqlite3.Error:
+        logging.exception("Contest registration database error")
+        await update.message.reply_text(messages["subscription_error"])
+
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if context.args and context.args[0].startswith("join_"):
+        await handle_join_start(update, context)
+        return
+
     if "language" not in context.user_data:
         language = detected_language(update)
         context.user_data["suggested_language"] = language
@@ -1307,6 +1428,12 @@ async def button_handler(
                 ]),
             )
             return
+        context.user_data.setdefault("contest_id", uuid.uuid4().hex[:12])
+        join_url = f"https://t.me/Prizora_GlobalBot?start=join_{context.user_data['contest_id']}"
+        join_labels = {"ru": "🎁 Участвовать", "en": "🎁 Join contest", "de": "🎁 Teilnehmen"}
+        join_markup = InlineKeyboardMarkup([[
+            InlineKeyboardButton(join_labels.get(language, join_labels["en"]), url=join_url)
+        ]])
         try:
             logo_id = context.user_data.get("contest_logo_file_id")
             banner_id = context.user_data.get("contest_banner_file_id")
@@ -1332,11 +1459,11 @@ async def button_handler(
             )
             if artwork_id:
                 if artwork_is_document:
-                    await context.bot.send_document(chat_id=chat.id, document=artwork_id, caption=announcement_text)
+                    await context.bot.send_document(chat_id=chat.id, document=artwork_id, caption=announcement_text, reply_markup=join_markup)
                 else:
-                    await context.bot.send_photo(chat_id=chat.id, photo=artwork_id, caption=announcement_text)
+                    await context.bot.send_photo(chat_id=chat.id, photo=artwork_id, caption=announcement_text, reply_markup=join_markup)
             else:
-                await context.bot.send_message(chat_id=chat.id, text=announcement_text)
+                await context.bot.send_message(chat_id=chat.id, text=announcement_text, reply_markup=join_markup)
         except TelegramError:
             logging.exception("Failed to publish contest announcement")
             await query.edit_message_text(
