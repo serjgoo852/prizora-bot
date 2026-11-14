@@ -3,7 +3,7 @@ import os
 import logging
 import sqlite3
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
@@ -602,15 +602,18 @@ def init_database():
 
 def save_published_contest(context: ContextTypes.DEFAULT_TYPE, organizer_id: int) -> str:
     contest_id = context.user_data.get("contest_id") or uuid.uuid4().hex[:12]
+    moscow_tz = timezone(timedelta(hours=3))
     starts_at = datetime.strptime(
         context.user_data["contest_start_at"], "%d.%m.%Y %H:%M"
-    ).isoformat()
+    ).replace(tzinfo=moscow_tz).isoformat()
     ends_at = datetime.strptime(
         context.user_data["contest_end_at"], "%d.%m.%Y %H:%M"
-    ).isoformat()
+    ).replace(tzinfo=moscow_tz).isoformat()
+    saved_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
     with sqlite3.connect(DATABASE_PATH) as connection:
+        connection.execute("PRAGMA foreign_keys = ON")
         connection.execute(
-            """INSERT INTO contests (
+            """INSERT OR IGNORE INTO contests (
                 contest_id, organizer_id, destination_chat_id, destination_title,
                 prize_name, contest_format, participant_limit, winner_count,
                 subscription_chat_id, starts_at, ends_at, rules, created_at, published_at
@@ -628,8 +631,8 @@ def save_published_contest(context: ContextTypes.DEFAULT_TYPE, organizer_id: int
                 starts_at,
                 ends_at,
                 context.user_data.get("contest_rules", ""),
-                datetime.utcnow().isoformat(timespec="seconds"),
-                datetime.utcnow().isoformat(timespec="seconds"),
+                saved_at,
+                saved_at,
             ),
         )
     context.user_data["contest_id"] = contest_id
@@ -1345,6 +1348,10 @@ async def button_handler(
                 ]),
             )
             return
+        # Telegram has accepted the announcement. Lock publication before database work
+        # so a storage error cannot make the organizer publish the same post twice.
+        context.user_data["contest_published"] = True
+        context.user_data["contest_publish_pending"] = False
         try:
             save_published_contest(context, update.effective_user.id)
         except (sqlite3.Error, ValueError, KeyError):
@@ -1356,8 +1363,6 @@ async def button_handler(
                 ]]),
             )
             return
-        context.user_data["contest_publish_pending"] = False
-        context.user_data["contest_published"] = True
         await query.edit_message_text(
             tr(context, "announcement_publish_success", destination=chat_display_name(chat)),
             reply_markup=InlineKeyboardMarkup([[
