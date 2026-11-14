@@ -152,12 +152,13 @@ I18N = {
             "👥 Количество мест: {participants}\n"
             "🏆 Победителей: {winners}\n"
             "🔐 Подписка: {subscription}\n\n"
-            "📅 Начало: {start_at}\n"
-            "⏰ Завершение: {end_at}\n"
+            "🕒 Все даты и время указаны по Москве (МСК, UTC+3).\n"
+            "📅 Начало: {start_at} МСК\n"
+            "⏰ Завершение: {end_at} МСК\n"
             "📌 Условия участия: {rules}\n\n"
             "⚠️ Публикация тестовая: регистрация участников и выбор победителей пока не подключены."
         ),
-        "announcement_start_prompt": "📅 Укажи дату и время начала конкурса в формате ДД.ММ.ГГГГ ЧЧ:ММ (местное время).\nНапример: 14.11.2026 18:00",
+        "announcement_start_prompt": "📅 Укажи дату и время начала конкурса в формате ДД.ММ.ГГГГ ЧЧ:ММ (московское время, МСК UTC+3).\nНапример: 14.11.2026 18:00",
         "announcement_end_prompt": "⏰ Укажи дату и время завершения конкурса в том же формате. Время завершения должно быть позже начала.",
         "announcement_rules_prompt": "📌 Напиши условия участия. Регистрация пока не подключена; это текст для тестовой публикации.",
         "current_value": "Текущее значение: {value}\nОтправь новое значение, чтобы изменить его.",
@@ -315,12 +316,13 @@ I18N = {
             "👥 Available spots: {participants}\n"
             "🏆 Winners: {winners}\n"
             "🔐 Subscription: {subscription}\n\n"
-            "📅 Starts: {start_at}\n"
-            "⏰ Ends: {end_at}\n"
+            "🕒 All dates and times are Moscow time (MSK, UTC+3).\n"
+            "📅 Starts: {start_at} MSK\n"
+            "⏰ Ends: {end_at} MSK\n"
             "📌 How to enter: {rules}\n\n"
             "⚠️ Test announcement: participant registration and winner selection are not connected yet."
         ),
-        "announcement_start_prompt": "📅 Enter the start date and time as DD.MM.YYYY HH:MM (your local time).\nExample: 14.11.2026 18:00",
+        "announcement_start_prompt": "📅 Enter the start date and time as DD.MM.YYYY HH:MM (Moscow time, MSK, UTC+3).\nExample: 14.11.2026 18:00",
         "announcement_end_prompt": "⏰ Enter the end date and time in the same format. The end must be later than the start.",
         "announcement_rules_prompt": "📌 Enter the participation rules. Registration is not connected yet; this is test announcement text.",
         "current_value": "Current value: {value}\nSend a new value to change it.",
@@ -478,12 +480,13 @@ I18N = {
             "👥 Teilnehmerplätze: {participants}\n"
             "🏆 Gewinner: {winners}\n"
             "🔐 Abonnement: {subscription}\n\n"
-            "📅 Beginn: {start_at}\n"
-            "⏰ Ende: {end_at}\n"
+            "🕒 Alle Datums- und Zeitangaben sind Moskauer Zeit (MSK, UTC+3).\n"
+            "📅 Beginn: {start_at} MSK\n"
+            "⏰ Ende: {end_at} MSK\n"
             "📌 Teilnahmebedingungen: {rules}\n\n"
             "⚠️ Testveröffentlichung: Teilnehmerregistrierung und Gewinnerauswahl sind noch nicht verfügbar."
         ),
-        "announcement_start_prompt": "📅 Gib Startdatum und Uhrzeit als TT.MM.JJJJ HH:MM ein (Ortszeit).\nBeispiel: 14.11.2026 18:00",
+        "announcement_start_prompt": "📅 Gib Startdatum und Uhrzeit als TT.MM.JJJJ HH:MM ein (Moskauer Zeit, MSK, UTC+3).\nBeispiel: 14.11.2026 18:00",
         "announcement_end_prompt": "⏰ Gib Enddatum und Uhrzeit im selben Format ein. Das Ende muss nach dem Beginn liegen.",
         "announcement_rules_prompt": "📌 Gib die Teilnahmebedingungen ein. Die Registrierung ist noch nicht verbunden; dies ist zunächst Test-Ankündigungstext.",
         "current_value": "Aktueller Wert: {value}\nSende einen neuen Wert, um ihn zu ändern.",
