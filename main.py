@@ -1,5 +1,6 @@
 
 import os
+import base64
 import logging
 import sqlite3
 import uuid
@@ -17,6 +18,19 @@ from telegram.ext import (
 from telegram.error import TelegramError
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
+
+
+def load_brand_banner():
+    """Load the PRIZORA black-and-gold welcome artwork bundled with the bot."""
+    banner_path = os.path.join(
+        os.path.dirname(__file__), "assets", "prizora_brand_banner.jpg.b64"
+    )
+    try:
+        with open(banner_path, "r", encoding="ascii") as banner_file:
+            return base64.b64decode(banner_file.read().strip())
+    except (OSError, ValueError):
+        logging.exception("Could not load PRIZORA brand banner")
+        return None
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -1120,6 +1134,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.args and context.args[0].startswith("join_"):
         await handle_join_start(update, context)
         return
+
+    # Show the PRIZORA brand artwork before the welcome/menu screens.
+    brand_banner = load_brand_banner()
+    if brand_banner:
+        try:
+            await update.message.reply_photo(photo=brand_banner)
+        except TelegramError:
+            logging.exception("Could not send PRIZORA brand banner")
 
     if "language" not in context.user_data:
         language = detected_language(update)
