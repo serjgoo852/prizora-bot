@@ -142,7 +142,7 @@ I18N = {
             "🏆 Победителей: {winners}\n"
             "🔐 Подписка: {subscription}\n\n"
             "Следующий этап — подготовка публикации. "
-            "Публикация объявления подключена. Регистрация участников и выбор победителей будут добавлены отдельно. "
+            "Публикация и регистрация участников по ссылке доступны. Победителей организатор выбирает вручную; автоматический выбор появится позже. "
             "Тарифные ограничения пока не применяются."
         ),
         "summary_home": "🏠 Главное меню",
@@ -208,7 +208,7 @@ I18N = {
             "1. Выбери язык интерфейса.\n"
             "2. Выбери формат и место проведения конкурса.\n"
             "3. Укажи приз, лимит участников и количество победителей.\n\n"
-            "Подготовка и публикация тестового объявления уже доступны. Регистрация участников и выбор победителей будут добавлены позже."
+            "Подготовка и публикация объявления, а также регистрация участников по ссылке уже доступны. Победителей организатор выбирает вручную; автоматический выбор появится позже."
         ),
     },
     "en": {
@@ -309,7 +309,7 @@ I18N = {
             "🏆 Winners: {winners}\n"
             "🔐 Subscription: {subscription}\n\n"
             "Next step: prepare the contest announcement. "
-            "Announcement publishing is connected. Participant registration and winner selection will be added separately. "
+            "Publishing and participant registration through the contest link are available. The organizer selects winners manually; automatic winner selection will be added later. "
             "Plan limits are not enforced yet."
         ),
         "summary_home": "🏠 Main menu",
@@ -375,7 +375,7 @@ I18N = {
             "1. Choose your interface language.\n"
             "2. Select a contest format and where it will run.\n"
             "3. Enter the prize, participant limit, and number of winners.\n\n"
-            "Preparing and publishing a test announcement is now available. Participant registration and winner selection will be added later."
+            "Preparing and publishing announcements, as well as participant registration through the contest link, are available. The organizer selects winners manually; automatic winner selection will be added later."
         ),
     },
     "de": {
@@ -476,7 +476,7 @@ I18N = {
             "🏆 Gewinner: {winners}\n"
             "🔐 Abonnement: {subscription}\n\n"
             "Nächster Schritt: die Ankündigung vorbereiten. "
-            "Die Veröffentlichung der Ankündigung ist verbunden. Teilnehmerregistrierung und Gewinnerauswahl folgen später. "
+            "Veröffentlichung und Teilnehmerregistrierung über den Wettbewerbslink sind verfügbar. Der Veranstalter wählt die Gewinner manuell; eine automatische Auswahl folgt später. "
             "Tariflimits werden noch nicht angewendet."
         ),
         "summary_home": "🏠 Hauptmenü",
@@ -542,7 +542,7 @@ I18N = {
             "1. Wähle die Sprache der Oberfläche.\n"
             "2. Wähle ein Format und den Veranstaltungsort.\n"
             "3. Gib den Preis, die Teilnehmergrenze und die Anzahl der Gewinner ein.\n\n"
-            "Vorbereitung und Veröffentlichung einer Testankündigung sind jetzt möglich. Teilnehmerregistrierung und Gewinnerauswahl folgen später."
+            "Vorbereitung und Veröffentlichung von Ankündigungen sowie die Teilnehmerregistrierung über den Wettbewerbslink sind verfügbar. Der Veranstalter wählt die Gewinner manuell; eine automatische Auswahl folgt später."
         ),
     },
 }
