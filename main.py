@@ -170,7 +170,7 @@ I18N = {
         "announcement_publish_success": "✅ Объявление отправлено в чат: {destination}.\n\nВажно: регистрация участников и выбор победителей пока не подключены.",
         "announcement_publish_error": "Не удалось отправить объявление. Проверь, что бот всё ещё администратор чата и имеет право публиковать сообщения. Можно попробовать ещё раз.",
         "artwork_button": "🎨 Оформление конкурса",
-        "artwork_title": "🎨 Оформление конкурса\\n\\nДобавь логотип и/или баннер. Оба изображения необязательны.\\n\\nЛоготип: {logo}\\nБаннер: {banner}",
+        "artwork_title": "🎨 Оформление конкурса\n\nДобавь логотип и/или баннер. Оба изображения необязательны.\n\nЛоготип: {logo}\nБаннер: {banner}",
         "artwork_logo": "🟡 Загрузить логотип", "artwork_banner": "🖼 Загрузить баннер",
         "artwork_done": "✅ Готово", "artwork_skip": "Пропустить оформление",
         "artwork_remove_logo": "Удалить логотип", "artwork_remove_banner": "Удалить баннер",
@@ -333,7 +333,7 @@ I18N = {
         "announcement_publish_success": "✅ Announcement sent to: {destination}.\n\nImportant: participant registration and winner selection are not connected yet.",
         "announcement_publish_error": "The announcement could not be sent. Check that the bot is still an administrator and can post in the chat. You can retry.",
         "artwork_button": "🎨 Contest branding",
-        "artwork_title": "🎨 Contest branding\\n\\nAdd a logo and/or banner. Both images are optional.\\n\\nLogo: {logo}\\nBanner: {banner}",
+        "artwork_title": "🎨 Contest branding\n\nAdd a logo and/or banner. Both images are optional.\n\nLogo: {logo}\nBanner: {banner}",
         "artwork_logo": "🟡 Upload logo", "artwork_banner": "🖼 Upload banner",
         "artwork_done": "✅ Done", "artwork_skip": "Skip branding",
         "artwork_remove_logo": "Remove logo", "artwork_remove_banner": "Remove banner",
@@ -496,7 +496,7 @@ I18N = {
         "announcement_publish_success": "✅ Ankündigung gesendet an: {destination}.\n\nWichtig: Teilnehmerregistrierung und Gewinnerauswahl sind noch nicht verbunden.",
         "announcement_publish_error": "Die Ankündigung konnte nicht gesendet werden. Prüfe, ob der Bot noch Administrator ist und veröffentlichen darf. Du kannst es erneut versuchen.",
         "artwork_button": "🎨 Wettbewerbsdesign",
-        "artwork_title": "🎨 Wettbewerbsdesign\\n\\nFüge ein Logo und/oder Banner hinzu. Beide Bilder sind optional.\\n\\nLogo: {logo}\\nBanner: {banner}",
+        "artwork_title": "🎨 Wettbewerbsdesign\n\nFüge ein Logo und/oder Banner hinzu. Beide Bilder sind optional.\n\nLogo: {logo}\nBanner: {banner}",
         "artwork_logo": "🟡 Logo hochladen", "artwork_banner": "🖼 Banner hochladen",
         "artwork_done": "✅ Fertig", "artwork_skip": "Design überspringen",
         "artwork_remove_logo": "Logo entfernen", "artwork_remove_banner": "Banner entfernen",
@@ -723,10 +723,12 @@ async def artwork_photo_handler(update: Update, context: ContextTypes.DEFAULT_TY
         await message.reply_text(tr(context, "artwork_banner_ratio")); return
     if is_logo:
         context.user_data["contest_logo_file_id"] = file_id
+        context.user_data["contest_logo_as_document"] = bool(document and not photo)
         context.user_data["awaiting_contest_logo"] = False
         await message.reply_text(tr(context, "artwork_logo_saved"))
     else:
         context.user_data["contest_banner_file_id"] = file_id
+        context.user_data["contest_banner_as_document"] = bool(document and not photo)
         context.user_data["awaiting_contest_banner"] = False
         await message.reply_text(tr(context, "artwork_banner_saved"))
     text, markup = artwork_menu(context)
@@ -1121,13 +1123,15 @@ async def button_handler(
 
     elif data == "artwork:remove_logo":
         context.user_data.pop("contest_logo_file_id", None)
+        context.user_data.pop("contest_logo_as_document", None)
         text, markup = artwork_menu(context)
-        await query.edit_message_text(tr(context, "artwork_removed") + "\\n\\n" + text, reply_markup=markup)
+        await query.edit_message_text(tr(context, "artwork_removed") + "\n\n" + text, reply_markup=markup)
 
     elif data == "artwork:remove_banner":
         context.user_data.pop("contest_banner_file_id", None)
+        context.user_data.pop("contest_banner_as_document", None)
         text, markup = artwork_menu(context)
-        await query.edit_message_text(tr(context, "artwork_removed") + "\\n\\n" + text, reply_markup=markup)
+        await query.edit_message_text(tr(context, "artwork_removed") + "\n\n" + text, reply_markup=markup)
 
     elif data in ("artwork:done", "artwork:skip"):
         context.user_data["awaiting_contest_logo"] = False
@@ -1190,9 +1194,15 @@ async def button_handler(
             return
         try:
             if context.user_data.get("contest_logo_file_id"):
-                await context.bot.send_photo(chat_id=chat.id, photo=context.user_data["contest_logo_file_id"])
+                if context.user_data.get("contest_logo_as_document"):
+                    await context.bot.send_document(chat_id=chat.id, document=context.user_data["contest_logo_file_id"])
+                else:
+                    await context.bot.send_photo(chat_id=chat.id, photo=context.user_data["contest_logo_file_id"])
             if context.user_data.get("contest_banner_file_id"):
-                await context.bot.send_photo(chat_id=chat.id, photo=context.user_data["contest_banner_file_id"])
+                if context.user_data.get("contest_banner_as_document"):
+                    await context.bot.send_document(chat_id=chat.id, document=context.user_data["contest_banner_file_id"])
+                else:
+                    await context.bot.send_photo(chat_id=chat.id, photo=context.user_data["contest_banner_file_id"])
             await context.bot.send_message(chat_id=chat.id, text=build_announcement_text(context))
         except TelegramError:
             logging.exception("Failed to publish contest announcement")
@@ -1264,7 +1274,7 @@ async def button_handler(
         context.user_data["contest_subscription_required"] = False
         context.user_data.pop("contest_subscription_chat_id", None)
         context.user_data.pop("contest_subscription_title", None)
-        for contest_field in ("contest_start_at", "contest_end_at", "contest_rules", "contest_logo_file_id", "contest_banner_file_id"):
+        for contest_field in ("contest_start_at", "contest_end_at", "contest_rules", "contest_logo_file_id", "contest_banner_file_id", "contest_logo_as_document", "contest_banner_as_document"):
             context.user_data.pop(contest_field, None)
         await query.edit_message_text(
             f"{FORMAT_NAMES[language][format_key]}\n\n{tr(context, 'place_prompt')}",
