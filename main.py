@@ -1003,10 +1003,7 @@ def register_participant(contest_id: str, user) -> str:
         if contest is None:
             return "not_found"
         starts_at = datetime.fromisoformat(contest["starts_at"])
-        ends_at = datetime.fromisoformat(contest["ends_at"])
-        if now < starts_at.astimezone(timezone.utc):
-            return "not_started"
-        if now >= ends_at.astimezone(timezone.utc):
+        if now >= starts_at.astimezone(timezone.utc):
             return "ended"
         existing = connection.execute(
             "SELECT 1 FROM participants WHERE contest_id = ? AND user_id = ?",
