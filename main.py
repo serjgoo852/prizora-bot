@@ -42,16 +42,16 @@ I18N = {
             "Для новых пользователей предусмотрен пробный период PRO на 7 дней.\n\n"
             "Выбери действие:"
         ),
-        "menu_create": "🏆 Создать конкурс",
-        "menu_formats": "🎮 Форматы конкурсов",
-        "menu_plans": "💎 Мои тарифы",
+        "menu_create": "👑 Создать конкурс",
+        "menu_formats": "✨ Форматы конкурсов",
+        "menu_plans": "💰 Мои тарифы",
         "menu_help": "📖 Помощь",
         "menu_language": "🌐 Язык",
-        "home_title": "👑 PRIZORA\n\nВыбери действие:",
-        "formats_title": "🎮 Выбери формат конкурса:",
-        "create_title": "🏆 Создание конкурса\n\nВыбери формат:",
-        "back_home": "⬅️ Главное меню",
-        "back": "⬅️ Назад",
+        "home_title": "👑 PRIZORA\n━━━━━━━━━━━━\n✨ ТВОЯ ПЛОЩАДКА КОНКУРСОВ\n\nВыбери действие:",
+        "formats_title": "✨ ВЫБОР ФОРМАТА\n\nВыбери стиль своего розыгрыша:",
+        "create_title": "👑 НОВЫЙ КОНКУРС\n━━━━━━━━━━━━\nВыбери формат:",
+        "back_home": "⌂ Главное меню",
+        "back": "‹ Назад",
         "unknown_format": "Неизвестный формат.",
         "place_prompt": "Где планируешь провести конкурс?",
         "group": "Группа",
@@ -167,12 +167,12 @@ I18N = {
         "announcement_datetime_invalid": "Не понял дату и время. Введи в формате ДД.ММ.ГГГГ ЧЧ:ММ, например 14.11.2026 18:00.",
         "announcement_end_invalid": "Завершение должно быть позже начала. Введи дату и время ещё раз.",
         "announcement_rules_invalid": "Напиши условия текстом (до 1000 символов).",
-        "announcement_review_prompt": "👑 Предпросмотр готов!\n\nПроверь объявление выше. Если всё верно — нажми «Опубликовать». В выбранном чате оно появится только после подтверждения.",
-        "announcement_publish_button": "✨ Опубликовать в чат",
+        "announcement_review_prompt": "👑 ПРЕДПРОСМОТР ГОТОВ\n━━━━━━━━━━━━\nПроверь карточку конкурса выше. Если всё верно, подтверди публикацию кнопкой ниже.",
+        "announcement_publish_button": "👑 Опубликовать конкурс",
         "announcement_cancel_button": "✖️ Отменить",
         "announcement_publish_success": "✅ Объявление отправлено в чат: {destination}.\n\nВажно: регистрация участников и выбор победителей пока не подключены.",
         "announcement_publish_error": "Не удалось отправить объявление. Проверь, что бот всё ещё администратор чата и имеет право публиковать сообщения. Можно попробовать ещё раз.",
-        "artwork_button": "✨ Золотое оформление конкурса",
+        "artwork_button": "✨ Оформление конкурса",
         "artwork_title": "🎨 Оформление конкурса\n\nДобавь логотип и/или баннер. Оба изображения необязательны.\n\nЛоготип: {logo}\nБаннер: {banner}",
         "artwork_logo": "🟡 Загрузить логотип", "artwork_banner": "🖼 Загрузить баннер",
         "artwork_done": "✅ Готово", "artwork_skip": "Пропустить оформление",
@@ -206,16 +206,16 @@ I18N = {
             "New users get a 7-day PRO trial.\n\n"
             "Choose an action:"
         ),
-        "menu_create": "🏆 Create a contest",
-        "menu_formats": "🎮 Contest formats",
-        "menu_plans": "💎 My plans",
+        "menu_create": "👑 Create a contest",
+        "menu_formats": "✨ Contest formats",
+        "menu_plans": "💰 My plans",
         "menu_help": "📖 Help",
         "menu_language": "🌐 Language",
-        "home_title": "👑 PRIZORA\n\nChoose an action:",
-        "formats_title": "🎮 Choose a contest format:",
-        "create_title": "🏆 Create a contest\n\nChoose a format:",
-        "back_home": "⬅️ Main menu",
-        "back": "⬅️ Back",
+        "home_title": "👑 PRIZORA\n━━━━━━━━━━━━\n✨ YOUR GIVEAWAY STUDIO\n\nChoose an action:",
+        "formats_title": "✨ CHOOSE A FORMAT\n\nSelect your giveaway style:",
+        "create_title": "👑 NEW CONTEST\n━━━━━━━━━━━━\nChoose a format:",
+        "back_home": "⌂ Main menu",
+        "back": "‹ Back",
         "unknown_format": "Unknown format.",
         "place_prompt": "Where will you host the contest?",
         "group": "Group",
@@ -331,8 +331,8 @@ I18N = {
         "announcement_datetime_invalid": "I couldn't read that date and time. Use DD.MM.YYYY HH:MM, for example 14.11.2026 18:00.",
         "announcement_end_invalid": "The end date and time must be later than the start. Please enter it again.",
         "announcement_rules_invalid": "Enter the rules as text (up to 1,000 characters).",
-        "announcement_review_prompt": "👑 Your preview is ready!\n\nCheck the announcement above. If everything looks right, tap “Publish”. It will appear in the selected chat only after confirmation.",
-        "announcement_publish_button": "✨ Publish to chat",
+        "announcement_review_prompt": "👑 PREVIEW READY\n━━━━━━━━━━━━\nCheck the contest card above. If everything looks right, confirm using the button below.",
+        "announcement_publish_button": "👑 Publish contest",
         "announcement_cancel_button": "✖️ Cancel",
         "announcement_publish_success": "✅ Announcement sent to: {destination}.\n\nImportant: participant registration and winner selection are not connected yet.",
         "announcement_publish_error": "The announcement could not be sent. Check that the bot is still an administrator and can post in the chat. You can retry.",
@@ -935,8 +935,10 @@ def main_menu(language: str):
     t = I18N[language]
     keyboard = [
         [InlineKeyboardButton(t["menu_create"], callback_data="create")],
-        [InlineKeyboardButton(t["menu_formats"], callback_data="formats")],
-        [InlineKeyboardButton(t["menu_plans"], callback_data="plans")],
+        [
+            InlineKeyboardButton(t["menu_formats"], callback_data="formats"),
+            InlineKeyboardButton(t["menu_plans"], callback_data="plans"),
+        ],
         [
             InlineKeyboardButton(t["menu_help"], callback_data="help"),
             InlineKeyboardButton(t["menu_language"], callback_data="language"),
@@ -1679,9 +1681,7 @@ async def prize_text_handler(
                 await context.bot.send_photo(chat_id=update.effective_chat.id, photo=artwork_id, caption=announcement_text)
 
         await update.message.reply_text(
-            tr(context, "announcement_review_prompt")
-            + "\n\n"
-            + build_announcement_text(context),
+            tr(context, "announcement_review_prompt"),
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton(tr(context, "announcement_publish_button"), callback_data="publish_confirm")],
                 [InlineKeyboardButton(tr(context, "back"), callback_data="back:announcement_rules")],
