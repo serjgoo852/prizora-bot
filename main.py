@@ -1412,6 +1412,42 @@ async def prize_text_handler(
         context.user_data["contest_rules"] = message_text
         context.user_data["awaiting_announcement_rules"] = False
         context.user_data["contest_publish_pending"] = True
+
+        # Show uploaded contest artwork in the final announcement review.
+        language = current_language(context)
+        logo_id = context.user_data.get("contest_logo_file_id")
+        banner_id = context.user_data.get("contest_banner_file_id")
+        if logo_id:
+            if context.user_data.get("contest_logo_as_document"):
+                await context.bot.send_document(
+                    chat_id=update.effective_chat.id,
+                    document=logo_id,
+                    caption="🟡 Логотип конкурса" if language == "ru" else
+                            "🟡 Contest logo" if language == "en" else "🟡 Wettbewerbslogo",
+                )
+            else:
+                await context.bot.send_photo(
+                    chat_id=update.effective_chat.id,
+                    photo=logo_id,
+                    caption="🟡 Логотип конкурса" if language == "ru" else
+                            "🟡 Contest logo" if language == "en" else "🟡 Wettbewerbslogo",
+                )
+        if banner_id:
+            if context.user_data.get("contest_banner_as_document"):
+                await context.bot.send_document(
+                    chat_id=update.effective_chat.id,
+                    document=banner_id,
+                    caption="🖼 Баннер конкурса" if language == "ru" else
+                            "🖼 Contest banner" if language == "en" else "🖼 Wettbewerbsbanner",
+                )
+            else:
+                await context.bot.send_photo(
+                    chat_id=update.effective_chat.id,
+                    photo=banner_id,
+                    caption="🖼 Баннер конкурса" if language == "ru" else
+                            "🖼 Contest banner" if language == "en" else "🖼 Wettbewerbsbanner",
+                )
+
         await update.message.reply_text(
             tr(context, "announcement_review_prompt")
             + "\n\n"
