@@ -762,14 +762,14 @@ async def send_contest_summary(
     if logo_id:
         if context.user_data.get("contest_logo_as_document"):
             await context.bot.send_document(
-                chat_id=message.chat_id,
+                chat_id=message.chat.id,
                 document=logo_id,
                 caption="🟡 Логотип конкурса" if language == "ru" else
                         "🟡 Contest logo" if language == "en" else "🟡 Wettbewerbslogo",
             )
         else:
             await context.bot.send_photo(
-                chat_id=message.chat_id,
+                chat_id=message.chat.id,
                 photo=logo_id,
                 caption="🟡 Логотип конкурса" if language == "ru" else
                         "🟡 Contest logo" if language == "en" else "🟡 Wettbewerbslogo",
@@ -777,14 +777,14 @@ async def send_contest_summary(
     if banner_id:
         if context.user_data.get("contest_banner_as_document"):
             await context.bot.send_document(
-                chat_id=message.chat_id,
+                chat_id=message.chat.id,
                 document=banner_id,
                 caption="🖼 Баннер конкурса" if language == "ru" else
                         "🖼 Contest banner" if language == "en" else "🖼 Wettbewerbsbanner",
             )
         else:
             await context.bot.send_photo(
-                chat_id=message.chat_id,
+                chat_id=message.chat.id,
                 photo=banner_id,
                 caption="🖼 Баннер конкурса" if language == "ru" else
                         "🖼 Contest banner" if language == "en" else "🖼 Wettbewerbsbanner",
