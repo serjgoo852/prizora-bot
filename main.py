@@ -182,6 +182,7 @@ I18N = {
         "announcement_rules_prompt": "📌 Напиши условия участия. Регистрация открыта до окончания конкурса; после времени завершения новые участники не принимаются.",
         "current_value": "Текущее значение: {value}\nОтправь новое значение, чтобы изменить его.",
         "announcement_datetime_invalid": "Не понял дату и время. Введи в формате ДД.ММ.ГГГГ ЧЧ:ММ, например 14.11.2026 18:00.",
+        "announcement_start_past": "Начало конкурса должно быть в будущем. Укажи более позднюю дату и время.",
         "announcement_end_invalid": "Завершение должно быть позже начала. Введи дату и время ещё раз.",
         "announcement_rules_invalid": "Напиши условия текстом (до 1000 символов).",
         "announcement_review_prompt": "👑 ПРЕДПРОСМОТР ГОТОВ\n━━━━━━━━━━━━\nПроверь карточку конкурса выше. Если всё верно, подтверди публикацию кнопкой ниже.",
@@ -349,6 +350,7 @@ I18N = {
         "announcement_rules_prompt": "📌 Enter the participation rules. Registration stays open until the contest end time; no new entries are accepted after that.",
         "current_value": "Current value: {value}\nSend a new value to change it.",
         "announcement_datetime_invalid": "I couldn't read that date and time. Use DD.MM.YYYY HH:MM, for example 14.11.2026 18:00.",
+        "announcement_start_past": "The start date and time must be in the future. Please enter a later time.",
         "announcement_end_invalid": "The end date and time must be later than the start. Please enter it again.",
         "announcement_rules_invalid": "Enter the rules as text (up to 1,000 characters).",
         "announcement_review_prompt": "👑 PREVIEW READY\n━━━━━━━━━━━━\nCheck the contest card above. If everything looks right, confirm using the button below.",
@@ -509,19 +511,20 @@ I18N = {
             "📅 Beginn: {start_at} MSK\n"
             "⏰ Ende: {end_at} MSK\n"
             "📌 Teilnahmebedingungen: {rules}\n\n"
-            "⚠️ Testveröffentlichung: Teilnehmerregistrierung und Gewinnerauswahl sind noch nicht verfügbar."
+            "👇 Nutze die Schaltfläche „Teilnehmen“ unten. Die Anmeldung ist im angegebenen Zeitraum möglich; der Veranstalter wählt die Gewinner manuell."
         ),
         "announcement_start_prompt": "📅 Gib Startdatum und Uhrzeit als TT.MM.JJJJ HH:MM ein (Moskauer Zeit, MSK, UTC+3).\nBeispiel: 14.11.2026 18:00",
         "announcement_end_prompt": "⏰ Gib Enddatum und Uhrzeit im selben Format ein. Das Ende muss nach dem Beginn liegen.",
         "announcement_rules_prompt": "📌 Gib die Teilnahmebedingungen ein. Die Registrierung bleibt bis zum Ende des Wettbewerbs geöffnet; danach sind keine neuen Teilnahmen möglich.",
         "current_value": "Aktueller Wert: {value}\nSende einen neuen Wert, um ihn zu ändern.",
         "announcement_datetime_invalid": "Das Datum wurde nicht erkannt. Verwende TT.MM.JJJJ HH:MM, zum Beispiel 14.11.2026 18:00.",
+        "announcement_start_past": "Der Start muss in der Zukunft liegen. Bitte gib ein späteres Datum und eine spätere Uhrzeit ein.",
         "announcement_end_invalid": "Das Ende muss nach dem Beginn liegen. Bitte gib es erneut ein.",
         "announcement_rules_invalid": "Gib die Bedingungen als Text ein (bis zu 1.000 Zeichen).",
         "announcement_review_prompt": "👑 VORSCHAU FERTIG\n━━━━━━━━━━━━\nPrüfe die Wettbewerbs-Karte oben. Wenn alles stimmt, bestätige unten die Veröffentlichung.",
         "announcement_publish_button": "👑 Wettbewerb veröffentlichen",
         "announcement_cancel_button": "✖️ Abbrechen",
-        "announcement_publish_success": "✅ Ankündigung gesendet an: {destination}.\n\nWichtig: Teilnehmerregistrierung und Gewinnerauswahl sind noch nicht verbunden.",
+        "announcement_publish_success": "✅ Ankündigung gesendet an: {destination}.\n\nTeilnehmer können sich bis zum Ende des Wettbewerbs über die Schaltfläche anmelden. Der Veranstalter wählt die Gewinner manuell.",
         "announcement_publish_error": "Die Ankündigung konnte nicht gesendet werden. Prüfe, ob der Bot noch Administrator ist und veröffentlichen darf. Du kannst es erneut versuchen.",
         "artwork_button": "✨ Wettbewerbsdesign",
         "artwork_title": "👑 PRIZORA-DESIGN\n━━━━━━━━━━━━\nFüge ein Logo und/oder Banner hinzu. Bilder sind optional.\n\nLogo: {logo}\nBanner: {banner}",
@@ -1638,6 +1641,13 @@ async def prize_text_handler(
         except ValueError:
             await update.message.reply_text(
                 tr(context, "announcement_datetime_invalid"),
+                reply_markup=step_navigation(context, "back:summary"),
+            )
+            return
+        moscow_tz = timezone(timedelta(hours=3))
+        if start_value.replace(tzinfo=moscow_tz) <= datetime.now(moscow_tz):
+            await update.message.reply_text(
+                tr(context, "announcement_start_past"),
                 reply_markup=step_navigation(context, "back:summary"),
             )
             return
