@@ -1471,7 +1471,7 @@ async def button_handler(
             logo_id = context.user_data.get("contest_logo_file_id")
             banner_id = context.user_data.get("contest_banner_file_id")
             announcement_text = build_announcement_text(context)
-            if len(announcement_text) > 1024:
+            if len(announcement_text) > (1024 if (banner_id or logo_id) else 4096):
                 await query.edit_message_text(
                     "Текст объявления превышает лимит подписи Telegram (1024 символа). Вернись назад и сократи условия участия.",
                     reply_markup=InlineKeyboardMarkup([
@@ -1690,7 +1690,7 @@ async def prize_text_handler(
         logo_id = context.user_data.get("contest_logo_file_id")
         banner_id = context.user_data.get("contest_banner_file_id")
         announcement_text = build_announcement_text(context)
-        if len(announcement_text) > 1024:
+        if len(announcement_text) > (1024 if (banner_id or logo_id) else 4096):
             context.user_data["awaiting_announcement_rules"] = True
             context.user_data["contest_publish_pending"] = False
             await update.message.reply_text(
