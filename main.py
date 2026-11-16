@@ -150,17 +150,17 @@ I18N = {
         "announcement_button": "📣 Заполнить даты и подготовить",
         "announcement_title": "📣 Черновик объявления",
         "announcement_text": (
-            "👑 PRIZORA · РОЗЫГРЫШ\\n"
-            "━━━━━━━━━━━━━━━━━━\\n"
-            "🎁 ГЛАВНЫЙ ПРИЗ\\n{prize}\\n\\n"
-            "🎡 Формат: {format}\\n"
-            "📍 Площадка: {destination}\\n"
-            "👥 Мест: {participants} · 🏆 Победителей: {winners}\\n"
-            "🔐 Подписка: {subscription}\\n\\n"
-            "━━━━━━━━━━━━━━━━━━\\n"
-            "📅 СТАРТ: {start_at} МСК\\n"
-            "⏰ ФИНИШ: {end_at} МСК\\n\\n"
-            "📌 КАК УЧАСТВОВАТЬ\\n{rules}\\n\\n"
+            "👑 PRIZORA · РОЗЫГРЫШ\n"
+            "━━━━━━━━━━━━━━━━━━\n"
+            "🎁 ГЛАВНЫЙ ПРИЗ\n{prize}\n\n"
+            "🎡 Формат: {format}\n"
+            "📍 Площадка: {destination}\n"
+            "👥 Мест: {participants} · 🏆 Победителей: {winners}\n"
+            "🔐 Подписка: {subscription}\n\n"
+            "━━━━━━━━━━━━━━━━━━\n"
+            "📅 СТАРТ: {start_at} МСК\n"
+            "⏰ ФИНИШ: {end_at} МСК\n\n"
+            "📌 КАК УЧАСТВОВАТЬ\n{rules}\n\n"
             "👇 Нажми «Участвовать», чтобы зарегистрироваться. Победителей определяет организатор."
         ),
         "announcement_start_prompt": "📅 Укажи дату и время начала конкурса в формате ДД.ММ.ГГГГ ЧЧ:ММ (московское время, МСК UTC+3).\nНапример: 14.11.2026 18:00",
@@ -317,17 +317,17 @@ I18N = {
         "announcement_button": "📣 Add dates and prepare",
         "announcement_title": "📣 Announcement draft",
         "announcement_text": (
-            "👑 PRIZORA · GIVEAWAY\\n"
-            "━━━━━━━━━━━━━━━━━━\\n"
-            "🎁 GRAND PRIZE\\n{prize}\\n\\n"
-            "🎡 Format: {format}\\n"
-            "📍 Venue: {destination}\\n"
-            "👥 Places: {participants} · 🏆 Winners: {winners}\\n"
-            "🔐 Subscription: {subscription}\\n\\n"
-            "━━━━━━━━━━━━━━━━━━\\n"
-            "📅 START: {start_at} MSK\\n"
-            "⏰ END: {end_at} MSK\\n\\n"
-            "📌 HOW TO ENTER\\n{rules}\\n\\n"
+            "👑 PRIZORA · GIVEAWAY\n"
+            "━━━━━━━━━━━━━━━━━━\n"
+            "🎁 GRAND PRIZE\n{prize}\n\n"
+            "🎡 Format: {format}\n"
+            "📍 Venue: {destination}\n"
+            "👥 Places: {participants} · 🏆 Winners: {winners}\n"
+            "🔐 Subscription: {subscription}\n\n"
+            "━━━━━━━━━━━━━━━━━━\n"
+            "📅 START: {start_at} MSK\n"
+            "⏰ END: {end_at} MSK\n\n"
+            "📌 HOW TO ENTER\n{rules}\n\n"
             "👇 Tap “Join contest” to register. The organizer selects the winners."
         ),
         "announcement_start_prompt": "📅 Enter the start date and time as DD.MM.YYYY HH:MM (Moscow time, MSK, UTC+3).\nExample: 14.11.2026 18:00",
@@ -484,17 +484,17 @@ I18N = {
         "announcement_button": "📣 Daten eingeben und vorbereiten",
         "announcement_title": "📣 Entwurf der Ankündigung",
         "announcement_text": (
-            "👑 PRIZORA · GEWINNSPIEL\\n"
-            "━━━━━━━━━━━━━━━━━━\\n"
-            "🎁 HAUPTPREIS\\n{prize}\\n\\n"
-            "🎡 Format: {format}\\n"
-            "📍 Ort: {destination}\\n"
-            "👥 Plätze: {participants} · 🏆 Gewinner: {winners}\\n"
-            "🔐 Abonnement: {subscription}\\n\\n"
-            "━━━━━━━━━━━━━━━━━━\\n"
-            "📅 START: {start_at} MSK\\n"
-            "⏰ ENDE: {end_at} MSK\\n\\n"
-            "📌 TEILNAHMEBEDINGUNGEN\\n{rules}\\n\\n"
+            "👑 PRIZORA · GEWINNSPIEL\n"
+            "━━━━━━━━━━━━━━━━━━\n"
+            "🎁 HAUPTPREIS\n{prize}\n\n"
+            "🎡 Format: {format}\n"
+            "📍 Ort: {destination}\n"
+            "👥 Plätze: {participants} · 🏆 Gewinner: {winners}\n"
+            "🔐 Abonnement: {subscription}\n\n"
+            "━━━━━━━━━━━━━━━━━━\n"
+            "📅 START: {start_at} MSK\n"
+            "⏰ ENDE: {end_at} MSK\n\n"
+            "📌 TEILNAHMEBEDINGUNGEN\n{rules}\n\n"
             "👇 Tippe auf „Teilnehmen“, um dich anzumelden. Der Veranstalter wählt die Gewinner aus."
         ),
         "announcement_start_prompt": "📅 Gib Startdatum und Uhrzeit als TT.MM.JJJJ HH:MM ein (Moskauer Zeit, MSK, UTC+3).\nBeispiel: 14.11.2026 18:00",
