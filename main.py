@@ -1384,7 +1384,7 @@ async def button_handler(
         context.user_data["suggested_language"] = selected_language
         language = selected_language
         await query.edit_message_text(
-            tr(context, "language_saved"),
+            tr(context, "welcome"),
             reply_markup=main_menu(language),
         )
 
