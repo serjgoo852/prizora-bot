@@ -151,6 +151,11 @@ I18N = {
         "plan_trial": "🎁 Новым пользователям предусмотрено 7 дней PRO.\n\n",
         "plan_notice": "Настоящее подключение подписок и оплата будут реализованы отдельным этапом.",
         "announcement_button": "📣 Заполнить даты и подготовить",
+        "announcement_mode_prompt": "🕒 Когда открыть регистрацию участников? Выбери режим:",
+        "registration_immediate": "⚡ Сразу после публикации",
+        "registration_scheduled": "⏰ В назначенное время старта",
+        "registration_mode_immediate": "сразу после публикации",
+        "registration_mode_scheduled": "в назначенное время старта",
         "announcement_title": "📣 Черновик объявления",
         "announcement_text": (
             "👑 PRIZORA · РОЗЫГРЫШ\n"
@@ -159,7 +164,8 @@ I18N = {
             "🎡 Формат: {format}\n"
             "📍 Площадка: {destination}\n"
             "👥 Мест: {participants} · 🏆 Победителей: {winners}\n"
-            "🔐 Подписка: {subscription}\n\n"
+            "🔐 Подписка: {subscription}\n"
+            "🕒 Регистрация: {registration_mode}\n\n"
             "━━━━━━━━━━━━━━━━━━\n"
             "📅 СТАРТ: {start_at} МСК\n"
             "⏰ ФИНИШ: {end_at} МСК\n\n"
@@ -319,6 +325,11 @@ I18N = {
         "plan_trial": "🎁 New users are eligible for a 7-day PRO trial.\n\n",
         "plan_notice": "Subscription activation and payments will be implemented in a later stage.",
         "announcement_button": "📣 Add dates and prepare",
+        "announcement_mode_prompt": "🕒 When should participant registration open? Choose a mode:",
+        "registration_immediate": "⚡ Immediately after publication",
+        "registration_scheduled": "⏰ At the scheduled start time",
+        "registration_mode_immediate": "immediately after publication",
+        "registration_mode_scheduled": "at the scheduled start time",
         "announcement_title": "📣 Announcement draft",
         "announcement_text": (
             "👑 PRIZORA · GIVEAWAY\n"
@@ -327,7 +338,8 @@ I18N = {
             "🎡 Format: {format}\n"
             "📍 Venue: {destination}\n"
             "👥 Places: {participants} · 🏆 Winners: {winners}\n"
-            "🔐 Subscription: {subscription}\n\n"
+            "🔐 Subscription: {subscription}\n"
+            "🕒 Registration: {registration_mode}\n\n"
             "━━━━━━━━━━━━━━━━━━\n"
             "📅 START: {start_at} MSK\n"
             "⏰ END: {end_at} MSK\n\n"
@@ -487,6 +499,11 @@ I18N = {
         "plan_trial": "🎁 Neue Nutzer können eine 7-tägige PRO-Testphase nutzen.\n\n",
         "plan_notice": "Die Aktivierung von Abonnements und Zahlungen wird später umgesetzt.",
         "announcement_button": "📣 Daten eingeben und vorbereiten",
+        "announcement_mode_prompt": "🕒 Wann soll die Teilnehmerregistrierung geöffnet werden? Wähle einen Modus:",
+        "registration_immediate": "⚡ Sofort nach der Veröffentlichung",
+        "registration_scheduled": "⏰ Zum geplanten Startzeitpunkt",
+        "registration_mode_immediate": "sofort nach der Veröffentlichung",
+        "registration_mode_scheduled": "zum geplanten Startzeitpunkt",
         "announcement_title": "📣 Entwurf der Ankündigung",
         "announcement_text": (
             "👑 PRIZORA · GEWINNSPIEL\n"
@@ -495,7 +512,8 @@ I18N = {
             "🎡 Format: {format}\n"
             "📍 Ort: {destination}\n"
             "👥 Plätze: {participants} · 🏆 Gewinner: {winners}\n"
-            "🔐 Abonnement: {subscription}\n\n"
+            "🔐 Abonnement: {subscription}\n"
+            "🕒 Anmeldung: {registration_mode}\n\n"
             "━━━━━━━━━━━━━━━━━━\n"
             "📅 START: {start_at} MSK\n"
             "⏰ ENDE: {end_at} MSK\n\n"
@@ -599,9 +617,17 @@ def init_database():
                 ends_at TEXT NOT NULL,
                 rules TEXT NOT NULL,
                 created_at TEXT NOT NULL,
-                published_at TEXT NOT NULL
+                published_at TEXT NOT NULL,
+                registration_mode TEXT NOT NULL DEFAULT 'scheduled'
             )
         """)
+        contest_columns = {
+            row[1] for row in connection.execute("PRAGMA table_info(contests)")
+        }
+        if "registration_mode" not in contest_columns:
+            connection.execute(
+                "ALTER TABLE contests ADD COLUMN registration_mode TEXT NOT NULL DEFAULT 'scheduled'"
+            )
         connection.execute("""
             CREATE TABLE IF NOT EXISTS participants (
                 contest_id TEXT NOT NULL,
@@ -631,8 +657,9 @@ def save_published_contest(context: ContextTypes.DEFAULT_TYPE, organizer_id: int
             """INSERT OR IGNORE INTO contests (
                 contest_id, organizer_id, destination_chat_id, destination_title,
                 prize_name, contest_format, participant_limit, winner_count,
-                subscription_chat_id, starts_at, ends_at, rules, created_at, published_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                subscription_chat_id, starts_at, ends_at, rules, created_at, published_at,
+                registration_mode
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 contest_id,
                 organizer_id,
@@ -648,6 +675,7 @@ def save_published_contest(context: ContextTypes.DEFAULT_TYPE, organizer_id: int
                 context.user_data.get("contest_rules", ""),
                 saved_at,
                 saved_at,
+                context.user_data.get("contest_registration_mode", "scheduled"),
             ),
         )
     context.user_data["contest_id"] = contest_id
@@ -972,6 +1000,12 @@ def build_announcement_text(context: ContextTypes.DEFAULT_TYPE) -> str:
         start_at=context.user_data.get("contest_start_at", "—"),
         end_at=context.user_data.get("contest_end_at", "—"),
         rules=context.user_data.get("contest_rules", "—"),
+        registration_mode=tr(
+            context,
+            "registration_mode_immediate"
+            if context.user_data.get("contest_registration_mode", "scheduled") == "immediate"
+            else "registration_mode_scheduled",
+        ),
     )
 
 
@@ -1265,7 +1299,8 @@ def register_participant(contest_id: str, user) -> str:
         if contest is None:
             return "not_found"
         starts_at = datetime.fromisoformat(contest["starts_at"])
-        if now < starts_at.astimezone(timezone.utc):
+        registration_mode = contest["registration_mode"] if "registration_mode" in contest.keys() else "scheduled"
+        if registration_mode != "immediate" and now < starts_at.astimezone(timezone.utc):
             return "not_started"
         ends_at = datetime.fromisoformat(contest["ends_at"])
         if now >= ends_at.astimezone(timezone.utc):
@@ -1650,6 +1685,22 @@ async def button_handler(
             "awaiting_announcement_rules",
         ):
             context.user_data[state_key] = False
+        context.user_data["awaiting_announcement_start"] = False
+        context.user_data["contest_publish_pending"] = False
+        await query.edit_message_text(
+            tr(context, "announcement_mode_prompt"),
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton(tr(context, "registration_immediate"), callback_data="registration_mode:immediate")],
+                [InlineKeyboardButton(tr(context, "registration_scheduled"), callback_data="registration_mode:scheduled")],
+                [InlineKeyboardButton(tr(context, "back"), callback_data="back:summary")],
+            ]),
+        )
+
+    elif data.startswith("registration_mode:"):
+        mode = data.split(":", 1)[1]
+        if mode not in ("immediate", "scheduled"):
+            return
+        context.user_data["contest_registration_mode"] = mode
         context.user_data["awaiting_announcement_start"] = True
         context.user_data["contest_publish_pending"] = False
         await query.edit_message_text(
@@ -1813,6 +1864,7 @@ async def button_handler(
         context.user_data.pop("contest_id", None)
         context.user_data["contest_published"] = False
         context.user_data["contest_publish_pending"] = False
+        context.user_data.pop("contest_registration_mode", None)
         context.user_data["contest_subscription_required"] = False
         context.user_data.pop("contest_subscription_chat_id", None)
         context.user_data.pop("contest_subscription_title", None)
