@@ -891,9 +891,18 @@ async def send_contest_summary(
         winners=winner_count,
         subscription=subscription,
     )
+    # Keep contest setup and date entry as separate steps:
+    # first complete or skip artwork, then show only the date button.
+    if context.user_data.get("contest_artwork_step_completed"):
+        next_step_button = InlineKeyboardButton(
+            tr(context, "announcement_button"), callback_data="announcement_preview"
+        )
+    else:
+        next_step_button = InlineKeyboardButton(
+            tr(context, "artwork_button"), callback_data="artwork:menu"
+        )
     markup = InlineKeyboardMarkup([
-        [InlineKeyboardButton(tr(context, "artwork_button"), callback_data="artwork:menu")],
-        [InlineKeyboardButton(tr(context, "announcement_button"), callback_data="announcement_preview")],
+        [next_step_button],
         [InlineKeyboardButton(tr(context, "back"), callback_data="back:subscription_choice")],
         [InlineKeyboardButton(tr(context, "summary_home"), callback_data="home")],
     ])
@@ -1380,6 +1389,7 @@ async def button_handler(
     elif data in ("artwork:done", "artwork:skip"):
         context.user_data["awaiting_contest_logo"] = False
         context.user_data["awaiting_contest_banner"] = False
+        context.user_data["contest_artwork_step_completed"] = True
         await send_contest_summary(query.message, context, edit=True)
 
     elif data == "announcement_preview":
@@ -1558,6 +1568,7 @@ async def button_handler(
         context.user_data.pop("contest_subscription_title", None)
         for contest_field in ("contest_start_at", "contest_end_at", "contest_rules", "contest_logo_file_id", "contest_banner_file_id", "contest_logo_as_document", "contest_banner_as_document"):
             context.user_data.pop(contest_field, None)
+        context.user_data["contest_artwork_step_completed"] = False
         await query.edit_message_text(
             f"{FORMAT_NAMES[language][format_key]}\n\n{tr(context, 'place_prompt')}",
             reply_markup=place_menu(language),
