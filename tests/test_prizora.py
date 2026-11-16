@@ -71,7 +71,7 @@ class PrizoraTests(unittest.TestCase):
         self.assertNotIn("7-day", main.I18N["en"]["welcome"].lower())
         self.assertIn("not enabled yet", main.I18N["en"]["formats_title"].lower())
         self.assertIn("not active yet", main.I18N["en"]["plan_trial"].lower())
-        self.assertIn("manually", main.I18N["de"]["announcement_publish_success"].lower())
+        self.assertIn("manuell", main.I18N["de"]["announcement_publish_success"].lower())
 
     def test_registration_rejects_unknown_contest(self):
         self.assertEqual(main.register_participant("missing", DummyUser(1)), "not_found")
