@@ -1,5 +1,6 @@
 
 import os
+import base64
 import logging
 import sqlite3
 import uuid
@@ -18,6 +19,23 @@ from telegram.error import TelegramError
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
 
+
+def load_brand_banner():
+    """Load and validate the PRIZORA black-and-gold welcome artwork."""
+    banner_path = os.path.join(
+        os.path.dirname(__file__), "assets", "prizora_brand_banner.jpg.b64"
+    )
+    try:
+        with open(banner_path, "r", encoding="ascii") as banner_file:
+            encoded = banner_file.read().strip()
+        banner = base64.b64decode(encoded, validate=True)
+        if not banner.startswith(b"\xff\xd8\xff") or not banner.endswith(b"\xff\xd9"):
+            raise ValueError("PRIZORA banner is not a complete JPEG")
+        return banner
+    except (OSError, ValueError):
+        logging.warning("Could not load PRIZORA brand banner", exc_info=True)
+        return None
+
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO,
@@ -31,46 +49,28 @@ SUPPORTED_LANGUAGES = {
 
 I18N = {
     "ru": {
-        "language_prompt": "🌐 Выбери язык PRIZORA. Его можно изменить в любой момент в главном меню.",
+        "language_prompt": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n🌐 Выбери язык интерфейса. Его можно изменить в любой момент в главном меню.",
         "language_detected": "Язык Telegram: {language}. Можешь выбрать другой.",
         "language_saved": "✅ Язык интерфейса: Русский.",
-        "welcome": (
-            "👑 PRIZORA\n"
-            "━━━━━━━━━━━━━━━━━━\n"
-            "✨ ТВОЯ ПРЕМИАЛЬНАЯ ПЛОЩАДКА КОНКУРСОВ\n"
-            "━━━━━━━━━━━━━━━━━━\n\n"
-            "🎁 Создавай яркие конкурсы и розыгрыши.\n"
-            "🎡 Выбирай формат под свою аудиторию.\n"
-            "🏆 Собирай участников и определяй победителей.\n\n"
-            "💎 Новым пользователям доступен пробный период PRO — 7 дней.\n\n"
-            "👇 Выбери, с чего начнём:"
-        ),
+        "welcome": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n✨ ПРЕМИАЛЬНАЯ ПЛОЩАДКА КОНКУРСОВ\n━━━━━━━━━━━━━━━━━━\n\n🎁 Создавай и публикуй объявления конкурсов.\n👥 Принимай заявки участников по ссылке.\n🏆 Победителей пока выбирает организатор вручную.\n\n👇 Выбери, с чего начнём:",
         "menu_create": "👑 Создать конкурс",
         "menu_formats": "✨ Форматы конкурсов",
         "menu_plans": "💰 Мои тарифы",
         "menu_help": "📖 Помощь",
         "menu_language": "🌐 Язык",
         "home_title": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n✨ ПРЕМИАЛЬНАЯ ПЛОЩАДКА КОНКУРСОВ\n━━━━━━━━━━━━━━━━━━\n\n👇 Выбери действие:",
-        "formats_title": "✨ ВЫБОР ФОРМАТА\n━━━━━━━━━━━━\nВыбери стиль своего розыгрыша:",
-        "create_title": "👑 НОВЫЙ КОНКУРС\n━━━━━━━━━━━━\nВыбери формат розыгрыша:",
+        "formats_title": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n✨ ФОРМАТ ОБЪЯВЛЕНИЯ\nВыбери тип конкурса для публикации.\nАвтоматические игровые механики пока не подключены.",
+        "create_title": "👑 PRIZORA • НОВЫЙ КОНКУРС\n━━━━━━━━━━━━\nВыбери формат объявления:",
         "back_home": "⌂ Главное меню",
         "back": "‹ Назад",
         "unknown_format": "Неизвестный формат.",
-        "place_prompt": "Где планируешь провести конкурс?",
+        "place_prompt": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n📍 МЕСТО ПРОВЕДЕНИЯ\nГде планируешь провести конкурс?",
         "group": "👥 Группа",
         "channel": "📣 Канал",
         "selected_group": "в группе",
         "selected_channel": "в канале",
-        "destination_prompt_group": (
-            "📍 Отправь @username публичной группы или её числовой ID.\n\n"
-            "Сначала добавь @Prizora_GlobalBot в группу администратором. "
-            "Я проверю, что ты тоже администратор и бот сможет работать с группой."
-        ),
-        "destination_prompt_channel": (
-            "📣 Отправь @username публичного канала или его числовой ID.\n\n"
-            "Сначала добавь @Prizora_GlobalBot в канал администратором с правом публиковать сообщения. "
-            "Я проверю права канала и твои права администратора."
-        ),
+        "destination_prompt_group": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n📍 ПОДКЛЮЧЕНИЕ ГРУППЫ\nОтправь @username публичной группы или её числовой ID.\n\nСначала добавь @Prizora_GlobalBot в группу администратором. Я проверю, что ты тоже администратор и бот сможет работать с группой.",
+        "destination_prompt_channel": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n📣 ПОДКЛЮЧЕНИЕ КАНАЛА\nОтправь @username публичного канала или его числовой ID.\n\nСначала добавь @Prizora_GlobalBot в канал администратором с правом публиковать сообщения. Я проверю права канала и твои права администратора.",
         "chat_reference_invalid": "Не удалось распознать чат. Отправь @username или числовой ID (для закрытого чата).",
         "chat_not_found": "Не удалось получить доступ к этому чату. Проверь @username/ID и убедись, что бот уже добавлен туда.",
         "chat_type_mismatch": "Тип чата не совпадает с выбранным. Выбери группу для группы или канал для канала.",
@@ -78,15 +78,10 @@ I18N = {
         "bot_no_post_permission": "У бота нет права публиковать сообщения в этом канале. Включи право «Публикация сообщений» и попробуй снова.",
         "organizer_not_admin": "Твой аккаунт не найден среди администраторов этого чата. Подключить его может владелец или администратор.",
         "destination_verified": "✅ Чат подтверждён: {title}\n\nТеперь выбери категорию приза:",
-        "subscription_prompt": "🔐 Нужно ли требовать подписку на отдельный Telegram-канал для участия?",
+        "subscription_prompt": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n🔐 Нужна ли обязательная подписка на отдельный Telegram-канал для участия?",
         "subscription_yes": "✅ Да, подписка обязательна",
         "subscription_no": "Нет, подписка не нужна",
-        "subscription_channel_prompt": (
-            "📢 Укажи @username канала или его числовой ID.\n\n"
-            "Добавь @Prizora_GlobalBot в этот канал администратором. "
-            "Для проверки подписки бот должен быть администратором канала. "
-            "Ты также должен быть владельцем или администратором."
-        ),
+        "subscription_channel_prompt": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n📢 Укажи @username канала или его числовой ID.\n\nДобавь @Prizora_GlobalBot в этот канал администратором. Для проверки подписки бот должен быть администратором канала. Ты также должен быть владельцем или администратором.",
         "subscription_channel_verified": "✅ Канал для проверки подписки подтверждён: {title}",
         "subscription_required": "Обязательна — {channel}",
         "subscription_optional": "Не обязательна",
@@ -97,58 +92,29 @@ I18N = {
         "prize_gift": "🎁 Подарок или набор",
         "prize_digital": "👑 Цифровой приз / VIP",
         "prize_custom": "✍️ Свой вариант",
-        "prize_prompt": (
-            "Выбрана категория: {prize}\n\n"
-            "✍️ Напиши название приза и, если нужно, его описание.\n"
-            "Например: «Подарочный сертификат на 5 000 рублей»."
-        ),
+        "prize_prompt": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n🎁 ВЫБРАНА КАТЕГОРИЯ: {prize}\n\n✍️ Напиши название приза и, если нужно, его описание.\nНапример: «Подарочный сертификат на 5 000 рублей».",
         "prize_empty": "Напиши название приза текстом.",
         "prize_too_long": "Слишком длинное описание. Умести его, пожалуйста, в 300 символов.",
-        "prize_saved_ask_limit": (
-            "✅ Приз сохранён: {prize}\n\n"
-            "👥 Сколько участников максимум сможет принять конкурс?\n"
-            "Введи целое число от 1 до 100 000."
-        ),
+        "prize_saved_ask_limit": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n✅ Приз сохранён: {prize}\n\n👥 ЛИМИТ УЧАСТНИКОВ\nСколько человек максимум смогут зарегистрироваться?\nВведи целое число от 1 до 100 000.",
         "number_participants_invalid": "Введи, пожалуйста, целое число участников, например 100.",
         "number_participants_range": "Количество участников должно быть от 1 до 100 000. Попробуй ещё раз.",
-        "participants_saved_ask_winners": (
-            "👥 Максимум участников: {count}\n\n"
-            "🏆 Сколько победителей нужно выбрать?\n"
-            "Введи целое число от 1 до {count}."
-        ),
+        "participants_saved_ask_winners": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n👥 Максимум участников: {count}\n\n🏆 КОЛИЧЕСТВО ПОБЕДИТЕЛЕЙ\nСколько победителей организатор выберет вручную?\nВведи целое число от 1 до {count}.",
         "number_winners_invalid": "Введи, пожалуйста, целое число победителей, например 3.",
         "number_winners_range": "Количество победителей должно быть от 1 до {count}. Попробуй ещё раз.",
-        "summary": (
-            "✅ Параметры конкурса сохранены!\n\n"
-            "🎡 Формат: {format}\n"
-            "📍 Место проведения: {place}\n"
-            "📣 Чат: {destination}\n"
-            "🎁 Приз: {prize}\n"
-            "👥 Максимум участников: {participants}\n"
-            "🏆 Победителей: {winners}\n"
-            "🔐 Подписка: {subscription}\n\n"
-            "Следующий этап — подготовка публикации. "
-            "Публикация объявления подключена. Регистрация участников и выбор победителей будут добавлены отдельно. "
-            "Тарифные ограничения пока не применяются."
-        ),
+        "summary": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n✨ ПАРАМЕТРЫ КОНКУРСА\n━━━━━━━━━━━━━━━━━━\n\n✅ Параметры конкурса сохранены!\n\n🎡 Формат: {format}\n📍 Место проведения: {place}\n📣 Чат: {destination}\n🎁 Приз: {prize}\n👥 Максимум участников: {participants}\n🏆 Победителей: {winners}\n🔐 Подписка: {subscription}\n\nСледующий этап — подготовка объявления. Публикация и регистрация по ссылке доступны. Победителей организатор выбирает вручную. Формат отображается в объявлении; автоматические игровые механики пока не подключены. Тарифные лимиты и оплата пока не активны.",
         "summary_home": "🏠 Главное меню",
-        "plans_title": "💎 Тарифы PRIZORA\n\nВыбери тариф, чтобы узнать подробности:",
-        "plan_detail": (
-            "{name}\n\n"
-            "👥 Участники: {limit}\n\n"
-            "✨ Возможности: {features}\n\n"
-            "{trial}{notice}"
-        ),
-        "plan_free_limit": "100 участников",
-        "plan_free_features": "Основные форматы конкурсов",
-        "plan_pro_limit": "500 участников",
-        "plan_pro_features": "Все форматы, история и несколько победителей",
-        "plan_premium_limit": "Без установленного лимита",
-        "plan_premium_features": "Все возможности и расширенная статистика",
-        "plan_trial": "🎁 Новым пользователям предусмотрено 7 дней PRO.\n\n",
-        "plan_notice": "Настоящее подключение подписок и оплата будут реализованы отдельным этапом.",
+        "plans_title": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n💎 ПЛАНЫ И ТАРИФЫ\nВыбери тариф для просмотра планируемых условий:",
+        "plan_detail": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n{name}\n\n👥 Участники: {limit}\n\n✨ Возможности: {features}\n\n{trial}{notice}",
+        "plan_free_limit": "до 100 участников (пока не применяется)",
+        "plan_free_features": "Настройка конкурса и регистрация по ссылке",
+        "plan_pro_limit": "до 500 участников (пока не применяется)",
+        "plan_pro_features": "Дополнительные инструменты — пока не активны",
+        "plan_premium_limit": "без лимита (планируемое условие)",
+        "plan_premium_features": "Расширенные инструменты и статистика — пока не активны",
+        "plan_trial": "🎁 Пробный период PRO пока не подключён.\n\n",
+        "plan_notice": "Подписки, оплата и применение тарифных лимитов пока не подключены.",
         "announcement_button": "📣 Заполнить даты и подготовить",
-        "announcement_title": "📣 Черновик объявления",
+        "announcement_title": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n📣 ЧЕРНОВИК ОБЪЯВЛЕНИЯ",
         "announcement_text": (
             "🎉 РОЗЫГРЫШ!\n\n"
             "🎁 Приз: {prize}\n"
@@ -163,25 +129,26 @@ I18N = {
             "📌 Условия участия: {rules}\n\n"
             "👇 Нажми кнопку «Участвовать» под объявлением. Регистрация доступна в указанные даты; победителей пока выбирает организатор."
         ),
-        "announcement_start_prompt": "📅 Укажи дату и время начала конкурса в формате ДД.ММ.ГГГГ ЧЧ:ММ (московское время, МСК UTC+3).\nНапример: 14.11.2026 18:00",
-        "announcement_end_prompt": "⏰ Укажи дату и время завершения конкурса в том же формате. Время завершения должно быть позже начала.",
-        "announcement_rules_prompt": "📌 Напиши условия участия. Регистрация открыта до окончания конкурса; после времени завершения новые участники не принимаются.",
+        "announcement_start_prompt": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n📅 ДАТА И ВРЕМЯ НАЧАЛА\nУкажи дату и время по Москве (МСК, UTC+3) в формате ДД.ММ.ГГГГ ЧЧ:ММ.\nНапример: 14.11.2026 18:00",
+        "announcement_end_prompt": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n⏰ ДАТА И ВРЕМЯ ОКОНЧАНИЯ\nУкажи дату и время в том же формате. Окончание должно быть позже начала.",
+        "announcement_rules_prompt": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n📌 УСЛОВИЯ УЧАСТИЯ\nНапиши условия текстом. Регистрация открыта до окончания конкурса; после этого новые заявки не принимаются.",
         "current_value": "Текущее значение: {value}\nОтправь новое значение, чтобы изменить его.",
         "announcement_datetime_invalid": "Не понял дату и время. Введи в формате ДД.ММ.ГГГГ ЧЧ:ММ, например 14.11.2026 18:00.",
+        "announcement_start_past": "Начало конкурса должно быть в будущем. Укажи более позднюю дату и время.",
         "announcement_end_invalid": "Завершение должно быть позже начала. Введи дату и время ещё раз.",
         "announcement_rules_invalid": "Напиши условия текстом (до 1000 символов).",
-        "announcement_review_prompt": "👑 ПРЕДПРОСМОТР ГОТОВ\n━━━━━━━━━━━━\nПроверь карточку конкурса выше. Если всё верно, подтверди публикацию кнопкой ниже.",
+        "announcement_review_prompt": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n✨ ПРЕДПРОСМОТР ГОТОВ\nПроверь карточку конкурса выше. Если всё верно, подтверди публикацию кнопкой ниже.",
         "announcement_publish_button": "👑 Опубликовать конкурс",
         "announcement_cancel_button": "✖️ Отменить",
-        "announcement_publish_success": "✨ Конкурс опубликован в чате: {destination}.\n\nУчастники могут зарегистрироваться по кнопке под объявлением до окончания конкурса. Победителя пока выбирает организатор.",
+        "announcement_publish_success": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n✨ Конкурс опубликован в чате: {destination}.\n\nРегистрация по кнопке будет доступна в указанный период. Победителей организатор выбирает вручную.",
         "announcement_publish_error": "Не удалось отправить объявление. Проверь, что бот всё ещё администратор чата и имеет право публиковать сообщения. Можно попробовать ещё раз.",
         "artwork_button": "✨ Оформление конкурса",
-        "artwork_title": "👑 ФИРМЕННЫЙ СТИЛЬ PRIZORA\n━━━━━━━━━━━━\nДобавь логотип и/или баннер. Изображения необязательны.\n\nЛоготип: {logo}\nБаннер: {banner}",
+        "artwork_title": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n🎨 ОФОРМЛЕНИЕ КОНКУРСА\nДобавь логотип и/или баннер организатора. Изображения необязательны.\n\nЛоготип: {logo}\nБаннер: {banner}",
         "artwork_logo": "🟡 Загрузить логотип", "artwork_banner": "🖼 Загрузить баннер",
         "artwork_done": "✅ Готово", "artwork_skip": "Пропустить оформление",
         "artwork_remove_logo": "Удалить логотип", "artwork_remove_banner": "Удалить баннер",
-        "artwork_logo_prompt": "Отправь логотип как фото или изображение-файл PNG/JPG. Рекомендуемый размер — квадрат 512 × 512 px, до 5 МБ.",
-        "artwork_banner_prompt": "Отправь баннер как фото или изображение-файл PNG/JPG. Рекомендуемый размер — 1200 × 675 px (горизонтальный), до 5 МБ.",
+        "artwork_logo_prompt": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n🟡 ЗАГРУЗКА ЛОГОТИПА\nОтправь логотип как фото или изображение-файл PNG/JPG. Рекомендуемый размер — квадрат 512 × 512 px, до 5 МБ.",
+        "artwork_banner_prompt": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n🖼 ЗАГРУЗКА БАННЕРА\nОтправь баннер как фото или изображение-файл PNG/JPG. Рекомендуемый размер — 1200 × 675 px (горизонтальный), до 5 МБ.",
         "artwork_photo_invalid": "Отправь фото или файл PNG/JPG размером не более 5 МБ.",
         "artwork_logo_ratio": "Для логотипа нужно квадратное изображение (примерно 1:1). Попробуй другое.",
         "artwork_banner_ratio": "Для баннера нужно горизонтальное изображение (примерно 16:9). Попробуй другое.",
@@ -189,55 +156,35 @@ I18N = {
         "artwork_removed": "Изображение удалено.", "artwork_status_yes": "добавлено", "artwork_status_no": "не добавлено",
         "announcement_cancelled": "Публикация отменена. Объявление не отправлялось.",
         "announcement_already_published": "Это объявление уже было отправлено. Повторно публиковать его не буду.",
-        "help_text": (
-            "📖 PRIZORA — международный конструктор конкурсов и розыгрышей.\n\n"
-            "1. Выбери язык интерфейса.\n"
-            "2. Выбери формат и место проведения конкурса.\n"
-            "3. Укажи приз, лимит участников и количество победителей.\n\n"
-            "Подготовка и публикация тестового объявления уже доступны. Регистрация участников и выбор победителей будут добавлены позже."
-        ),
+        "announcement_too_long": "Текст объявления превышает лимит Telegram: {limit} символов. Сократи условия участия и отправь их ещё раз.",
+        "announcement_storage_error": "Объявление опубликовано, но сохранить конкурс в базе не удалось. Не публикуй его повторно; сообщи организатору об этой ошибке.",
+        "artwork_logo_caption": "🟡 Логотип конкурса",
+        "artwork_banner_caption": "🖼 Баннер конкурса",
+        "help_text": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n📖 ПОМОЩЬ\n\n1. Выбери язык интерфейса.\n2. Выбери тип конкурса и место публикации.\n3. Укажи приз, лимит участников и количество победителей.\n\nПодготовка и публикация объявления, а также регистрация по ссылке доступны. Победителей организатор выбирает вручную. Формат пока служит обозначением в объявлении; автоматические игровые механики, тарифные лимиты и оплата не подключены.",
     },
     "en": {
-        "language_prompt": "🌐 Choose the PRIZORA interface language. You can change it anytime from the main menu.",
+        "language_prompt": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n🌐 Choose the interface language. You can change it anytime from the main menu.",
         "language_detected": "Telegram language detected: {language}. You can choose another language.",
         "language_saved": "✅ Interface language set to English.",
-        "welcome": (
-            "👑 PRIZORA\n"
-            "━━━━━━━━━━━━━━━━━━\n"
-            "✨ YOUR PREMIUM GIVEAWAY STUDIO\n"
-            "━━━━━━━━━━━━━━━━━━\n\n"
-            "🎁 Create engaging contests and giveaways.\n"
-            "🎡 Choose a format for your audience.\n"
-            "🏆 Bring participants together and pick winners.\n\n"
-            "💎 New users get a 7-day PRO trial.\n\n"
-            "👇 Choose where to begin:"
-        ),
+        "welcome": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n✨ YOUR PREMIUM GIVEAWAY STUDIO\n━━━━━━━━━━━━━━━━━━\n\n🎁 Create and publish contest announcements.\n👥 Collect entries through a contest link.\n🏆 The organizer currently selects winners manually.\n\n👇 Choose where to begin:",
         "menu_create": "👑 Create a contest",
         "menu_formats": "✨ Contest formats",
         "menu_plans": "💰 My plans",
         "menu_help": "📖 Help",
         "menu_language": "🌐 Language",
         "home_title": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n✨ YOUR PREMIUM GIVEAWAY STUDIO\n━━━━━━━━━━━━━━━━━━\n\n👇 Choose an action:",
-        "formats_title": "✨ CHOOSE A FORMAT\n━━━━━━━━━━━━\nSelect your giveaway style:",
-        "create_title": "👑 NEW CONTEST\n━━━━━━━━━━━━\nChoose a giveaway format:",
+        "formats_title": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n✨ CONTEST FORMAT\nChoose the label shown in the announcement.\nAutomated game mechanics are not enabled yet.",
+        "create_title": "👑 PRIZORA • NEW CONTEST\n━━━━━━━━━━━━\nChoose an announcement format:",
         "back_home": "⌂ Main menu",
         "back": "‹ Back",
         "unknown_format": "Unknown format.",
-        "place_prompt": "Where will you host the contest?",
+        "place_prompt": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n📍 WHERE WILL IT RUN?\nWhere will you host the contest?",
         "group": "👥 Group",
         "channel": "📣 Channel",
         "selected_group": "in a group",
         "selected_channel": "in a channel",
-        "destination_prompt_group": (
-            "📍 Send the public group's @username or numeric chat ID.\n\n"
-            "First add @Prizora_GlobalBot to the group as an administrator. "
-            "I'll check that you are also an administrator and that the bot can work with the group."
-        ),
-        "destination_prompt_channel": (
-            "📣 Send the public channel's @username or numeric chat ID.\n\n"
-            "First add @Prizora_GlobalBot as a channel administrator with permission to post messages. "
-            "I'll check the channel and your administrator rights."
-        ),
+        "destination_prompt_group": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n📍 CONNECT A GROUP\nSend the public group's @username or numeric chat ID.\n\nFirst add @Prizora_GlobalBot to the group as an administrator. I'll check that you are also an administrator and that the bot can work with the group.",
+        "destination_prompt_channel": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n📣 CONNECT A CHANNEL\nSend the public channel's @username or numeric chat ID.\n\nFirst add @Prizora_GlobalBot as a channel administrator with permission to post messages. I'll check the channel and your administrator rights.",
         "chat_reference_invalid": "I couldn't recognize that chat. Send an @username or numeric ID (for a private chat).",
         "chat_not_found": "I couldn't access this chat. Check the @username/ID and make sure the bot has already been added.",
         "chat_type_mismatch": "The chat type doesn't match your selection. Choose a group for group, or a channel for channel.",
@@ -245,15 +192,10 @@ I18N = {
         "bot_no_post_permission": "The bot cannot post in this channel. Enable the 'Post Messages' permission and try again.",
         "organizer_not_admin": "Your account is not listed as an administrator in this chat. Only its owner or an administrator can connect it.",
         "destination_verified": "✅ Chat verified: {title}\n\nNow choose a prize category:",
-        "subscription_prompt": "🔐 Should participants be required to subscribe to a separate Telegram channel?",
+        "subscription_prompt": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n🔐 Should participants have to subscribe to a separate Telegram channel?",
         "subscription_yes": "✅ Yes, subscription is required",
         "subscription_no": "No subscription required",
-        "subscription_channel_prompt": (
-            "📢 Send the channel's @username or numeric ID.\n\n"
-            "Add @Prizora_GlobalBot to that channel as an administrator. "
-            "The bot must be an administrator to verify subscriptions. "
-            "You must also be the owner or an administrator."
-        ),
+        "subscription_channel_prompt": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n📢 Send the channel's @username or numeric ID.\n\nAdd @Prizora_GlobalBot to that channel as an administrator. The bot must be an administrator to verify subscriptions. You must also be the owner or an administrator.",
         "subscription_channel_verified": "✅ Subscription channel verified: {title}",
         "subscription_required": "Required — {channel}",
         "subscription_optional": "Not required",
@@ -264,58 +206,29 @@ I18N = {
         "prize_gift": "🎁 Gift or bundle",
         "prize_digital": "👑 Digital prize / VIP",
         "prize_custom": "✍️ Custom prize",
-        "prize_prompt": (
-            "Selected category: {prize}\n\n"
-            "✍️ Enter the prize name and, optionally, a description.\n"
-            "Example: “A €50 gift card”."
-        ),
+        "prize_prompt": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n🎁 SELECTED CATEGORY: {prize}\n\n✍️ Enter the prize name and, optionally, a description.\nExample: “A €50 gift card”.",
         "prize_empty": "Please enter the prize name as text.",
         "prize_too_long": "That description is too long. Please keep it within 300 characters.",
-        "prize_saved_ask_limit": (
-            "✅ Prize saved: {prize}\n\n"
-            "👥 What is the maximum number of participants?\n"
-            "Enter a whole number from 1 to 100,000."
-        ),
+        "prize_saved_ask_limit": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n✅ Prize saved: {prize}\n\n👥 PARTICIPANT LIMIT\nHow many people can register at most?\nEnter a whole number from 1 to 100,000.",
         "number_participants_invalid": "Please enter a whole number of participants, for example 100.",
         "number_participants_range": "The participant limit must be between 1 and 100,000. Please try again.",
-        "participants_saved_ask_winners": (
-            "👥 Participant limit: {count}\n\n"
-            "🏆 How many winners should be selected?\n"
-            "Enter a whole number from 1 to {count}."
-        ),
+        "participants_saved_ask_winners": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n👥 Participant limit: {count}\n\n🏆 NUMBER OF WINNERS\nHow many winners will the organizer select manually?\nEnter a whole number from 1 to {count}.",
         "number_winners_invalid": "Please enter a whole number of winners, for example 3.",
         "number_winners_range": "The number of winners must be between 1 and {count}. Please try again.",
-        "summary": (
-            "✅ Contest settings saved!\n\n"
-            "🎡 Format: {format}\n"
-            "📍 Location: {place}\n"
-            "📣 Chat: {destination}\n"
-            "🎁 Prize: {prize}\n"
-            "👥 Participant limit: {participants}\n"
-            "🏆 Winners: {winners}\n"
-            "🔐 Subscription: {subscription}\n\n"
-            "Next step: prepare the contest announcement. "
-            "Announcement publishing is connected. Participant registration and winner selection will be added separately. "
-            "Plan limits are not enforced yet."
-        ),
+        "summary": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n✨ CONTEST SETTINGS\n━━━━━━━━━━━━━━━━━━\n\n✅ Contest settings saved!\n\n🎡 Format: {format}\n📍 Location: {place}\n📣 Chat: {destination}\n🎁 Prize: {prize}\n👥 Participant limit: {participants}\n🏆 Winners: {winners}\n🔐 Subscription: {subscription}\n\nNext step: prepare the contest announcement. Publishing and participant registration through the contest link are available. The organizer selects winners manually. The selected format is shown in the announcement; automated game mechanics are not enabled yet. Plan limits and payments are not active yet.",
         "summary_home": "🏠 Main menu",
-        "plans_title": "💎 PRIZORA plans\n\nChoose a plan to see its details:",
-        "plan_detail": (
-            "{name}\n\n"
-            "👥 Participants: {limit}\n\n"
-            "✨ Features: {features}\n\n"
-            "{trial}{notice}"
-        ),
-        "plan_free_limit": "100 participants",
-        "plan_free_features": "Core contest formats",
-        "plan_pro_limit": "500 participants",
-        "plan_pro_features": "All formats, history, and multiple winners",
-        "plan_premium_limit": "No fixed limit",
-        "plan_premium_features": "All features and extended statistics",
-        "plan_trial": "🎁 New users are eligible for a 7-day PRO trial.\n\n",
-        "plan_notice": "Subscription activation and payments will be implemented in a later stage.",
+        "plans_title": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n💎 PLANS\nChoose a plan to view the planned features:",
+        "plan_detail": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n{name}\n\n👥 Participants: {limit}\n\n✨ Features: {features}\n\n{trial}{notice}",
+        "plan_free_limit": "up to 100 participants (not enforced yet)",
+        "plan_free_features": "Contest setup and registration through a link",
+        "plan_pro_limit": "up to 500 participants (not enforced yet)",
+        "plan_pro_features": "Additional tools — not active yet",
+        "plan_premium_limit": "no fixed limit (planned)",
+        "plan_premium_features": "Advanced tools and statistics — not active yet",
+        "plan_trial": "🎁 The PRO trial is not active yet.\n\n",
+        "plan_notice": "Subscriptions, payments, and plan-limit enforcement are not active yet.",
         "announcement_button": "📣 Add dates and prepare",
-        "announcement_title": "📣 Announcement draft",
+        "announcement_title": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n📣 ANNOUNCEMENT DRAFT",
         "announcement_text": (
             "🎉 GIVEAWAY!\n\n"
             "🎁 Prize: {prize}\n"
@@ -330,25 +243,26 @@ I18N = {
             "📌 How to enter: {rules}\n\n"
             "👇 Use the Join contest button below. Registration is open during the announced dates; the organizer currently selects the winners."
         ),
-        "announcement_start_prompt": "📅 Enter the start date and time as DD.MM.YYYY HH:MM (Moscow time, MSK, UTC+3).\nExample: 14.11.2026 18:00",
-        "announcement_end_prompt": "⏰ Enter the end date and time in the same format. The end must be later than the start.",
-        "announcement_rules_prompt": "📌 Enter the participation rules. Registration stays open until the contest end time; no new entries are accepted after that.",
+        "announcement_start_prompt": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n📅 START DATE AND TIME\nEnter the date and time in Moscow time (MSK, UTC+3), using DD.MM.YYYY HH:MM.\nExample: 14.11.2026 18:00",
+        "announcement_end_prompt": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n⏰ END DATE AND TIME\nEnter the date and time in the same format. The end must be later than the start.",
+        "announcement_rules_prompt": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n📌 PARTICIPATION RULES\nEnter the rules as text. Registration stays open until the contest end time; no new entries are accepted after that.",
         "current_value": "Current value: {value}\nSend a new value to change it.",
         "announcement_datetime_invalid": "I couldn't read that date and time. Use DD.MM.YYYY HH:MM, for example 14.11.2026 18:00.",
+        "announcement_start_past": "The start date and time must be in the future. Please enter a later time.",
         "announcement_end_invalid": "The end date and time must be later than the start. Please enter it again.",
         "announcement_rules_invalid": "Enter the rules as text (up to 1,000 characters).",
-        "announcement_review_prompt": "👑 PREVIEW READY\n━━━━━━━━━━━━\nCheck the contest card above. If everything looks right, confirm using the button below.",
+        "announcement_review_prompt": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n✨ PREVIEW READY\nCheck the contest card above. If everything looks right, confirm using the button below.",
         "announcement_publish_button": "👑 Publish contest",
         "announcement_cancel_button": "✖️ Cancel",
-        "announcement_publish_success": "✨ Contest published in: {destination}.\n\nParticipants can register using the button until the contest ends. The organiser currently selects the winner.",
+        "announcement_publish_success": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n✨ Contest published in: {destination}.\n\nRegistration through the button will be available during the scheduled period. The organizer selects winners manually.",
         "announcement_publish_error": "The announcement could not be sent. Check that the bot is still an administrator and can post in the chat. You can retry.",
-        "artwork_button": "✨ Contest branding",
-        "artwork_title": "👑 PRIZORA BRANDING\n━━━━━━━━━━━━\nAdd a logo and/or banner. Images are optional.\n\nLogo: {logo}\nBanner: {banner}",
+        "artwork_button": "✨ Contest artwork",
+        "artwork_title": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n🎨 CONTEST ARTWORK\nAdd the organizer's logo and/or banner. Images are optional.\n\nLogo: {logo}\nBanner: {banner}",
         "artwork_logo": "🟡 Upload logo", "artwork_banner": "🖼 Upload banner",
-        "artwork_done": "✅ Done", "artwork_skip": "Skip branding",
+        "artwork_done": "✅ Done", "artwork_skip": "Skip artwork",
         "artwork_remove_logo": "Remove logo", "artwork_remove_banner": "Remove banner",
-        "artwork_logo_prompt": "Send the logo as a photo or PNG/JPG file. Recommended: square 512 × 512 px, up to 5 MB.",
-        "artwork_banner_prompt": "Send the banner as a photo or PNG/JPG file. Recommended: landscape 1200 × 675 px, up to 5 MB.",
+        "artwork_logo_prompt": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n🟡 UPLOAD LOGO\nSend the logo as a photo or PNG/JPG file. Recommended: square 512 × 512 px, up to 5 MB.",
+        "artwork_banner_prompt": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n🖼 UPLOAD BANNER\nSend the banner as a photo or PNG/JPG file. Recommended: landscape 1200 × 675 px, up to 5 MB.",
         "artwork_photo_invalid": "Send a photo or PNG/JPG file no larger than 5 MB.",
         "artwork_logo_ratio": "The logo should be square (approximately 1:1). Please try another image.",
         "artwork_banner_ratio": "The banner should be landscape (approximately 16:9). Please try another image.",
@@ -356,55 +270,35 @@ I18N = {
         "artwork_removed": "Image removed.", "artwork_status_yes": "added", "artwork_status_no": "not added",
         "announcement_cancelled": "Publication cancelled. The announcement was not sent.",
         "announcement_already_published": "This announcement has already been sent. I won't publish it again.",
-        "help_text": (
-            "📖 PRIZORA is an international contest and giveaway builder.\n\n"
-            "1. Choose your interface language.\n"
-            "2. Select a contest format and where it will run.\n"
-            "3. Enter the prize, participant limit, and number of winners.\n\n"
-            "Preparing and publishing a test announcement is now available. Participant registration and winner selection will be added later."
-        ),
+        "announcement_too_long": "The announcement exceeds Telegram's current limit of {limit} characters. Shorten the participation rules and send them again.",
+        "announcement_storage_error": "The announcement was published, but the contest could not be saved to the database. Do not publish it again; contact the organizer about this error.",
+        "artwork_logo_caption": "🟡 Contest logo",
+        "artwork_banner_caption": "🖼 Contest banner",
+        "help_text": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n📖 HELP\n\n1. Choose your interface language.\n2. Choose a contest label and where the announcement will be posted.\n3. Enter the prize, participant limit, and number of winners.\n\nPreparing and publishing announcements, plus registration through the contest link, are available. The organizer selects winners manually. The format is currently a label in the announcement; automated game mechanics, plan limits, and payments are not active.",
     },
     "de": {
-        "language_prompt": "🌐 Wähle die Sprache der PRIZORA-Oberfläche. Du kannst sie jederzeit im Hauptmenü ändern.",
+        "language_prompt": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n🌐 Wähle die Sprache der Oberfläche. Du kannst sie jederzeit im Hauptmenü ändern.",
         "language_detected": "Erkannte Telegram-Sprache: {language}. Du kannst eine andere Sprache wählen.",
         "language_saved": "✅ Die Oberflächensprache ist jetzt Deutsch.",
-        "welcome": (
-            "👑 PRIZORA\n"
-            "━━━━━━━━━━━━━━━━━━\n"
-            "✨ DEIN PREMIUM-GEWINNSPIELSTUDIO\n"
-            "━━━━━━━━━━━━━━━━━━\n\n"
-            "🎁 Erstelle besondere Wettbewerbe und Verlosungen.\n"
-            "🎡 Wähle das passende Format für deine Community.\n"
-            "🏆 Ermittle die Gewinner deiner Aktionen.\n\n"
-            "💎 Neue Nutzer erhalten 7 Tage PRO zum Testen.\n\n"
-            "👇 Wähle, womit du beginnen möchtest:"
-        ),
+        "welcome": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n✨ DEIN GEWINNSPIELSTUDIO\n━━━━━━━━━━━━━━━━━━\n\n🎁 Erstelle und veröffentliche Wettbewerbsankündigungen.\n👥 Sammle Teilnahmen über den Wettbewerbslink.\n🏆 Der Veranstalter wählt die Gewinner derzeit manuell.\n\n👇 Wähle, womit du beginnen möchtest:",
         "menu_create": "🏆 Wettbewerb erstellen",
         "menu_formats": "🎮 Wettbewerbsformate",
         "menu_plans": "💎 Meine Tarife",
         "menu_help": "📖 Hilfe",
         "menu_language": "🌐 Sprache",
         "home_title": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n✨ DEIN PREMIUM-GEWINNSPIELSTUDIO\n━━━━━━━━━━━━━━━━━━\n\n👇 Wähle eine Aktion:",
-        "formats_title": "✨ FORMAT AUSWÄHLEN\n━━━━━━━━━━━━\nWähle deinen Wettbewerbsstil:",
-        "create_title": "👑 NEUER WETTBEWERB\n━━━━━━━━━━━━\nWähle ein Format:",
+        "formats_title": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n✨ FORMAT DER ANKÜNDIGUNG\nWähle die Bezeichnung für die Ankündigung.\nAutomatische Spielmechaniken sind noch nicht verfügbar.",
+        "create_title": "👑 PRIZORA • NEUER WETTBEWERB\n━━━━━━━━━━━━\nWähle ein Ankündigungsformat:",
         "back_home": "⬅️ Hauptmenü",
         "back": "⬅️ Zurück",
         "unknown_format": "Unbekanntes Format.",
-        "place_prompt": "Wo möchtest du den Wettbewerb veranstalten?",
+        "place_prompt": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n📍 VERANSTALTUNGSORT\nWo möchtest du den Wettbewerb veranstalten?",
         "group": "👥 Gruppe",
         "channel": "📣 Kanal",
         "selected_group": "in einer Gruppe",
         "selected_channel": "in einem Kanal",
-        "destination_prompt_group": (
-            "📍 Sende den öffentlichen @username der Gruppe oder ihre numerische Chat-ID.\n\n"
-            "Füge zuerst @Prizora_GlobalBot als Administrator zur Gruppe hinzu. "
-            "Ich prüfe, ob du ebenfalls Administrator bist und der Bot mit der Gruppe arbeiten kann."
-        ),
-        "destination_prompt_channel": (
-            "📣 Sende den öffentlichen @username des Kanals oder seine numerische Chat-ID.\n\n"
-            "Füge zuerst @Prizora_GlobalBot als Kanaladministrator mit dem Recht zum Veröffentlichen hinzu. "
-            "Ich prüfe die Rechte des Kanals und deine Administratorrechte."
-        ),
+        "destination_prompt_group": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n📍 GRUPPE VERBINDEN\nSende den öffentlichen @username der Gruppe oder ihre numerische Chat-ID.\n\nFüge zuerst @Prizora_GlobalBot als Administrator zur Gruppe hinzu. Ich prüfe, ob du ebenfalls Administrator bist und der Bot mit der Gruppe arbeiten kann.",
+        "destination_prompt_channel": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n📣 KANAL VERBINDEN\nSende den öffentlichen @username des Kanals oder seine numerische Chat-ID.\n\nFüge @Prizora_GlobalBot als Kanaladministrator mit dem Recht zum Veröffentlichen hinzu. Ich prüfe die Rechte des Kanals und deine Administratorrechte.",
         "chat_reference_invalid": "Der Chat konnte nicht erkannt werden. Sende einen @username oder eine numerische ID (für private Chats).",
         "chat_not_found": "Der Bot kann diesen Chat nicht erreichen. Prüfe @username/ID und füge den Bot zuerst hinzu.",
         "chat_type_mismatch": "Der Chattyp passt nicht zur Auswahl. Wähle eine Gruppe für Gruppe oder einen Kanal für Kanal.",
@@ -412,15 +306,10 @@ I18N = {
         "bot_no_post_permission": "Der Bot darf in diesem Kanal nicht veröffentlichen. Aktiviere das Recht „Nachrichten veröffentlichen“ und versuche es erneut.",
         "organizer_not_admin": "Dein Konto ist in diesem Chat nicht als Administrator eingetragen. Nur Eigentümer oder Administratoren können ihn verbinden.",
         "destination_verified": "✅ Chat bestätigt: {title}\n\nWähle jetzt die Preiskategorie:",
-        "subscription_prompt": "🔐 Soll für die Teilnahme ein Abonnement eines separaten Telegram-Kanals erforderlich sein?",
+        "subscription_prompt": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n🔐 Müssen Teilnehmer einen separaten Telegram-Kanal abonnieren?",
         "subscription_yes": "✅ Ja, Abonnement erforderlich",
         "subscription_no": "Kein Abonnement erforderlich",
-        "subscription_channel_prompt": (
-            "📢 Sende den @username des Kanals oder seine numerische ID.\n\n"
-            "Füge @Prizora_GlobalBot als Administrator zu diesem Kanal hinzu. "
-            "Der Bot muss Administrator sein, um Abonnements zu prüfen. "
-            "Du musst ebenfalls Eigentümer oder Administrator sein."
-        ),
+        "subscription_channel_prompt": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n📢 Sende den @username des Kanals oder seine numerische ID.\n\nFüge @Prizora_GlobalBot als Administrator zu diesem Kanal hinzu. Der Bot muss Administrator sein, um Abonnements zu prüfen. Du musst ebenfalls Eigentümer oder Administrator sein.",
         "subscription_channel_verified": "✅ Kanal für die Abonnementprüfung bestätigt: {title}",
         "subscription_required": "Erforderlich — {channel}",
         "subscription_optional": "Nicht erforderlich",
@@ -431,58 +320,29 @@ I18N = {
         "prize_gift": "🎁 Geschenk oder Set",
         "prize_digital": "👑 Digitaler Preis / VIP",
         "prize_custom": "✍️ Eigener Preis",
-        "prize_prompt": (
-            "Ausgewählte Kategorie: {prize}\n\n"
-            "✍️ Gib den Namen des Preises und optional eine Beschreibung ein.\n"
-            "Beispiel: „Geschenkgutschein im Wert von 50 €“."
-        ),
+        "prize_prompt": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n🎁 AUSGEWÄHLTE KATEGORIE: {prize}\n\n✍️ Gib den Namen des Preises und optional eine Beschreibung ein.\nBeispiel: „Geschenkgutschein im Wert von 50 €“.",
         "prize_empty": "Bitte gib den Namen des Preises als Text ein.",
         "prize_too_long": "Die Beschreibung ist zu lang. Bitte verwende höchstens 300 Zeichen.",
-        "prize_saved_ask_limit": (
-            "✅ Preis gespeichert: {prize}\n\n"
-            "👥 Wie viele Teilnehmer darf der Wettbewerb maximal haben?\n"
-            "Gib eine ganze Zahl von 1 bis 100.000 ein."
-        ),
+        "prize_saved_ask_limit": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n✅ Preis gespeichert: {prize}\n\n👥 TEILNEHMERLIMIT\nWie viele Personen können sich maximal anmelden?\nGib eine ganze Zahl von 1 bis 100.000 ein.",
         "number_participants_invalid": "Bitte gib eine ganze Teilnehmerzahl ein, zum Beispiel 100.",
         "number_participants_range": "Die Teilnehmerzahl muss zwischen 1 und 100.000 liegen. Bitte versuche es erneut.",
-        "participants_saved_ask_winners": (
-            "👥 Maximale Teilnehmerzahl: {count}\n\n"
-            "🏆 Wie viele Gewinner sollen ausgewählt werden?\n"
-            "Gib eine ganze Zahl von 1 bis {count} ein."
-        ),
+        "participants_saved_ask_winners": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n👥 Teilnehmerlimit: {count}\n\n🏆 ANZAHL DER GEWINNER\nWie viele Gewinner wählt der Veranstalter manuell aus?\nGib eine ganze Zahl von 1 bis {count} ein.",
         "number_winners_invalid": "Bitte gib eine ganze Anzahl von Gewinnern ein, zum Beispiel 3.",
         "number_winners_range": "Die Anzahl der Gewinner muss zwischen 1 und {count} liegen. Bitte versuche es erneut.",
-        "summary": (
-            "✅ Wettbewerbseinstellungen gespeichert!\n\n"
-            "🎡 Format: {format}\n"
-            "📍 Ort: {place}\n"
-            "📣 Chat: {destination}\n"
-            "🎁 Preis: {prize}\n"
-            "👥 Maximale Teilnehmerzahl: {participants}\n"
-            "🏆 Gewinner: {winners}\n"
-            "🔐 Abonnement: {subscription}\n\n"
-            "Nächster Schritt: die Ankündigung vorbereiten. "
-            "Die Veröffentlichung der Ankündigung ist verbunden. Teilnehmerregistrierung und Gewinnerauswahl folgen später. "
-            "Tariflimits werden noch nicht angewendet."
-        ),
+        "summary": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n✨ WETTBEWERBSEINSTELLUNGEN\n━━━━━━━━━━━━━━━━━━\n\n✅ Wettbewerbseinstellungen gespeichert!\n\n🎡 Format: {format}\n📍 Ort: {place}\n📣 Chat: {destination}\n🎁 Preis: {prize}\n👥 Maximale Teilnehmerzahl: {participants}\n🏆 Gewinner: {winners}\n🔐 Abonnement: {subscription}\n\nNächster Schritt: die Ankündigung vorbereiten. Veröffentlichung und Teilnehmerregistrierung über den Wettbewerbslink sind verfügbar. Der Veranstalter wählt die Gewinner manuell. Das gewählte Format erscheint in der Ankündigung; automatische Spielmechaniken sind noch nicht verfügbar. Tariflimits und Zahlungen sind noch nicht aktiv.",
         "summary_home": "🏠 Hauptmenü",
-        "plans_title": "💎 PRIZORA-Tarife\n\nWähle einen Tarif für weitere Informationen:",
-        "plan_detail": (
-            "{name}\n\n"
-            "👥 Teilnehmer: {limit}\n\n"
-            "✨ Funktionen: {features}\n\n"
-            "{trial}{notice}"
-        ),
-        "plan_free_limit": "100 Teilnehmer",
-        "plan_free_features": "Grundlegende Wettbewerbsformate",
-        "plan_pro_limit": "500 Teilnehmer",
-        "plan_pro_features": "Alle Formate, Verlauf und mehrere Gewinner",
-        "plan_premium_limit": "Kein festes Limit",
-        "plan_premium_features": "Alle Funktionen und erweiterte Statistiken",
-        "plan_trial": "🎁 Neue Nutzer können eine 7-tägige PRO-Testphase nutzen.\n\n",
-        "plan_notice": "Die Aktivierung von Abonnements und Zahlungen wird später umgesetzt.",
+        "plans_title": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n💎 TARIFE\nWähle einen Tarif für die geplanten Funktionen:",
+        "plan_detail": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n{name}\n\n👥 Teilnehmer: {limit}\n\n✨ Funktionen: {features}\n\n{trial}{notice}",
+        "plan_free_limit": "bis zu 100 Teilnehmer (noch nicht aktiv)",
+        "plan_free_features": "Wettbewerb einrichten und Anmeldung per Link",
+        "plan_pro_limit": "bis zu 500 Teilnehmer (noch nicht aktiv)",
+        "plan_pro_features": "Zusätzliche Werkzeuge — noch nicht aktiv",
+        "plan_premium_limit": "kein festes Limit (geplant)",
+        "plan_premium_features": "Erweiterte Werkzeuge und Statistiken — noch nicht aktiv",
+        "plan_trial": "🎁 Die PRO-Testphase ist noch nicht aktiv.\n\n",
+        "plan_notice": "Abonnements, Zahlungen und Tariflimits sind noch nicht aktiv.",
         "announcement_button": "📣 Daten eingeben und vorbereiten",
-        "announcement_title": "📣 Entwurf der Ankündigung",
+        "announcement_title": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n📣 ENTWURF DER ANKÜNDIGUNG",
         "announcement_text": (
             "🎉 GEWINNSPIEL!\n\n"
             "🎁 Preis: {prize}\n"
@@ -495,27 +355,28 @@ I18N = {
             "📅 Beginn: {start_at} MSK\n"
             "⏰ Ende: {end_at} MSK\n"
             "📌 Teilnahmebedingungen: {rules}\n\n"
-            "⚠️ Testveröffentlichung: Teilnehmerregistrierung und Gewinnerauswahl sind noch nicht verfügbar."
+            "👇 Nutze die Schaltfläche „Teilnehmen“ unten. Die Anmeldung ist im angegebenen Zeitraum möglich; der Veranstalter wählt die Gewinner manuell."
         ),
-        "announcement_start_prompt": "📅 Gib Startdatum und Uhrzeit als TT.MM.JJJJ HH:MM ein (Moskauer Zeit, MSK, UTC+3).\nBeispiel: 14.11.2026 18:00",
-        "announcement_end_prompt": "⏰ Gib Enddatum und Uhrzeit im selben Format ein. Das Ende muss nach dem Beginn liegen.",
-        "announcement_rules_prompt": "📌 Gib die Teilnahmebedingungen ein. Die Registrierung bleibt bis zum Ende des Wettbewerbs geöffnet; danach sind keine neuen Teilnahmen möglich.",
+        "announcement_start_prompt": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n📅 STARTDATUM UND UHRZEIT\nGib Datum und Uhrzeit in Moskauer Zeit (MSK, UTC+3) im Format TT.MM.JJJJ HH:MM ein.\nBeispiel: 14.11.2026 18:00",
+        "announcement_end_prompt": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n⏰ ENDDATUM UND UHRZEIT\nGib Datum und Uhrzeit im selben Format ein. Das Ende muss nach dem Beginn liegen.",
+        "announcement_rules_prompt": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n📌 TEILNAHMEBEDINGUNGEN\nGib die Bedingungen als Text ein. Die Anmeldung bleibt bis zum Ende des Wettbewerbs geöffnet; danach sind keine neuen Teilnahmen möglich.",
         "current_value": "Aktueller Wert: {value}\nSende einen neuen Wert, um ihn zu ändern.",
         "announcement_datetime_invalid": "Das Datum wurde nicht erkannt. Verwende TT.MM.JJJJ HH:MM, zum Beispiel 14.11.2026 18:00.",
+        "announcement_start_past": "Der Start muss in der Zukunft liegen. Bitte gib ein späteres Datum und eine spätere Uhrzeit ein.",
         "announcement_end_invalid": "Das Ende muss nach dem Beginn liegen. Bitte gib es erneut ein.",
         "announcement_rules_invalid": "Gib die Bedingungen als Text ein (bis zu 1.000 Zeichen).",
-        "announcement_review_prompt": "👑 VORSCHAU FERTIG\n━━━━━━━━━━━━\nPrüfe die Wettbewerbs-Karte oben. Wenn alles stimmt, bestätige unten die Veröffentlichung.",
+        "announcement_review_prompt": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n✨ VORSCHAU FERTIG\nPrüfe die Wettbewerbs-Karte oben. Wenn alles stimmt, bestätige unten die Veröffentlichung.",
         "announcement_publish_button": "👑 Wettbewerb veröffentlichen",
         "announcement_cancel_button": "✖️ Abbrechen",
-        "announcement_publish_success": "✅ Ankündigung gesendet an: {destination}.\n\nWichtig: Teilnehmerregistrierung und Gewinnerauswahl sind noch nicht verbunden.",
+        "announcement_publish_success": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n✨ Wettbewerb veröffentlicht in: {destination}.\n\nDie Anmeldung über die Schaltfläche ist im angegebenen Zeitraum möglich. Der Veranstalter wählt die Gewinner manuell.",
         "announcement_publish_error": "Die Ankündigung konnte nicht gesendet werden. Prüfe, ob der Bot noch Administrator ist und veröffentlichen darf. Du kannst es erneut versuchen.",
         "artwork_button": "✨ Wettbewerbsdesign",
-        "artwork_title": "👑 PRIZORA-DESIGN\n━━━━━━━━━━━━\nFüge ein Logo und/oder Banner hinzu. Bilder sind optional.\n\nLogo: {logo}\nBanner: {banner}",
+        "artwork_title": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n🎨 WETTBEWERBSDESIGN\nFüge das Logo und/oder Banner des Veranstalters hinzu. Bilder sind optional.\n\nLogo: {logo}\nBanner: {banner}",
         "artwork_logo": "🟡 Logo hochladen", "artwork_banner": "🖼 Banner hochladen",
         "artwork_done": "✅ Fertig", "artwork_skip": "Design überspringen",
         "artwork_remove_logo": "Logo entfernen", "artwork_remove_banner": "Banner entfernen",
-        "artwork_logo_prompt": "Sende das Logo als Foto oder PNG/JPG-Datei. Empfohlen: quadratisch 512 × 512 px, bis 5 MB.",
-        "artwork_banner_prompt": "Sende das Banner als Foto oder PNG/JPG-Datei. Empfohlen: Querformat 1200 × 675 px, bis 5 MB.",
+        "artwork_logo_prompt": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n🟡 LOGO HOCHLADEN\nSende das Logo als Foto oder PNG/JPG-Datei. Empfohlen: quadratisch 512 × 512 px, bis 5 MB.",
+        "artwork_banner_prompt": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n🖼 BANNER HOCHLADEN\nSende das Banner als Foto oder PNG/JPG-Datei. Empfohlen: Querformat 1200 × 675 px, bis 5 MB.",
         "artwork_photo_invalid": "Sende ein Foto oder eine PNG/JPG-Datei bis 5 MB.",
         "artwork_logo_ratio": "Das Logo sollte quadratisch sein (ungefähr 1:1). Bitte versuche ein anderes Bild.",
         "artwork_banner_ratio": "Das Banner sollte im Querformat sein (ungefähr 16:9). Bitte versuche ein anderes Bild.",
@@ -523,13 +384,11 @@ I18N = {
         "artwork_removed": "Bild entfernt.", "artwork_status_yes": "hinzugefügt", "artwork_status_no": "nicht hinzugefügt",
         "announcement_cancelled": "Veröffentlichung abgebrochen. Die Ankündigung wurde nicht gesendet.",
         "announcement_already_published": "Diese Ankündigung wurde bereits gesendet. Ich veröffentliche sie nicht erneut.",
-        "help_text": (
-            "📖 PRIZORA ist ein internationaler Baukasten für Wettbewerbe und Verlosungen.\n\n"
-            "1. Wähle die Sprache der Oberfläche.\n"
-            "2. Wähle ein Format und den Veranstaltungsort.\n"
-            "3. Gib den Preis, die Teilnehmergrenze und die Anzahl der Gewinner ein.\n\n"
-            "Vorbereitung und Veröffentlichung einer Testankündigung sind jetzt möglich. Teilnehmerregistrierung und Gewinnerauswahl folgen später."
-        ),
+        "announcement_too_long": "Die Ankündigung überschreitet das Telegram-Limit von {limit} Zeichen. Kürze die Teilnahmebedingungen und sende sie erneut.",
+        "announcement_storage_error": "Die Ankündigung wurde veröffentlicht, aber der Wettbewerb konnte nicht in der Datenbank gespeichert werden. Veröffentliche sie nicht erneut und informiere den Veranstalter.",
+        "artwork_logo_caption": "🟡 Wettbewerbslogo",
+        "artwork_banner_caption": "🖼 Wettbewerbsbanner",
+        "help_text": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n📖 HILFE\n\n1. Wähle die Sprache der Oberfläche.\n2. Wähle eine Wettbewerbsbezeichnung und den Ort der Veröffentlichung.\n3. Gib den Preis, die Teilnehmergrenze und die Anzahl der Gewinner ein.\n\nVorbereitung und Veröffentlichung von Ankündigungen sowie die Anmeldung über den Wettbewerbslink sind verfügbar. Der Veranstalter wählt die Gewinner manuell. Das Format ist derzeit nur eine Bezeichnung in der Ankündigung; automatische Spielmechaniken, Tariflimits und Zahlungen sind nicht aktiv.",
     },
 }
 
@@ -854,30 +713,26 @@ async def send_contest_summary(
             await context.bot.send_document(
                 chat_id=message.chat.id,
                 document=logo_id,
-                caption="🟡 Логотип конкурса" if language == "ru" else
-                        "🟡 Contest logo" if language == "en" else "🟡 Wettbewerbslogo",
+                caption=tr(context, "artwork_logo_caption"),
             )
         else:
             await context.bot.send_photo(
                 chat_id=message.chat.id,
                 photo=logo_id,
-                caption="🟡 Логотип конкурса" if language == "ru" else
-                        "🟡 Contest logo" if language == "en" else "🟡 Wettbewerbslogo",
+                caption=tr(context, "artwork_logo_caption"),
             )
     if banner_id:
         if context.user_data.get("contest_banner_as_document"):
             await context.bot.send_document(
                 chat_id=message.chat.id,
                 document=banner_id,
-                caption="🖼 Баннер конкурса" if language == "ru" else
-                        "🖼 Contest banner" if language == "en" else "🖼 Wettbewerbsbanner",
+                caption=tr(context, "artwork_banner_caption"),
             )
         else:
             await context.bot.send_photo(
                 chat_id=message.chat.id,
                 photo=banner_id,
-                caption="🖼 Баннер конкурса" if language == "ru" else
-                        "🖼 Contest banner" if language == "en" else "🖼 Wettbewerbsbanner",
+                caption=tr(context, "artwork_banner_caption"),
             )
 
     text = tr(
@@ -1013,6 +868,9 @@ def register_participant(contest_id: str, user) -> str:
         ).fetchone()
         if contest is None:
             return "not_found"
+        starts_at = datetime.fromisoformat(contest["starts_at"])
+        if now < starts_at.astimezone(timezone.utc):
+            return "not_started"
         ends_at = datetime.fromisoformat(contest["ends_at"])
         if now >= ends_at.astimezone(timezone.utc):
             return "ended"
@@ -1043,6 +901,8 @@ def register_participant(contest_id: str, user) -> str:
 
 
 async def handle_join_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if "language" not in context.user_data and "suggested_language" not in context.user_data:
+        context.user_data["suggested_language"] = detected_language(update)
     language = current_language(context)
     messages = {
         "ru": {
@@ -1077,6 +937,10 @@ async def handle_join_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         },
     }
     messages = messages.get(language, messages["en"])
+    messages = {
+        key: f"👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n{value}"
+        for key, value in messages.items()
+    }
     contest_id = context.args[0][5:] if context.args and context.args[0].startswith("join_") else ""
     if not contest_id or len(contest_id) > 32:
         await update.message.reply_text(tr(context, "welcome"), reply_markup=main_menu(language))
@@ -1120,6 +984,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.args and context.args[0].startswith("join_"):
         await handle_join_start(update, context)
         return
+
+    # Show the PRIZORA brand artwork before the welcome/menu screens.
+    brand_banner = load_brand_banner()
+    if brand_banner:
+        try:
+            await update.message.reply_photo(photo=brand_banner)
+        except TelegramError:
+            logging.exception("Could not send PRIZORA brand banner")
 
     if "language" not in context.user_data:
         language = detected_language(update)
@@ -1446,9 +1318,10 @@ async def button_handler(
             logo_id = context.user_data.get("contest_logo_file_id")
             banner_id = context.user_data.get("contest_banner_file_id")
             announcement_text = build_announcement_text(context)
-            if len(announcement_text) > 1024:
+            max_announcement_length = 1024 if (banner_id or logo_id) else 4096
+            if len(announcement_text) > max_announcement_length:
                 await query.edit_message_text(
-                    "Текст объявления превышает лимит подписи Telegram (1024 символа). Вернись назад и сократи условия участия.",
+                    tr(context, "announcement_too_long", limit=max_announcement_length),
                     reply_markup=InlineKeyboardMarkup([
                         [InlineKeyboardButton(tr(context, "back"), callback_data="back:announcement_rules")],
                         [InlineKeyboardButton(tr(context, "announcement_cancel_button"), callback_data="publish_cancel")],
@@ -1457,9 +1330,9 @@ async def button_handler(
                 return
             if logo_id and banner_id:
                 if context.user_data.get("contest_logo_as_document"):
-                    await context.bot.send_document(chat_id=chat.id, document=logo_id, caption="🟡 Логотип конкурса")
+                    await context.bot.send_document(chat_id=chat.id, document=logo_id, caption=tr(context, "artwork_logo_caption"))
                 else:
-                    await context.bot.send_photo(chat_id=chat.id, photo=logo_id, caption="🟡 Логотип конкурса")
+                    await context.bot.send_photo(chat_id=chat.id, photo=logo_id, caption=tr(context, "artwork_logo_caption"))
             artwork_id = banner_id or logo_id
             artwork_is_document = (
                 context.user_data.get("contest_banner_as_document")
@@ -1492,7 +1365,7 @@ async def button_handler(
         except (sqlite3.Error, ValueError, KeyError):
             logging.exception("Announcement was published but contest could not be saved")
             await query.edit_message_text(
-                "Объявление отправлено, но сохранить конкурс в базе не удалось. Не публикуй его повторно; сообщи об этой ошибке.",
+                tr(context, "announcement_storage_error"),
                 reply_markup=InlineKeyboardMarkup([[
                     InlineKeyboardButton(tr(context, "back_home"), callback_data="home")
                 ]]),
@@ -1616,6 +1489,13 @@ async def prize_text_handler(
                 reply_markup=step_navigation(context, "back:summary"),
             )
             return
+        moscow_tz = timezone(timedelta(hours=3))
+        if start_value.replace(tzinfo=moscow_tz) <= datetime.now(moscow_tz):
+            await update.message.reply_text(
+                tr(context, "announcement_start_past"),
+                reply_markup=step_navigation(context, "back:summary"),
+            )
+            return
         context.user_data["contest_start_at"] = start_value.strftime("%d.%m.%Y %H:%M")
         context.user_data["awaiting_announcement_start"] = False
         context.user_data["awaiting_announcement_end"] = True
@@ -1665,19 +1545,20 @@ async def prize_text_handler(
         logo_id = context.user_data.get("contest_logo_file_id")
         banner_id = context.user_data.get("contest_banner_file_id")
         announcement_text = build_announcement_text(context)
-        if len(announcement_text) > 1024:
+        max_announcement_length = 1024 if (banner_id or logo_id) else 4096
+        if len(announcement_text) > max_announcement_length:
             context.user_data["awaiting_announcement_rules"] = True
             context.user_data["contest_publish_pending"] = False
             await update.message.reply_text(
-                "Текст объявления вместе с баннером превышает лимит подписи Telegram (1024 символа). Сократи условия участия и отправь их ещё раз.",
+                tr(context, "announcement_too_long", limit=max_announcement_length),
                 reply_markup=step_navigation(context, "back:announcement_end"),
             )
             return
         if logo_id and banner_id:
             if context.user_data.get("contest_logo_as_document"):
-                await context.bot.send_document(chat_id=update.effective_chat.id, document=logo_id, caption="🟡 Логотип конкурса")
+                await context.bot.send_document(chat_id=update.effective_chat.id, document=logo_id, caption=tr(context, "artwork_logo_caption"))
             else:
-                await context.bot.send_photo(chat_id=update.effective_chat.id, photo=logo_id, caption="🟡 Логотип конкурса")
+                await context.bot.send_photo(chat_id=update.effective_chat.id, photo=logo_id, caption=tr(context, "artwork_logo_caption"))
         artwork_id = banner_id or logo_id
         artwork_is_document = (
             context.user_data.get("contest_banner_as_document")
@@ -1688,6 +1569,9 @@ async def prize_text_handler(
                 await context.bot.send_document(chat_id=update.effective_chat.id, document=artwork_id, caption=announcement_text)
             else:
                 await context.bot.send_photo(chat_id=update.effective_chat.id, photo=artwork_id, caption=announcement_text)
+        else:
+            # The uploaded artwork is optional: always show the full preview text.
+            await update.message.reply_text(announcement_text)
 
         await update.message.reply_text(
             tr(context, "announcement_review_prompt"),
