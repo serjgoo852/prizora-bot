@@ -81,16 +81,16 @@ I18N = {
         "bot_no_post_permission": "У бота нет права публиковать сообщения в этом канале. Включи право «Публикация сообщений» и попробуй снова.",
         "organizer_not_admin": "Твой аккаунт не найден среди администраторов этого чата. Подключить его может владелец или администратор.",
         "destination_verified": "✅ Чат подтверждён: {title}\n\nТеперь выбери категорию приза:",
-        "subscription_prompt": "🔐 Нужно ли требовать подписку на отдельный Telegram-канал для участия?",
+        "subscription_prompt": "🔐 Нужно ли требовать подписку на отдельный Telegram-чат (канал или группу) для участия?",
         "subscription_yes": "✅ Да, подписка обязательна",
         "subscription_no": "Нет, подписка не нужна",
         "subscription_channel_prompt": (
-            "📢 Укажи @username канала или его числовой ID.\n\n"
-            "Добавь @Prizora_GlobalBot в этот канал администратором. "
-            "Для проверки подписки бот должен быть администратором канала. "
+            "📢 Укажи @username канала или группы либо числовой ID.\n\n"
+            "Добавь @Prizora_GlobalBot в этот чат администратором. "
+            "Для проверки участия бот должен быть администратором. "
             "Ты также должен быть владельцем или администратором."
         ),
-        "subscription_channel_verified": "✅ Канал для проверки подписки подтверждён: {title}",
+        "subscription_channel_verified": "✅ Чат для проверки подписки подтверждён: {title}",
         "subscription_required": "Обязательна — {channel}",
         "subscription_optional": "Не обязательна",
         "place_selected": "✅ Выбрано: {place}\n\n🎁 Теперь выбери категорию приза:",
@@ -255,16 +255,16 @@ I18N = {
         "bot_no_post_permission": "The bot cannot post in this channel. Enable the 'Post Messages' permission and try again.",
         "organizer_not_admin": "Your account is not listed as an administrator in this chat. Only its owner or an administrator can connect it.",
         "destination_verified": "✅ Chat verified: {title}\n\nNow choose a prize category:",
-        "subscription_prompt": "🔐 Should participants be required to subscribe to a separate Telegram channel?",
+        "subscription_prompt": "🔐 Should participants be required to join a separate Telegram chat (channel or group)?",
         "subscription_yes": "✅ Yes, subscription is required",
         "subscription_no": "No subscription required",
         "subscription_channel_prompt": (
-            "📢 Send the channel's @username or numeric ID.\n\n"
-            "Add @Prizora_GlobalBot to that channel as an administrator. "
-            "The bot must be an administrator to verify subscriptions. "
+            "📢 Send the channel or group @username, or its numeric ID.\n\n"
+            "Add @Prizora_GlobalBot to that chat as an administrator. "
+            "The bot must be an administrator to verify membership. "
             "You must also be the owner or an administrator."
         ),
-        "subscription_channel_verified": "✅ Subscription channel verified: {title}",
+        "subscription_channel_verified": "✅ Subscription chat verified: {title}",
         "subscription_required": "Required — {channel}",
         "subscription_optional": "Not required",
         "place_selected": "✅ Selected: {place}\n\n🎁 Now choose a prize category:",
@@ -429,16 +429,16 @@ I18N = {
         "bot_no_post_permission": "Der Bot darf in diesem Kanal nicht veröffentlichen. Aktiviere das Recht „Nachrichten veröffentlichen“ und versuche es erneut.",
         "organizer_not_admin": "Dein Konto ist in diesem Chat nicht als Administrator eingetragen. Nur Eigentümer oder Administratoren können ihn verbinden.",
         "destination_verified": "✅ Chat bestätigt: {title}\n\nWähle jetzt die Preiskategorie:",
-        "subscription_prompt": "🔐 Soll für die Teilnahme ein Abonnement eines separaten Telegram-Kanals erforderlich sein?",
+        "subscription_prompt": "🔐 Soll für die Teilnahme die Mitgliedschaft in einem separaten Telegram-Chat (Kanal oder Gruppe) erforderlich sein?",
         "subscription_yes": "✅ Ja, Abonnement erforderlich",
         "subscription_no": "Kein Abonnement erforderlich",
         "subscription_channel_prompt": (
-            "📢 Sende den @username des Kanals oder seine numerische ID.\n\n"
-            "Füge @Prizora_GlobalBot als Administrator zu diesem Kanal hinzu. "
-            "Der Bot muss Administrator sein, um Abonnements zu prüfen. "
+            "📢 Sende den @username des Kanals oder der Gruppe oder ihre numerische ID.\n\n"
+            "Füge @Prizora_GlobalBot als Administrator zu diesem Chat hinzu. "
+            "Der Bot muss Administrator sein, um die Mitgliedschaft zu prüfen. "
             "Du musst ebenfalls Eigentümer oder Administrator sein."
         ),
-        "subscription_channel_verified": "✅ Kanal für die Abonnementprüfung bestätigt: {title}",
+        "subscription_channel_verified": "✅ Chat für die Mitgliedschaftsprüfung bestätigt: {title}",
         "subscription_required": "Erforderlich — {channel}",
         "subscription_optional": "Nicht erforderlich",
         "place_selected": "✅ Ausgewählt: {place}\n\n🎁 Wähle jetzt die Preiskategorie:",
@@ -738,6 +738,9 @@ async def validate_managed_chat(
             return None, "chat_type_mismatch"
     elif expected_type == "channel":
         if chat.type != "channel":
+            return None, "chat_type_mismatch"
+    elif expected_type == "subscription":
+        if chat.type not in ("channel", "group", "supergroup"):
             return None, "chat_type_mismatch"
     else:
         return None, "chat_type_mismatch"
@@ -2046,7 +2049,7 @@ async def prize_text_handler(
         chat, error_key = await validate_managed_chat(
             context,
             message_text,
-            expected_type="channel",
+            expected_type="subscription",
             organizer_id=update.effective_user.id,
             require_post_permission=False,
         )
