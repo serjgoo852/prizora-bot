@@ -36,7 +36,7 @@ jobs:
           path = Path("assets/prizora_brand_banner.jpg.b64")
           encoded = path.read_text(encoding="ascii").strip()
           alphabet = string.ascii_letters + string.digits + "+/"
-          matches = []
+          matches = {}
           for position in range(len(encoded) - 1):
               for character in alphabet:
                   candidate = encoded[:position] + character + encoded[position:]
@@ -44,22 +44,20 @@ jobs:
                       data = base64.b64decode(candidate, validate=True)
                   except Exception:
                       continue
-                  if not data.startswith(b"\xff\xd8\xff") or not data.endswith(b"\xff\xd9"):
+                  if not data.startswith(b"\\xff\\xd8\\xff") or not data.endswith(b"\\xff\\xd9"):
+                      continue
+                  if base64.b64encode(data).decode("ascii") != candidate:
                       continue
                   try:
                       with Image.open(io.BytesIO(data)) as image:
                           image.verify()
                   except Exception:
                       continue
-                  matches.append((position, character, candidate))
-                  if len(matches) > 1:
-                      break
-              if len(matches) > 1:
-                  break
+                  matches[candidate] = (position, character)
           if len(matches) != 1:
-              raise SystemExit(f"Expected one valid repair, found {len(matches)}")
-          position, character, candidate = matches[0]
-          path.write_text(candidate + "\n", encoding="ascii")
+              raise SystemExit(f"Expected one canonical valid repair, found {len(matches)}")
+          candidate, (position, character) = next(iter(matches.items()))
+          path.write_text(candidate + "\\n", encoding="ascii")
           print(f"REPAIR_FOUND position={position} character={character}")
           PY
       - name: Compile Python source
