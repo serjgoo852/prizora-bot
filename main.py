@@ -3,6 +3,7 @@ import os
 import logging
 import sqlite3
 import uuid
+from io import BytesIO
 from datetime import datetime, timedelta, timezone
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -939,6 +940,116 @@ def build_announcement_text(context: ContextTypes.DEFAULT_TYPE) -> str:
     )
 
 
+def build_announcement_banner(context: ContextTypes.DEFAULT_TYPE) -> BytesIO:
+    """Create a branded, language-aware PRIZORA contest banner."""
+    from PIL import Image, ImageDraw, ImageFont
+
+    language = current_language(context)
+    width, height = 1200, 675
+    image = Image.new("RGB", (width, height), "#090909")
+    pixels = image.load()
+    top = (9, 9, 12)
+    bottom = (30, 22, 10)
+    for y in range(height):
+        ratio = y / max(1, height - 1)
+        color = tuple(int(top[i] * (1 - ratio) + bottom[i] * ratio) for i in range(3))
+        for x in range(width):
+            pixels[x, y] = color
+
+    draw = ImageDraw.Draw(image)
+    gold = "#D8AE55"
+    pale_gold = "#F4D994"
+    muted = "#B99A60"
+    draw.rounded_rectangle((24, 24, width - 24, height - 24), radius=30, outline=gold, width=4)
+    draw.rounded_rectangle((42, 42, width - 42, height - 42), radius=24, outline="#594321", width=2)
+    draw.ellipse((width - 310, -180, width + 80, 210), outline="#3C2D17", width=3)
+    draw.ellipse((width - 260, -130, width + 30, 160), outline="#302411", width=2)
+    draw.ellipse((-150, height - 230, 220, height + 140), outline="#3C2D17", width=3)
+
+    regular_candidates = [
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/dejavu/DejaVuSans.ttf",
+    ]
+    bold_candidates = [
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        "/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf",
+    ]
+    def load_font(candidates, size):
+        for path in candidates:
+            if os.path.exists(path):
+                return ImageFont.truetype(path, size=size)
+        return ImageFont.load_default()
+
+    font_small = load_font(regular_candidates, 23)
+    font_label = load_font(bold_candidates, 25)
+    font_prize = load_font(bold_candidates, 54)
+    font_date = load_font(bold_candidates, 29)
+    font_footer = load_font(regular_candidates, 20)
+
+    if language == "ru":
+        eyebrow, prize_label, start_label, end_label, footer = (
+            "ОФИЦИАЛЬНЫЙ РОЗЫГРЫШ", "ГЛАВНЫЙ ПРИЗ", "СТАРТ", "ФИНИШ", "PRIZORA  •  ТВОЙ ШАНС НА ПОБЕДУ"
+        )
+    elif language == "de":
+        eyebrow, prize_label, start_label, end_label, footer = (
+            "OFFIZIELLES GEWINNSPIEL", "HAUPTPREIS", "START", "ENDE", "PRIZORA  •  DEINE CHANCE ZU GEWINNEN"
+        )
+    else:
+        eyebrow, prize_label, start_label, end_label, footer = (
+            "OFFICIAL GIVEAWAY", "GRAND PRIZE", "START", "FINISH", "PRIZORA  •  YOUR CHANCE TO WIN"
+        )
+
+    def centered(text, y, font, fill):
+        box = draw.textbbox((0, 0), text, font=font)
+        draw.text(((width - (box[2] - box[0])) / 2, y), text, font=font, fill=fill)
+
+    centered("PRIZORA", 76, load_font(bold_candidates, 56), pale_gold)
+    centered(eyebrow, 151, font_small, muted)
+    draw.line((300, 205, 900, 205), fill=gold, width=2)
+    centered(prize_label, 238, font_label, gold)
+
+    prize = str(context.user_data.get("contest_prize_name", "—")).strip() or "—"
+    max_width = 980
+    words = prize.split()
+    lines, current = [], ""
+    for word in words:
+        candidate = (current + " " + word).strip()
+        if draw.textbbox((0, 0), candidate, font=font_prize)[2] <= max_width:
+            current = candidate
+        else:
+            if current:
+                lines.append(current)
+            current = word
+    if current:
+        lines.append(current)
+    if len(lines) > 2:
+        lines = lines[:2]
+        while draw.textbbox((0, 0), lines[-1] + "…", font=font_prize)[2] > max_width and len(lines[-1]) > 4:
+            lines[-1] = lines[-1][:-1]
+        lines[-1] += "…"
+    prize_font = font_prize
+    if any(draw.textbbox((0, 0), line, font=prize_font)[2] > max_width for line in lines):
+        prize_font = load_font(bold_candidates, 42)
+    first_y = 295 if len(lines) == 1 else 278
+    for index, line in enumerate(lines):
+        centered(line, first_y + index * 66, prize_font, "#FFF8E8")
+
+    start_at = str(context.user_data.get("contest_start_at", "—"))
+    end_at = str(context.user_data.get("contest_end_at", "—"))
+    draw.rounded_rectangle((120, 465, 1080, 565), radius=18, fill="#17130D", outline="#765A2B", width=2)
+    draw.text((160, 482), start_label, font=font_label, fill=gold)
+    draw.text((160, 520), start_at, font=font_date, fill="#FFF1D0")
+    draw.text((660, 482), end_label, font=font_label, fill=gold)
+    draw.text((660, 520), end_at, font=font_date, fill="#FFF1D0")
+    centered(footer, 603, font_footer, muted)
+
+    output = BytesIO()
+    image.save(output, format="PNG", optimize=True)
+    output.seek(0)
+    output.name = "prizora-giveaway.png"
+    return output
+
+
 def subscription_choice_menu(language: str):
     t = I18N[language]
     return InlineKeyboardMarkup([
@@ -1465,23 +1576,19 @@ async def button_handler(
                     ]),
                 )
                 return
-            if logo_id and banner_id:
+            if logo_id:
                 if context.user_data.get("contest_logo_as_document"):
                     await context.bot.send_document(chat_id=chat.id, document=logo_id, caption="🟡 Логотип конкурса")
                 else:
                     await context.bot.send_photo(chat_id=chat.id, photo=logo_id, caption="🟡 Логотип конкурса")
-            artwork_id = banner_id or logo_id
-            artwork_is_document = (
-                context.user_data.get("contest_banner_as_document")
-                if banner_id else context.user_data.get("contest_logo_as_document")
-            )
-            if artwork_id:
-                if artwork_is_document:
-                    await context.bot.send_document(chat_id=chat.id, document=artwork_id, caption=announcement_text, reply_markup=join_markup)
+            if banner_id:
+                if context.user_data.get("contest_banner_as_document"):
+                    await context.bot.send_document(chat_id=chat.id, document=banner_id, caption=announcement_text, reply_markup=join_markup)
                 else:
-                    await context.bot.send_photo(chat_id=chat.id, photo=artwork_id, caption=announcement_text, reply_markup=join_markup)
+                    await context.bot.send_photo(chat_id=chat.id, photo=banner_id, caption=announcement_text, reply_markup=join_markup)
             else:
-                await context.bot.send_message(chat_id=chat.id, text=announcement_text, reply_markup=join_markup)
+                generated_banner = build_announcement_banner(context)
+                await context.bot.send_photo(chat_id=chat.id, photo=generated_banner, caption=announcement_text, reply_markup=join_markup)
         except TelegramError:
             logging.exception("Failed to publish contest announcement")
             await query.edit_message_text(
@@ -1684,21 +1791,19 @@ async def prize_text_handler(
                 reply_markup=step_navigation(context, "back:announcement_end"),
             )
             return
-        if logo_id and banner_id:
+        if logo_id:
             if context.user_data.get("contest_logo_as_document"):
                 await context.bot.send_document(chat_id=update.effective_chat.id, document=logo_id, caption="🟡 Логотип конкурса")
             else:
                 await context.bot.send_photo(chat_id=update.effective_chat.id, photo=logo_id, caption="🟡 Логотип конкурса")
-        artwork_id = banner_id or logo_id
-        artwork_is_document = (
-            context.user_data.get("contest_banner_as_document")
-            if banner_id else context.user_data.get("contest_logo_as_document")
-        )
-        if artwork_id:
-            if artwork_is_document:
-                await context.bot.send_document(chat_id=update.effective_chat.id, document=artwork_id, caption=announcement_text)
+        if banner_id:
+            if context.user_data.get("contest_banner_as_document"):
+                await context.bot.send_document(chat_id=update.effective_chat.id, document=banner_id, caption=announcement_text)
             else:
-                await context.bot.send_photo(chat_id=update.effective_chat.id, photo=artwork_id, caption=announcement_text)
+                await context.bot.send_photo(chat_id=update.effective_chat.id, photo=banner_id, caption=announcement_text)
+        else:
+            generated_banner = build_announcement_banner(context)
+            await context.bot.send_photo(chat_id=update.effective_chat.id, photo=generated_banner, caption=announcement_text)
 
         await update.message.reply_text(
             tr(context, "announcement_review_prompt"),
