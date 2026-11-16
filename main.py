@@ -940,81 +940,133 @@ def build_announcement_text(context: ContextTypes.DEFAULT_TYPE) -> str:
     )
 
 
-def build_announcement_banner(context: ContextTypes.DEFAULT_TYPE) -> BytesIO:
-    """Create a branded, language-aware PRIZORA contest banner."""
-    from PIL import Image, ImageDraw, ImageFont
+def build_announcement_banner(
+    context: ContextTypes.DEFAULT_TYPE,
+    logo_bytes: BytesIO | None = None,
+    background_bytes: BytesIO | None = None,
+) -> BytesIO:
+    """Create one complete PRIZORA banner with readable Unicode text and optional artwork."""
+    from PIL import Image, ImageDraw, ImageFont, ImageOps
 
     language = current_language(context)
     width, height = 1200, 675
-    image = Image.new("RGB", (width, height), "#090909")
-    pixels = image.load()
-    top = (9, 9, 12)
-    bottom = (30, 22, 10)
-    for y in range(height):
-        ratio = y / max(1, height - 1)
-        color = tuple(int(top[i] * (1 - ratio) + bottom[i] * ratio) for i in range(3))
-        for x in range(width):
-            pixels[x, y] = color
+
+    if background_bytes:
+        background_bytes.seek(0)
+        source = Image.open(background_bytes).convert("RGB")
+        image = ImageOps.fit(source, (width, height), method=Image.Resampling.LANCZOS)
+        # Darken the uploaded artwork slightly so the gold/white text remains readable.
+        shade = Image.new("RGBA", (width, height), (0, 0, 0, 105))
+        image = Image.alpha_composite(image.convert("RGBA"), shade).convert("RGB")
+    else:
+        image = Image.new("RGB", (width, height), "#090909")
+        pixels = image.load()
+        top, bottom = (9, 9, 12), (30, 22, 10)
+        for y in range(height):
+            ratio = y / max(1, height - 1)
+            color = tuple(int(top[i] * (1 - ratio) + bottom[i] * ratio) for i in range(3))
+            for x in range(width):
+                pixels[x, y] = color
 
     draw = ImageDraw.Draw(image)
-    gold = "#D8AE55"
-    pale_gold = "#F4D994"
-    muted = "#B99A60"
+    gold, pale_gold, muted = "#D8AE55", "#F4D994", "#D0B477"
     draw.rounded_rectangle((24, 24, width - 24, height - 24), radius=30, outline=gold, width=4)
-    draw.rounded_rectangle((42, 42, width - 42, height - 42), radius=24, outline="#594321", width=2)
-    draw.ellipse((width - 310, -180, width + 80, 210), outline="#3C2D17", width=3)
-    draw.ellipse((width - 260, -130, width + 30, 160), outline="#302411", width=2)
-    draw.ellipse((-150, height - 230, 220, height + 140), outline="#3C2D17", width=3)
+    draw.rounded_rectangle((42, 42, width - 42, height - 42), radius=24, outline="#765A2B", width=2)
+    draw.ellipse((width - 310, -180, width + 80, 210), outline="#6B512A", width=3)
+    draw.ellipse((width - 260, -130, width + 30, 160), outline="#4A381D", width=2)
+    draw.ellipse((-150, height - 230, 220, height + 140), outline="#6B512A", width=3)
 
+    # Search common Linux font locations. Never silently fall back to Pillow's
+    # tiny bitmap font, which does not contain Cyrillic glyphs.
+    font_roots = (
+        "/usr/share/fonts", "/usr/local/share/fonts",
+        "/usr/local/lib/python3.11/site-packages", "/usr/local/lib/python3.12/site-packages",
+    )
     regular_candidates = [
         "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",
+        "/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf",
         "/usr/share/fonts/dejavu/DejaVuSans.ttf",
     ]
     bold_candidates = [
         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        "/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf",
+        "/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf",
         "/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf",
     ]
+    for root in font_roots:
+        if os.path.isdir(root):
+            for directory, _, files in os.walk(root):
+                for filename in files:
+                    lower = filename.lower()
+                    path = os.path.join(directory, filename)
+                    if lower in ("dejavusans.ttf", "notosans-regular.ttf", "liberationsans-regular.ttf"):
+                        regular_candidates.append(path)
+                    elif lower in ("dejavusans-bold.ttf", "notosans-bold.ttf", "liberationsans-bold.ttf"):
+                        bold_candidates.append(path)
+
     def load_font(candidates, size):
         for path in candidates:
-            if os.path.exists(path):
-                return ImageFont.truetype(path, size=size)
-        return ImageFont.load_default()
+            if os.path.isfile(path):
+                try:
+                    return ImageFont.truetype(path, size=size)
+                except OSError:
+                    continue
+        raise RuntimeError("A Cyrillic-capable TrueType font is not installed in the bot image.")
 
-    font_small = load_font(regular_candidates, 23)
-    font_label = load_font(bold_candidates, 25)
-    font_prize = load_font(bold_candidates, 54)
+    font_small = load_font(regular_candidates, 25)
+    font_label = load_font(bold_candidates, 27)
+    font_prize = load_font(bold_candidates, 62)
     font_date = load_font(bold_candidates, 29)
-    font_footer = load_font(regular_candidates, 20)
+    font_footer = load_font(regular_candidates, 21)
+    font_brand = load_font(bold_candidates, 76)
 
     if language == "ru":
         eyebrow, prize_label, start_label, end_label, footer = (
-            "ОФИЦИАЛЬНЫЙ РОЗЫГРЫШ", "ГЛАВНЫЙ ПРИЗ", "СТАРТ", "ФИНИШ", "PRIZORA  •  ТВОЙ ШАНС НА ПОБЕДУ"
+            "ОФИЦИАЛЬНЫЙ РОЗЫГРЫШ", "ГЛАВНЫЙ ПРИЗ", "СТАРТ", "ФИНИШ", "ТВОЙ ШАНС НА ПОБЕДУ"
         )
     elif language == "de":
         eyebrow, prize_label, start_label, end_label, footer = (
-            "OFFIZIELLES GEWINNSPIEL", "HAUPTPREIS", "START", "ENDE", "PRIZORA  •  DEINE CHANCE ZU GEWINNEN"
+            "OFFIZIELLES GEWINNSPIEL", "HAUPTPREIS", "START", "ENDE", "DEINE CHANCE ZU GEWINNEN"
         )
     else:
         eyebrow, prize_label, start_label, end_label, footer = (
-            "OFFICIAL GIVEAWAY", "GRAND PRIZE", "START", "FINISH", "PRIZORA  •  YOUR CHANCE TO WIN"
+            "OFFICIAL GIVEAWAY", "GRAND PRIZE", "START", "FINISH", "YOUR CHANCE TO WIN"
         )
 
     def centered(text, y, font, fill):
         box = draw.textbbox((0, 0), text, font=font)
         draw.text(((width - (box[2] - box[0])) / 2, y), text, font=font, fill=fill)
 
-    centered("PRIZORA", 76, load_font(bold_candidates, 56), pale_gold)
-    centered(eyebrow, 151, font_small, muted)
-    draw.line((300, 205, 900, 205), fill=gold, width=2)
-    centered(prize_label, 238, font_label, gold)
+    # Place the uploaded logo inside the banner; it is never sent as a separate message.
+    brand_y = 66
+    if logo_bytes:
+        try:
+            logo_bytes.seek(0)
+            logo = Image.open(logo_bytes).convert("RGBA")
+            logo.thumbnail((112, 112), Image.Resampling.LANCZOS)
+            badge = Image.new("RGBA", (132, 132), (18, 14, 8, 230))
+            badge_draw = ImageDraw.Draw(badge)
+            badge_draw.rounded_rectangle((0, 0, 131, 131), radius=24, outline=gold, width=3)
+            badge.alpha_composite(logo, ((132 - logo.width) // 2, (132 - logo.height) // 2))
+            image.paste(badge, (74, 58), badge)
+        except Exception:
+            logging.exception("Could not place uploaded PRIZORA logo on banner")
+
+    centered("PRIZORA", brand_y, font_brand, pale_gold)
+    centered(eyebrow, 157, font_small, muted)
+    draw.line((300, 211, 900, 211), fill=gold, width=2)
+    centered(prize_label, 241, font_label, gold)
 
     prize = str(context.user_data.get("contest_prize_name", "—")).strip() or "—"
-    max_width = 980
-    words = prize.split()
-    lines, current = [], ""
+    max_width = 1000
+    prize_font = font_prize
+    while prize_font.size > 38 and draw.textbbox((0, 0), prize, font=prize_font)[2] > max_width:
+        prize_font = load_font(bold_candidates, prize_font.size - 4)
+    words, lines, current = prize.split(), [], ""
     for word in words:
         candidate = (current + " " + word).strip()
-        if draw.textbbox((0, 0), candidate, font=font_prize)[2] <= max_width:
+        if draw.textbbox((0, 0), candidate, font=prize_font)[2] <= max_width:
             current = candidate
         else:
             if current:
@@ -1024,30 +1076,56 @@ def build_announcement_banner(context: ContextTypes.DEFAULT_TYPE) -> BytesIO:
         lines.append(current)
     if len(lines) > 2:
         lines = lines[:2]
-        while draw.textbbox((0, 0), lines[-1] + "…", font=font_prize)[2] > max_width and len(lines[-1]) > 4:
+        while draw.textbbox((0, 0), lines[-1] + "…", font=prize_font)[2] > max_width and len(lines[-1]) > 4:
             lines[-1] = lines[-1][:-1]
         lines[-1] += "…"
-    prize_font = font_prize
-    if any(draw.textbbox((0, 0), line, font=prize_font)[2] > max_width for line in lines):
-        prize_font = load_font(bold_candidates, 42)
-    first_y = 295 if len(lines) == 1 else 278
+    first_y = 296 if len(lines) == 1 else 278
     for index, line in enumerate(lines):
         centered(line, first_y + index * 66, prize_font, "#FFF8E8")
 
     start_at = str(context.user_data.get("contest_start_at", "—"))
     end_at = str(context.user_data.get("contest_end_at", "—"))
-    draw.rounded_rectangle((120, 465, 1080, 565), radius=18, fill="#17130D", outline="#765A2B", width=2)
-    draw.text((160, 482), start_label, font=font_label, fill=gold)
+    draw.rounded_rectangle((120, 465, 1080, 565), radius=18, fill="#17130D", outline="#A17A3D", width=2)
+    draw.text((160, 480), start_label, font=font_label, fill=gold)
     draw.text((160, 520), start_at, font=font_date, fill="#FFF1D0")
-    draw.text((660, 482), end_label, font=font_label, fill=gold)
+    draw.text((660, 480), end_label, font=font_label, fill=gold)
     draw.text((660, 520), end_at, font=font_date, fill="#FFF1D0")
-    centered(footer, 603, font_footer, muted)
+    centered("PRIZORA  •  " + footer, 603, font_footer, muted)
 
     output = BytesIO()
     image.save(output, format="PNG", optimize=True)
     output.seek(0)
     output.name = "prizora-giveaway.png"
     return output
+
+
+async def build_contest_banner_media(context: ContextTypes.DEFAULT_TYPE, bot) -> BytesIO:
+    """Download optional user artwork and compose one final banner image."""
+    logo_bytes = None
+    background_bytes = None
+    logo_id = context.user_data.get("contest_logo_file_id")
+    banner_id = context.user_data.get("contest_banner_file_id")
+
+    if logo_id:
+        try:
+            logo_file = await bot.get_file(logo_id)
+            logo_bytes = BytesIO()
+            await logo_file.download_to_memory(out=logo_bytes)
+            logo_bytes.seek(0)
+        except TelegramError:
+            logging.exception("Could not download contest logo; continuing without it")
+
+    if banner_id:
+        try:
+            banner_file = await bot.get_file(banner_id)
+            background_bytes = BytesIO()
+            await banner_file.download_to_memory(out=background_bytes)
+            background_bytes.seek(0)
+        except TelegramError:
+            logging.exception("Could not download custom contest banner; using generated background")
+            background_bytes = None
+
+    return build_announcement_banner(context, logo_bytes=logo_bytes, background_bytes=background_bytes)
 
 
 def subscription_choice_menu(language: str):
@@ -1564,8 +1642,6 @@ async def button_handler(
             InlineKeyboardButton(join_labels.get(language, join_labels["en"]), url=join_url)
         ]])
         try:
-            logo_id = context.user_data.get("contest_logo_file_id")
-            banner_id = context.user_data.get("contest_banner_file_id")
             announcement_text = build_announcement_text(context)
             if len(announcement_text) > 1024:
                 await query.edit_message_text(
@@ -1576,19 +1652,8 @@ async def button_handler(
                     ]),
                 )
                 return
-            if logo_id:
-                if context.user_data.get("contest_logo_as_document"):
-                    await context.bot.send_document(chat_id=chat.id, document=logo_id, caption="🟡 Логотип конкурса")
-                else:
-                    await context.bot.send_photo(chat_id=chat.id, photo=logo_id, caption="🟡 Логотип конкурса")
-            if banner_id:
-                if context.user_data.get("contest_banner_as_document"):
-                    await context.bot.send_document(chat_id=chat.id, document=banner_id, caption=announcement_text, reply_markup=join_markup)
-                else:
-                    await context.bot.send_photo(chat_id=chat.id, photo=banner_id, caption=announcement_text, reply_markup=join_markup)
-            else:
-                generated_banner = build_announcement_banner(context)
-                await context.bot.send_photo(chat_id=chat.id, photo=generated_banner, caption=announcement_text, reply_markup=join_markup)
+            final_banner = await build_contest_banner_media(context, context.bot)
+            await context.bot.send_photo(chat_id=chat.id, photo=final_banner, caption=announcement_text, reply_markup=join_markup)
         except TelegramError:
             logging.exception("Failed to publish contest announcement")
             await query.edit_message_text(
@@ -1780,8 +1845,6 @@ async def prize_text_handler(
         context.user_data["contest_publish_pending"] = True
 
         # Show the banner and announcement together as one Telegram media message.
-        logo_id = context.user_data.get("contest_logo_file_id")
-        banner_id = context.user_data.get("contest_banner_file_id")
         announcement_text = build_announcement_text(context)
         if len(announcement_text) > 1024:
             context.user_data["awaiting_announcement_rules"] = True
@@ -1791,19 +1854,8 @@ async def prize_text_handler(
                 reply_markup=step_navigation(context, "back:announcement_end"),
             )
             return
-        if logo_id:
-            if context.user_data.get("contest_logo_as_document"):
-                await context.bot.send_document(chat_id=update.effective_chat.id, document=logo_id, caption="🟡 Логотип конкурса")
-            else:
-                await context.bot.send_photo(chat_id=update.effective_chat.id, photo=logo_id, caption="🟡 Логотип конкурса")
-        if banner_id:
-            if context.user_data.get("contest_banner_as_document"):
-                await context.bot.send_document(chat_id=update.effective_chat.id, document=banner_id, caption=announcement_text)
-            else:
-                await context.bot.send_photo(chat_id=update.effective_chat.id, photo=banner_id, caption=announcement_text)
-        else:
-            generated_banner = build_announcement_banner(context)
-            await context.bot.send_photo(chat_id=update.effective_chat.id, photo=generated_banner, caption=announcement_text)
+        final_banner = await build_contest_banner_media(context, context.bot)
+        await context.bot.send_photo(chat_id=update.effective_chat.id, photo=final_banner, caption=announcement_text)
 
         await update.message.reply_text(
             tr(context, "announcement_review_prompt"),
