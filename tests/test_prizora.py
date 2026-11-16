@@ -49,6 +49,7 @@ class PrizoraTests(unittest.TestCase):
         banner = main.load_brand_banner()
         self.assertIsNotNone(banner)
         self.assertEqual(banner[:3], bytes((255, 216, 255)))
+        self.assertEqual(banner[-2:], bytes((255, 217)))
 
     def test_localization_keys_and_placeholders_match(self):
         languages = ("ru", "en", "de")
@@ -64,6 +65,13 @@ class PrizoraTests(unittest.TestCase):
                 self.assertEqual(reference_placeholders, placeholders, f"{language}.{key}")
         self.assertEqual(set(main.FORMAT_NAMES["ru"]), set(main.FORMAT_NAMES["en"]))
         self.assertEqual(set(main.FORMAT_NAMES["ru"]), set(main.FORMAT_NAMES["de"]))
+
+    def test_public_copy_is_honest_about_unimplemented_features(self):
+        self.assertIn("manually", main.I18N["en"]["welcome"].lower())
+        self.assertNotIn("7-day", main.I18N["en"]["welcome"].lower())
+        self.assertIn("not enabled yet", main.I18N["en"]["formats_title"].lower())
+        self.assertIn("not active yet", main.I18N["en"]["plan_trial"].lower())
+        self.assertIn("manually", main.I18N["de"]["announcement_publish_success"].lower())
 
     def test_registration_rejects_unknown_contest(self):
         self.assertEqual(main.register_participant("missing", DummyUser(1)), "not_found")
