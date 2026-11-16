@@ -44,7 +44,7 @@ jobs:
                       data = base64.b64decode(candidate, validate=True)
                   except Exception:
                       continue
-                  if not data.startswith(b"\\xff\\xd8\\xff") or not data.endswith(b"\\xff\\xd9"):
+                  if not data.startswith(b"\xff\xd8\xff") or not data.endswith(b"\xff\xd9"):
                       continue
                   if base64.b64encode(data).decode("ascii") != candidate:
                       continue
@@ -57,7 +57,7 @@ jobs:
           if len(matches) != 1:
               raise SystemExit(f"Expected one canonical valid repair, found {len(matches)}")
           candidate, (position, character) = next(iter(matches.items()))
-          path.write_text(candidate + "\\n", encoding="ascii")
+          path.write_text(candidate + "\n", encoding="ascii")
           print(f"REPAIR_FOUND position={position} character={character}")
           PY
       - name: Compile Python source
