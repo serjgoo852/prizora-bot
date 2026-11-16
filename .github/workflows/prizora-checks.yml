@@ -37,7 +37,7 @@ jobs:
           encoded = path.read_text(encoding="ascii").strip()
           alphabet = string.ascii_letters + string.digits + "+/"
           matches = []
-          for position in range(len(encoded) - 2):
+          for position in range(len(encoded) - 1):
               for character in alphabet:
                   candidate = encoded[:position] + character + encoded[position:]
                   try:
