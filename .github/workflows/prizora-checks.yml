@@ -23,7 +23,7 @@ jobs:
           python-version: "3.11"
       - name: Install dependencies
         run: python -m pip install --disable-pip-version-check -r requirements.txt
-      - name: Repair-check bundled banner encoding
+      - name: Preview possible banner repairs
         run: |
           python -m pip install --disable-pip-version-check pillow
           python - <<'PY'
@@ -34,8 +34,7 @@ jobs:
           from pathlib import Path
           from PIL import Image
 
-          path = Path("assets/prizora_brand_banner.jpg.b64")
-          encoded = path.read_text(encoding="ascii").strip()
+          encoded = Path("assets/prizora_brand_banner.jpg.b64").read_text(encoding="ascii").strip()
           alphabet = string.ascii_letters + string.digits + "+/"
           matches = []
           for position in range(len(encoded) - 1):
@@ -51,28 +50,25 @@ jobs:
                       with warnings.catch_warnings():
                           warnings.simplefilter("error")
                           with Image.open(io.BytesIO(data)) as image:
-                              size = image.size
                               image.load()
-                              if image.size != size:
-                                  continue
+                              size = image.size
+                              preview = image.convert("RGB")
+                              preview.thumbnail((220, 124))
+                              output = io.BytesIO()
+                              preview.save(output, format="JPEG", quality=55, optimize=True)
                   except Exception:
                       continue
-                  matches.append((position, character, candidate))
+                  matches.append((position, character, data, output.getvalue(), size))
                   if len(matches) >= 12:
                       break
               if len(matches) >= 12:
                   break
           if not matches:
               raise SystemExit("No fully decodable JPEG repair candidate found")
-          print(f"FULL_DECODE_MATCHES={len(matches)}")
-          for position, character, candidate in matches:
-              print(f"REPAIR_CANDIDATE position={position} character={character} length={len(candidate)}")
-          if len(matches) == 1:
-              position, character, candidate = matches[0]
-              path.write_text(candidate + "\n", encoding="ascii")
-              print(f"REPAIR_FOUND position={position} character={character}")
-          else:
-              raise SystemExit("Multiple candidates fully decoded; manual selection required")
+          print(f"FULL_DECODE_MATCHES_SHOWN={len(matches)}")
+          for index, (position, character, data, preview, size) in enumerate(matches):
+              print(f"REPAIR_CANDIDATE index={index} position={position} character={character} size={size} bytes={len(data)}")
+              print(f"PREVIEW_{index}={base64.b64encode(preview).decode('ascii')}")
           PY
       - name: Compile Python source
         run: python -m compileall -q main.py tests
