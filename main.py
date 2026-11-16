@@ -21,15 +21,19 @@ BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
 
 
 def load_brand_banner():
-    """Load the PRIZORA black-and-gold welcome artwork bundled with the bot."""
+    """Load and validate the PRIZORA black-and-gold welcome artwork."""
     banner_path = os.path.join(
         os.path.dirname(__file__), "assets", "prizora_brand_banner.jpg.b64"
     )
     try:
         with open(banner_path, "r", encoding="ascii") as banner_file:
-            return base64.b64decode(banner_file.read().strip())
+            encoded = banner_file.read().strip()
+        banner = base64.b64decode(encoded, validate=True)
+        if not banner.startswith(b"\xff\xd8\xff") or not banner.endswith(b"\xff\xd9"):
+            raise ValueError("PRIZORA banner is not a complete JPEG")
+        return banner
     except (OSError, ValueError):
-        logging.exception("Could not load PRIZORA brand banner")
+        logging.warning("Could not load PRIZORA brand banner", exc_info=True)
         return None
 
 logging.basicConfig(
