@@ -48,7 +48,7 @@ class PrizoraTests(unittest.TestCase):
     def test_brand_banner_is_a_jpeg(self):
         banner = main.load_brand_banner()
         self.assertIsNotNone(banner)
-        self.assertTrue(banner.startswith(b"\\xff\\xd8\\xff"))
+        self.assertEqual(banner[:3], bytes((255, 216, 255)))
 
     def test_localization_keys_and_placeholders_match(self):
         languages = ("ru", "en", "de")
