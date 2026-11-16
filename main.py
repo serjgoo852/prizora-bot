@@ -19,6 +19,8 @@ from telegram.error import TelegramError
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
 
+MOSCOW_TZ = timezone(timedelta(hours=3), "MSK")
+
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO,
@@ -170,6 +172,7 @@ I18N = {
         "current_value": "Текущее значение: {value}\nОтправь новое значение, чтобы изменить его.",
         "announcement_datetime_invalid": "Не понял дату и время. Введи в формате ДД.ММ.ГГГГ ЧЧ:ММ, например 14.11.2026 18:00.",
         "announcement_end_invalid": "Завершение должно быть позже начала. Введи дату и время ещё раз.",
+        "announcement_start_past": "⚠️ Время начала уже прошло. Сейчас {now}, а вы указали {chosen}. Выберите будущее время или более позднюю дату.",
         "announcement_rules_invalid": "Напиши условия текстом (до 1000 символов).",
         "announcement_review_prompt": "👑 ПРЕДПРОСМОТР ГОТОВ\n━━━━━━━━━━━━\nПроверь карточку конкурса выше. Если всё верно, подтверди публикацию кнопкой ниже.",
         "announcement_publish_button": "👑 Опубликовать конкурс",
@@ -337,6 +340,7 @@ I18N = {
         "current_value": "Current value: {value}\nSend a new value to change it.",
         "announcement_datetime_invalid": "I couldn't read that date and time. Use DD.MM.YYYY HH:MM, for example 14.11.2026 18:00.",
         "announcement_end_invalid": "The end date and time must be later than the start. Please enter it again.",
+        "announcement_start_past": "⚠️ The start time has already passed. It is now {now}, but you entered {chosen}. Please choose a future time or a later date.",
         "announcement_rules_invalid": "Enter the rules as text (up to 1,000 characters).",
         "announcement_review_prompt": "👑 PREVIEW READY\n━━━━━━━━━━━━\nCheck the contest card above. If everything looks right, confirm using the button below.",
         "announcement_publish_button": "👑 Publish contest",
@@ -504,6 +508,7 @@ I18N = {
         "current_value": "Aktueller Wert: {value}\nSende einen neuen Wert, um ihn zu ändern.",
         "announcement_datetime_invalid": "Das Datum wurde nicht erkannt. Verwende TT.MM.JJJJ HH:MM, zum Beispiel 14.11.2026 18:00.",
         "announcement_end_invalid": "Das Ende muss nach dem Beginn liegen. Bitte gib es erneut ein.",
+        "announcement_start_past": "⚠️ Die Startzeit liegt bereits in der Vergangenheit. Jetzt ist es {now}, angegeben wurde {chosen}. Bitte wähle eine zukünftige Uhrzeit oder ein späteres Datum.",
         "announcement_rules_invalid": "Gib die Bedingungen als Text ein (bis zu 1.000 Zeichen).",
         "announcement_review_prompt": "👑 VORSCHAU FERTIG\n━━━━━━━━━━━━\nPrüfe die Wettbewerbs-Karte oben. Wenn alles stimmt, bestätige unten die Veröffentlichung.",
         "announcement_publish_button": "👑 Wettbewerb veröffentlichen",
@@ -911,6 +916,36 @@ async def send_contest_summary(
         await message.edit_text(text, reply_markup=markup)
     else:
         await message.reply_text(text, reply_markup=markup)
+
+
+def parse_moscow_datetime(value: str) -> datetime:
+    """Parse organizer input as a Moscow-local datetime."""
+    return datetime.strptime(value, "%d.%m.%Y %H:%M").replace(tzinfo=MOSCOW_TZ)
+
+
+def current_moscow_datetime() -> datetime:
+    return datetime.now(timezone.utc).astimezone(MOSCOW_TZ).replace(second=0, microsecond=0)
+
+
+def format_moscow_datetime(value: datetime) -> str:
+    return value.astimezone(MOSCOW_TZ).strftime("%d.%m.%Y %H:%M")
+
+
+def validate_contest_schedule(context: ContextTypes.DEFAULT_TYPE):
+    try:
+        start_value = parse_moscow_datetime(context.user_data.get("contest_start_at", ""))
+        end_value = parse_moscow_datetime(context.user_data.get("contest_end_at", ""))
+    except (TypeError, ValueError):
+        return "announcement_datetime_invalid", {}
+    now = current_moscow_datetime()
+    if start_value <= now:
+        return "announcement_start_past", {
+            "now": format_moscow_datetime(now),
+            "chosen": format_moscow_datetime(start_value),
+        }
+    if end_value <= start_value:
+        return "announcement_end_invalid", {}
+    return None, {}
 
 
 def build_announcement_text(context: ContextTypes.DEFAULT_TYPE) -> str:
@@ -1634,6 +1669,17 @@ async def button_handler(
         if not context.user_data.get("contest_publish_pending"):
             await query.edit_message_text(tr(context, "announcement_cancelled"))
             return
+        schedule_error, schedule_values = validate_contest_schedule(context)
+        if schedule_error:
+            context.user_data["contest_publish_pending"] = False
+            await query.edit_message_text(
+                tr(context, schedule_error, **schedule_values),
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton(tr(context, "back"), callback_data="back:announcement_start")],
+                    [InlineKeyboardButton(tr(context, "announcement_cancel_button"), callback_data="publish_cancel")],
+                ]),
+            )
+            return
         chat_id = context.user_data.get("contest_destination_chat_id")
         place = context.user_data.get("contest_place")
         if not chat_id or place not in ("group", "channel"):
@@ -1824,14 +1870,21 @@ async def prize_text_handler(
 
     if context.user_data.get("awaiting_announcement_start"):
         try:
-            start_value = datetime.strptime(message_text, "%d.%m.%Y %H:%M")
+            start_value = parse_moscow_datetime(message_text)
         except ValueError:
             await update.message.reply_text(
                 tr(context, "announcement_datetime_invalid"),
                 reply_markup=step_navigation(context, "back:summary"),
             )
             return
-        context.user_data["contest_start_at"] = start_value.strftime("%d.%m.%Y %H:%M")
+        now = current_moscow_datetime()
+        if start_value <= now:
+            await update.message.reply_text(
+                tr(context, "announcement_start_past", now=format_moscow_datetime(now), chosen=format_moscow_datetime(start_value)),
+                reply_markup=step_navigation(context, "back:summary"),
+            )
+            return
+        context.user_data["contest_start_at"] = format_moscow_datetime(start_value)
         context.user_data["awaiting_announcement_start"] = False
         context.user_data["awaiting_announcement_end"] = True
         await update.message.reply_text(
@@ -1842,21 +1895,21 @@ async def prize_text_handler(
 
     if context.user_data.get("awaiting_announcement_end"):
         try:
-            end_value = datetime.strptime(message_text, "%d.%m.%Y %H:%M")
-            start_value = datetime.strptime(context.user_data.get("contest_start_at", ""), "%d.%m.%Y %H:%M")
+            end_value = parse_moscow_datetime(message_text)
+            start_value = parse_moscow_datetime(context.user_data.get("contest_start_at", ""))
         except ValueError:
             await update.message.reply_text(
                 tr(context, "announcement_datetime_invalid"),
                 reply_markup=step_navigation(context, "back:announcement_start"),
             )
             return
-        if end_value <= start_value:
+        if end_value <= start_value or end_value <= current_moscow_datetime():
             await update.message.reply_text(
                 tr(context, "announcement_end_invalid"),
                 reply_markup=step_navigation(context, "back:announcement_start"),
             )
             return
-        context.user_data["contest_end_at"] = end_value.strftime("%d.%m.%Y %H:%M")
+        context.user_data["contest_end_at"] = format_moscow_datetime(end_value)
         context.user_data["awaiting_announcement_end"] = False
         context.user_data["awaiting_announcement_rules"] = True
         await update.message.reply_text(
