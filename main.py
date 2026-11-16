@@ -1018,6 +1018,11 @@ def build_announcement_banner(
                     elif lower in ("dejavusans-bold.ttf", "notosans-bold.ttf", "liberationsans-bold.ttf") or (lower.startswith("roboto") and "bold" in lower and lower.endswith((".ttf", ".otf"))):
                         bold_candidates.append(path)
 
+    # Variable Roboto builds may ship without a separate bold file.
+    # They still render Cyrillic correctly, so use the same face for bold labels.
+    if not bold_candidates and regular_candidates:
+        bold_candidates.extend(regular_candidates)
+
     def load_font(candidates, size):
         for path in candidates:
             if os.path.isfile(path):
@@ -1671,6 +1676,17 @@ async def button_handler(
             logging.exception("Failed to publish contest announcement")
             await query.edit_message_text(
                 tr(context, "announcement_publish_error"),
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton(tr(context, "announcement_publish_button"), callback_data="publish_confirm")],
+                    [InlineKeyboardButton(tr(context, "back"), callback_data="back:announcement_rules")],
+                    [InlineKeyboardButton(tr(context, "announcement_cancel_button"), callback_data="publish_cancel")],
+                ]),
+            )
+            return
+        except Exception:
+            logging.exception("Unexpected error while preparing or publishing contest announcement")
+            await query.edit_message_text(
+                "Не удалось подготовить изображение или публикацию. Ошибка записана в журнал. Проверь логи и попробуй ещё раз.",
                 reply_markup=InlineKeyboardMarkup([
                     [InlineKeyboardButton(tr(context, "announcement_publish_button"), callback_data="publish_confirm")],
                     [InlineKeyboardButton(tr(context, "back"), callback_data="back:announcement_rules")],
