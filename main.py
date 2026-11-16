@@ -933,6 +933,10 @@ async def handle_join_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         },
     }
     messages = messages.get(language, messages["en"])
+    messages = {
+        key: f"👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n{value}"
+        for key, value in messages.items()
+    }
     contest_id = context.args[0][5:] if context.args and context.args[0].startswith("join_") else ""
     if not contest_id or len(contest_id) > 32:
         await update.message.reply_text(tr(context, "welcome"), reply_markup=main_menu(language))
