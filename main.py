@@ -278,10 +278,10 @@ I18N = {
         "announcement_cancel_button": "✖️ Cancel",
         "announcement_publish_success": "✨ Contest published in: {destination}.\n\nParticipants can register using the button until the contest ends. The organizer selects winners manually.",
         "announcement_publish_error": "The announcement could not be sent. Check that the bot is still an administrator and can post in the chat. You can retry.",
-        "artwork_button": "✨ Contest branding",
+        "artwork_button": "✨ Contest artwork",
         "artwork_title": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n🎨 CONTEST ARTWORK\nAdd the organizer's logo and/or banner. Images are optional.\n\nLogo: {logo}\nBanner: {banner}",
         "artwork_logo": "🟡 Upload logo", "artwork_banner": "🖼 Upload banner",
-        "artwork_done": "✅ Done", "artwork_skip": "Skip branding",
+        "artwork_done": "✅ Done", "artwork_skip": "Skip artwork",
         "artwork_remove_logo": "Remove logo", "artwork_remove_banner": "Remove banner",
         "artwork_logo_prompt": "Send the logo as a photo or PNG/JPG file. Recommended: square 512 × 512 px, up to 5 MB.",
         "artwork_banner_prompt": "Send the banner as a photo or PNG/JPG file. Recommended: landscape 1200 × 675 px, up to 5 MB.",
@@ -754,8 +754,7 @@ async def send_contest_summary(
             await context.bot.send_photo(
                 chat_id=message.chat.id,
                 photo=logo_id,
-                caption="🟡 Логотип конкурса" if language == "ru" else
-                        "🟡 Contest logo" if language == "en" else "🟡 Wettbewerbslogo",
+                caption=tr(context, "artwork_logo_caption"),
             )
     if banner_id:
         if context.user_data.get("contest_banner_as_document"):
@@ -768,8 +767,7 @@ async def send_contest_summary(
             await context.bot.send_photo(
                 chat_id=message.chat.id,
                 photo=banner_id,
-                caption="🖼 Баннер конкурса" if language == "ru" else
-                        "🖼 Contest banner" if language == "en" else "🖼 Wettbewerbsbanner",
+                caption=tr(context, "artwork_banner_caption"),
             )
 
     text = tr(
