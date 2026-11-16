@@ -994,15 +994,28 @@ def build_announcement_banner(
         "/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf",
         "/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf",
     ]
+    # Roboto is installed as a Python package so the banner does not depend
+    # on system fonts being present in the slim container image.
+    try:
+        import fontpkg
+        roboto_root = os.fspath(fontpkg.path("Roboto"))
+        if os.path.isdir(roboto_root):
+            font_roots = font_roots + (roboto_root,)
+        elif os.path.isfile(roboto_root):
+            regular_candidates.append(roboto_root)
+            bold_candidates.append(roboto_root)
+    except Exception:
+        logging.exception("Could not locate the bundled Roboto font package")
+
     for root in font_roots:
         if os.path.isdir(root):
             for directory, _, files in os.walk(root):
                 for filename in files:
                     lower = filename.lower()
                     path = os.path.join(directory, filename)
-                    if lower in ("dejavusans.ttf", "notosans-regular.ttf", "liberationsans-regular.ttf"):
+                    if lower in ("dejavusans.ttf", "notosans-regular.ttf", "liberationsans-regular.ttf") or (lower.startswith("roboto") and "bold" not in lower and lower.endswith((".ttf", ".otf"))):
                         regular_candidates.append(path)
-                    elif lower in ("dejavusans-bold.ttf", "notosans-bold.ttf", "liberationsans-bold.ttf"):
+                    elif lower in ("dejavusans-bold.ttf", "notosans-bold.ttf", "liberationsans-bold.ttf") or (lower.startswith("roboto") and "bold" in lower and lower.endswith((".ttf", ".otf"))):
                         bold_candidates.append(path)
 
     def load_font(candidates, size):
@@ -1854,8 +1867,13 @@ async def prize_text_handler(
                 reply_markup=step_navigation(context, "back:announcement_end"),
             )
             return
-        final_banner = await build_contest_banner_media(context, context.bot)
-        await context.bot.send_photo(chat_id=update.effective_chat.id, photo=final_banner, caption=announcement_text)
+        try:
+            final_banner = await build_contest_banner_media(context, context.bot)
+            await context.bot.send_photo(chat_id=update.effective_chat.id, photo=final_banner, caption=announcement_text)
+        except Exception:
+            # Never leave the organizer without the next step if image rendering fails.
+            logging.exception("Could not generate contest preview banner")
+            await update.message.reply_text(announcement_text)
 
         await update.message.reply_text(
             tr(context, "announcement_review_prompt"),
@@ -2002,6 +2020,14 @@ async def prize_text_handler(
         )
 
 
+async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Log full tracebacks for unexpected Telegram update-handler failures."""
+    logging.error(
+        "Unhandled exception while processing Telegram update",
+        exc_info=(type(context.error), context.error, context.error.__traceback__),
+    )
+
+
 def main():
     if not BOT_TOKEN:
         raise RuntimeError("BOT_TOKEN environment variable is not set.")
@@ -2014,6 +2040,7 @@ def main():
     application.add_handler(CallbackQueryHandler(button_handler))
     application.add_handler(MessageHandler(filters.PHOTO | filters.Document.IMAGE, artwork_photo_handler))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, prize_text_handler))
+    application.add_error_handler(error_handler)
 
     logging.info("PRIZORA is starting...")
     application.run_polling()
