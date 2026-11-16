@@ -44,7 +44,7 @@ jobs:
                       data = base64.b64decode(candidate, validate=True)
                   except Exception:
                       continue
-                  if not data.startswith(b"\\xff\\xd8\\xff") or not data.endswith(b"\\xff\\xd9"):
+                  if not data.startswith(b"\xff\xd8\xff") or not data.endswith(b"\xff\xd9"):
                       continue
                   try:
                       with Image.open(io.BytesIO(data)) as image:
@@ -59,7 +59,7 @@ jobs:
           if len(matches) != 1:
               raise SystemExit(f"Expected one valid repair, found {len(matches)}")
           position, character, candidate = matches[0]
-          path.write_text(candidate + "\\n", encoding="ascii")
+          path.write_text(candidate + "\n", encoding="ascii")
           print(f"REPAIR_FOUND position={position} character={character}")
           PY
       - name: Compile Python source
