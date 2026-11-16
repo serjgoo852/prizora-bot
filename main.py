@@ -129,7 +129,7 @@ I18N = {
             "🏆 Победителей: {winners}\n"
             "🔐 Подписка: {subscription}\n\n"
             "Следующий этап — подготовка публикации. "
-            "Публикация объявления подключена. Регистрация участников и выбор победителей будут добавлены отдельно. "
+            "После публикации участники смогут зарегистрироваться по кнопке. Победителей пока выбирает организатор. "
             "Тарифные ограничения пока не применяются."
         ),
         "summary_home": "🏠 Главное меню",
@@ -195,7 +195,7 @@ I18N = {
             "1. Выбери язык интерфейса.\n"
             "2. Выбери формат и место проведения конкурса.\n"
             "3. Укажи приз, лимит участников и количество победителей.\n\n"
-            "Подготовка и публикация тестового объявления уже доступны. Регистрация участников и выбор победителей будут добавлены позже."
+            "Подготовка публикации и регистрация участников доступны. Победителей пока вручную выбирает организатор."
         ),
     },
     "en": {
@@ -362,7 +362,7 @@ I18N = {
             "1. Choose your interface language.\n"
             "2. Select a contest format and where it will run.\n"
             "3. Enter the prize, participant limit, and number of winners.\n\n"
-            "Preparing and publishing a test announcement is now available. Participant registration and winner selection will be added later."
+            "Contest announcements and participant registration are available. The organizer currently selects the winners manually."
         ),
     },
     "de": {
@@ -529,7 +529,7 @@ I18N = {
             "1. Wähle die Sprache der Oberfläche.\n"
             "2. Wähle ein Format und den Veranstaltungsort.\n"
             "3. Gib den Preis, die Teilnehmergrenze und die Anzahl der Gewinner ein.\n\n"
-            "Vorbereitung und Veröffentlichung einer Testankündigung sind jetzt möglich. Teilnehmerregistrierung und Gewinnerauswahl folgen später."
+            "Wettbewerbsankündigungen und Teilnehmerregistrierung sind verfügbar. Der Veranstalter wählt die Gewinner derzeit manuell aus."
         ),
     },
 }
