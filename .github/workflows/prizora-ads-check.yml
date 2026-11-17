@@ -65,6 +65,16 @@ jobs:
           row = ads.get_order(order2, advertiser)
           assert row["campaign_status"] == "active", row
 
+          # Active campaigns must expire when their paid term has elapsed.
+          import sqlite3
+          with sqlite3.connect(os.environ["DATABASE_PATH"]) as db:
+              db.execute(
+                  "UPDATE ad_campaigns SET ends_at='2000-01-01T00:00:00+00:00' WHERE campaign_id=?",
+                  (campaign2,),
+              )
+          assert ads.expire_campaigns() == 1
+          assert ads.get_order(order2, advertiser)["campaign_status"] == "completed"
+
           summary = ads.get_admin_summary()
           assert summary["campaigns"] == 2, summary
           print("PRIZORA Ads database smoke tests passed")
