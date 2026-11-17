@@ -371,18 +371,27 @@ def set_campaign_moderation(campaign_id: str, admin_id: int, action: str, note: 
 
 def activate_paid_approved_campaigns() -> int:
     """Activate only campaigns with both approved creative and confirmed payment."""
-    now = _now()
+    now_dt = datetime.now(timezone.utc)
+    now = now_dt.isoformat(timespec="seconds")
     with _connect() as db:
-        cursor = db.execute(
-            """UPDATE ad_campaigns SET status='active', starts_at=COALESCE(starts_at, ?),
-                      ends_at=COALESCE(ends_at, datetime(?, '+' || requested_days || ' days')),
-                      updated_at=?
+        eligible = db.execute(
+            """SELECT campaign_id, requested_days FROM ad_campaigns
                WHERE status='approved' AND EXISTS (
                    SELECT 1 FROM ad_orders o WHERE o.campaign_id=ad_campaigns.campaign_id
                    AND o.status='paid'
-               )""",
-            (now, now, now),
-        )
+               )"""
+        ).fetchall()
+        for campaign in eligible:
+            start_value = now
+            end_value = (now_dt + timedelta(days=int(campaign["requested_days"]))).isoformat(timespec="seconds")
+            db.execute(
+                """UPDATE ad_campaigns
+                   SET status='active', starts_at=COALESCE(starts_at, ?),
+                       ends_at=COALESCE(ends_at, ?), updated_at=?
+                   WHERE campaign_id=? AND status='approved'""",
+                (start_value, end_value, now, campaign["campaign_id"]),
+            )
+        activated = len(eligible)
         # The first placement is deliberately limited to the safe home screen.
         db.execute(
             """INSERT OR IGNORE INTO ad_placements
@@ -390,7 +399,7 @@ def activate_paid_approved_campaigns() -> int:
                SELECT campaign_id, 'home', 1, ? FROM ad_campaigns WHERE status='active'""",
             (now,),
         )
-        return cursor.rowcount
+        return activated
 
 
 
