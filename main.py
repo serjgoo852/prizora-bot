@@ -61,7 +61,7 @@ I18N = {
         "contest_card": "🎁 {prize}\n🎡 Формат: {format}\n📍 Площадка: {destination}\n👥 Участники: {count}/{limit}\n🏆 Победителей: {winners}\n🕒 Статус: {status}",
         "contest_status_active": "регистрация открыта",
         "contest_status_waiting": "ожидает начала",
-        "contest_status_ended": "регистрация завершена",
+        "contest_status_ended": "🏁 ИГРА ЗАВЕРШЕНА",
         "contest_participants_title": "👥 Участники конкурса",
         "contest_participants_empty": "Пока никто не зарегистрировался.",
         "participants_page": "Страница {page}/{pages}",
@@ -249,7 +249,7 @@ I18N = {
         "contest_card": "🎁 {prize}\n🎡 Format: {format}\n📍 Destination: {destination}\n👥 Participants: {count}/{limit}\n🏆 Winners: {winners}\n🕒 Status: {status}",
         "contest_status_active": "registration open",
         "contest_status_waiting": "waiting to start",
-        "contest_status_ended": "registration ended",
+        "contest_status_ended": "🏁 CONTEST FINISHED",
         "contest_participants_title": "👥 Contest participants",
         "contest_participants_empty": "No one has registered yet.",
         "participants_page": "Page {page}/{pages}",
@@ -437,7 +437,7 @@ I18N = {
         "contest_card": "🎁 {prize}\n🎡 Format: {format}\n📍 Ort: {destination}\n👥 Teilnehmer: {count}/{limit}\n🏆 Gewinner: {winners}\n🕒 Status: {status}",
         "contest_status_active": "Anmeldung geöffnet",
         "contest_status_waiting": "wartet auf den Start",
-        "contest_status_ended": "Anmeldung beendet",
+        "contest_status_ended": "🏁 WETTBEWERB BEENDET",
         "contest_participants_title": "👥 Wettbewerbsteilnehmer",
         "contest_participants_empty": "Noch niemand angemeldet.",
         "participants_page": "Seite {page}/{pages}",
@@ -679,6 +679,7 @@ def init_database():
             ("winners_json", "TEXT"),
             ("result_message_id", "INTEGER"),
             ("language", "TEXT NOT NULL DEFAULT 'ru'"),
+            ("announcement_message_id", "INTEGER"),
         ):
             if column not in contest_columns:
                 connection.execute(f"ALTER TABLE contests ADD COLUMN {column} {definition}")
@@ -702,7 +703,7 @@ def init_database():
         """)
 
 
-def save_published_contest(context: ContextTypes.DEFAULT_TYPE, organizer_id: int) -> str:
+def save_published_contest(context: ContextTypes.DEFAULT_TYPE, organizer_id: int, announcement_message_id: int) -> str:
     contest_id = context.user_data.get("contest_id") or uuid.uuid4().hex[:12]
     moscow_tz = timezone(timedelta(hours=3))
     starts_at = datetime.strptime(
@@ -719,8 +720,8 @@ def save_published_contest(context: ContextTypes.DEFAULT_TYPE, organizer_id: int
                 contest_id, organizer_id, destination_chat_id, destination_title,
                 prize_name, contest_format, participant_limit, winner_count,
                 subscription_chat_id, starts_at, ends_at, rules, created_at, published_at,
-                registration_mode, automation_enabled, language
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)""",
+                registration_mode, automation_enabled, language, announcement_message_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)""",
             (
                 contest_id,
                 organizer_id,
@@ -738,6 +739,7 @@ def save_published_contest(context: ContextTypes.DEFAULT_TYPE, organizer_id: int
                 saved_at,
                 context.user_data.get("contest_registration_mode", "scheduled"),
                 current_language(context),
+                announcement_message_id,
             ),
         )
     context.user_data["contest_id"] = contest_id
@@ -1994,7 +1996,7 @@ async def button_handler(
                 )
                 return
             final_banner = await build_contest_banner_media(context, context.bot)
-            await context.bot.send_photo(chat_id=chat.id, photo=final_banner, caption=announcement_text, reply_markup=join_markup)
+            announcement_message = await context.bot.send_photo(chat_id=chat.id, photo=final_banner, caption=announcement_text, reply_markup=join_markup)
         except TelegramError:
             logging.exception("Failed to publish contest announcement")
             await query.edit_message_text(
@@ -2022,7 +2024,7 @@ async def button_handler(
         context.user_data["contest_published"] = True
         context.user_data["contest_publish_pending"] = False
         try:
-            save_published_contest(context, update.effective_user.id)
+            save_published_contest(context, update.effective_user.id, announcement_message.message_id)
         except (sqlite3.Error, ValueError, KeyError):
             logging.exception("Announcement was published but contest could not be saved")
             await query.edit_message_text(
@@ -2459,6 +2461,21 @@ def format_result_message(contest):
 async def publish_pending_results(application):
     for contest in pending_result_posts():
         try:
+            if contest["announcement_message_id"]:
+                finished_label = {"en": "🏁 CONTEST FINISHED", "de": "🏁 WETTBEWERB BEENDET"}.get(
+                    contest["language"], "🏁 ИГРА ЗАВЕРШЕНА"
+                )
+                try:
+                    await application.bot.edit_message_caption(
+                        chat_id=contest["destination_chat_id"],
+                        message_id=contest["announcement_message_id"],
+                        caption=finished_label,
+                        reply_markup=None,
+                    )
+                    logging.info("Marked contest announcement %s as finished", contest["contest_id"])
+                except TelegramError:
+                    logging.exception("Could not update contest announcement %s; result will still be published", contest["contest_id"])
+
             message = await application.bot.send_message(
                 chat_id=contest["destination_chat_id"],
                 text=format_result_message(contest),
