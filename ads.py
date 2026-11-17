@@ -229,3 +229,169 @@ def get_admin_summary() -> dict:
             "SELECT COUNT(*) FROM ad_campaigns WHERE status = 'active'"
         ).fetchone()[0]
     return {key: int(value) for key, value in summary.items()}
+
+
+# Public starter tariffs. Prices can be changed here without touching contest code.
+AD_TARIFFS = {7: 299, 14: 499, 30: 999}
+
+
+def create_ad_order(campaign_id: str, advertiser_id: int) -> str:
+    """Create a manual-payment order for an advertiser's own draft."""
+    import uuid
+    now = _now()
+    order_id = uuid.uuid4().hex
+    with _connect() as db:
+        campaign = db.execute(
+            "SELECT advertiser_id, requested_days, status FROM ad_campaigns WHERE campaign_id = ?",
+            (campaign_id,),
+        ).fetchone()
+        if campaign is None or int(campaign["advertiser_id"]) != int(advertiser_id):
+            raise ValueError("campaign not found")
+        if campaign["status"] not in ("draft", "changes_requested"):
+            raise ValueError("campaign cannot be ordered in its current state")
+        days = int(campaign["requested_days"])
+        amount = AD_TARIFFS[days]
+        db.execute(
+            """INSERT INTO ad_orders
+               (order_id, campaign_id, advertiser_id, term_days, amount_rub, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (order_id, campaign_id, advertiser_id, days, amount, now, now),
+        )
+        db.execute(
+            "UPDATE ad_campaigns SET status='pending_review', updated_at=? WHERE campaign_id=?",
+            (now, campaign_id),
+        )
+        db.execute(
+            "INSERT INTO ad_moderation (campaign_id, action, note, created_at) VALUES (?, 'submitted', ?, ?)",
+            (campaign_id, "Заявка отправлена на проверку", now),
+        )
+    return order_id
+
+
+def get_advertiser_campaigns(advertiser_id: int) -> list:
+    with _connect() as db:
+        rows = db.execute(
+            """SELECT c.*, o.order_id, o.amount_rub, o.status AS order_status
+               FROM ad_campaigns c LEFT JOIN ad_orders o ON o.campaign_id=c.campaign_id
+               WHERE c.advertiser_id=? ORDER BY c.created_at DESC LIMIT 20""",
+            (advertiser_id,),
+        ).fetchall()
+        return [dict(row) for row in rows]
+
+
+def get_admin_queue(limit: int = 20) -> list:
+    with _connect() as db:
+        rows = db.execute(
+            """SELECT c.campaign_id, c.advertiser_id, c.title, c.public_link,
+                      c.description, c.image_file_id, c.requested_days, c.status,
+                      o.order_id, o.amount_rub, o.status AS order_status,
+                      p.payment_id, p.proof_file_id, p.advertiser_note, p.status AS payment_status
+               FROM ad_campaigns c
+               LEFT JOIN ad_orders o ON o.campaign_id=c.campaign_id
+               LEFT JOIN ad_payments p ON p.order_id=o.order_id AND p.status='submitted'
+               WHERE c.status IN ('pending_review','approved','changes_requested')
+                  OR o.status='payment_submitted'
+               ORDER BY c.created_at ASC LIMIT ?""",
+            (max(1, min(int(limit), 50)),),
+        ).fetchall()
+        return [dict(row) for row in rows]
+
+
+def set_payment_review(order_id: str, admin_id: int, approved: bool, note: str = "") -> None:
+    """Confirm or reject payment independently of content moderation."""
+    if not is_ads_admin(admin_id):
+        raise PermissionError("admin only")
+    now = _now()
+    with _connect() as db:
+        order = db.execute(
+            "SELECT campaign_id, status FROM ad_orders WHERE order_id=?", (order_id,)
+        ).fetchone()
+        if order is None or order["status"] != "payment_submitted":
+            raise ValueError("payment is not awaiting review")
+        payment = db.execute(
+            "SELECT payment_id FROM ad_payments WHERE order_id=? AND status='submitted' ORDER BY payment_id DESC LIMIT 1",
+            (order_id,),
+        ).fetchone()
+        if payment is None:
+            raise ValueError("payment submission not found")
+        new_payment_status = "confirmed" if approved else "rejected"
+        new_order_status = "paid" if approved else "awaiting_payment"
+        db.execute(
+            "UPDATE ad_payments SET status=?, reviewed_by=?, reviewed_at=? WHERE payment_id=?",
+            (new_payment_status, admin_id, now, payment["payment_id"]),
+        )
+        db.execute(
+            "UPDATE ad_orders SET status=?, updated_at=? WHERE order_id=?",
+            (new_order_status, now, order_id),
+        )
+
+
+def set_campaign_moderation(campaign_id: str, admin_id: int, action: str, note: str = "") -> None:
+    """Moderate creative material; approval alone never activates a campaign."""
+    if not is_ads_admin(admin_id):
+        raise PermissionError("admin only")
+    transitions = {
+        "approve": ("approved", "approved"),
+        "reject": ("rejected", "rejected"),
+        "changes": ("changes_requested", "changes_requested"),
+        "pause": ("paused", "paused"),
+        "resume": ("approved", "resumed"),
+        "stop": ("cancelled", "stopped"),
+    }
+    if action not in transitions:
+        raise ValueError("unsupported moderation action")
+    status, audit_action = transitions[action]
+    now = _now()
+    with _connect() as db:
+        campaign = db.execute(
+            "SELECT status FROM ad_campaigns WHERE campaign_id=?", (campaign_id,)
+        ).fetchone()
+        if campaign is None:
+            raise ValueError("campaign not found")
+        db.execute(
+            "UPDATE ad_campaigns SET status=?, updated_at=? WHERE campaign_id=?",
+            (status, now, campaign_id),
+        )
+        db.execute(
+            "INSERT INTO ad_moderation (campaign_id, action, admin_id, note, created_at) VALUES (?, ?, ?, ?, ?)",
+            (campaign_id, audit_action, admin_id, (note or "")[:1000], now),
+        )
+        # Activation requires both independent approvals.
+        if action == "approve":
+            order = db.execute(
+                "SELECT order_id FROM ad_orders WHERE campaign_id=? AND status='paid' ORDER BY created_at DESC LIMIT 1",
+                (campaign_id,),
+            ).fetchone()
+            if order:
+                db.execute(
+                    "UPDATE ad_campaigns SET status='approved', updated_at=? WHERE campaign_id=?",
+                    (now, campaign_id),
+                )
+
+
+def activate_paid_approved_campaigns() -> int:
+    """Activate only campaigns with both approved creative and confirmed payment."""
+    now = _now()
+    with _connect() as db:
+        cursor = db.execute(
+            """UPDATE ad_campaigns SET status='active', starts_at=COALESCE(starts_at, ?),
+                      ends_at=COALESCE(ends_at, datetime(?, '+' || requested_days || ' days')),
+                      updated_at=?
+               WHERE status='approved' AND EXISTS (
+                   SELECT 1 FROM ad_orders o WHERE o.campaign_id=ad_campaigns.campaign_id
+                   AND o.status='paid'
+               )""",
+            (now, now, now),
+        )
+        return cursor.rowcount
+
+
+def get_order(order_id: str, advertiser_id: int) -> Optional[dict]:
+    with _connect() as db:
+        row = db.execute(
+            """SELECT o.*, c.title, c.status AS campaign_status
+               FROM ad_orders o JOIN ad_campaigns c ON c.campaign_id=o.campaign_id
+               WHERE o.order_id=? AND o.advertiser_id=?""",
+            (order_id, advertiser_id),
+        ).fetchone()
+        return dict(row) if row else None
