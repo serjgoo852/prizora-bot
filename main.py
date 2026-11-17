@@ -1879,6 +1879,12 @@ async def button_handler(
         await query.edit_message_text("Пришли фото/скрин чека или напиши текстовое подтверждение оплаты. Если отправляешь текст, укажи дату и сумму.")
 
     elif data == "ads:mine":
+        # Leaving the creative-edit flow (including its Cancel button) must
+        # discard the temporary draft so later messages are not consumed by it.
+        context.user_data.pop("ads_edit_campaign", None)
+        context.user_data.pop("ads_edit_draft", None)
+        if context.user_data.get("ads_step") in ("edit_title", "edit_link", "edit_description", "edit_ready"):
+            context.user_data.pop("ads_step", None)
         rows = ads.get_advertiser_campaigns(query.from_user.id)
         if not rows:
             await query.edit_message_text("Пока заявок нет.", reply_markup=InlineKeyboardMarkup([
