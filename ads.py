@@ -536,6 +536,17 @@ def get_campaign_ad_stats(campaign_id: str) -> Optional[dict]:
     }
 
 
+
+def get_campaign_public_link(campaign_id: str) -> Optional[dict]:
+    """Return public destination details only while a campaign is active."""
+    with _connect() as db:
+        row = db.execute(
+            "SELECT title, public_link FROM ad_campaigns WHERE campaign_id=? AND status='active'",
+            (campaign_id,),
+        ).fetchone()
+    return dict(row) if row else None
+
+
 def get_ads_delivery_summary() -> dict:
     """Aggregate impression, click and CTR metrics for the admin dashboard."""
     with _connect() as db:
