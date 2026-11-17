@@ -42,7 +42,7 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
         reply_text.assert_awaited_once()
         args, kwargs = reply_text.await_args
         self.assertIn("PRIZORA", args[0])
-        self.assertIn("language", kwargs["reply_markup"].inline_keyboard[0][0].callback_data)
+        self.assertEqual(kwargs["reply_markup"].inline_keyboard[0][0].callback_data, "lang:ru")
         self.assertEqual(context.user_data["suggested_language"], "ru")
 
     async def test_start_returning_user_shows_welcome_and_main_menu(self):
