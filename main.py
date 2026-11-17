@@ -1904,6 +1904,7 @@ async def button_handler(
                 f"{row['title'][:35]} · {row['status']}",
                 callback_data=f"ads:item:{row['campaign_id']}")])
         keyboard.extend([
+            [InlineKeyboardButton("📂 Активные и приостановленные", callback_data="ads:manage")],
             [InlineKeyboardButton("‹ Назад к рекламе", callback_data="ads:home")],
             [InlineKeyboardButton(tr(context, "back_home"), callback_data="home")],
         ])
@@ -1922,19 +1923,39 @@ async def button_handler(
             + "Выбери заявку:",
             reply_markup=InlineKeyboardMarkup(keyboard))
 
+    elif data == "ads:manage":
+        if not ads.is_ads_admin(query.from_user.id):
+            await query.edit_message_text("⛔ Доступ запрещён.")
+            return
+        rows = ads.get_admin_campaigns()
+        keyboard = [[InlineKeyboardButton(
+            f"{row['title'][:32]} · {'активна' if row['status'] == 'active' else 'пауза'}",
+            callback_data=f"ads:item:{row['campaign_id']}")]
+            for row in rows[:20]]
+        keyboard.append([InlineKeyboardButton("‹ К админ-панели", callback_data="ads:admin")])
+        await query.edit_message_text(
+            "📂 УПРАВЛЕНИЕ КАМПАНИЯМИ\\n\\n"
+            + ("Выбери активную или приостановленную кампанию:" if rows else "Активных и приостановленных кампаний пока нет."),
+            reply_markup=InlineKeyboardMarkup(keyboard))
+
     elif data.startswith("ads:item:"):
         if not ads.is_ads_admin(query.from_user.id):
             await query.edit_message_text("⛔ Доступ запрещён.")
             return
         campaign_id = data.split(":", 2)[2]
-        row = next((x for x in ads.get_admin_queue(50) if x["campaign_id"] == campaign_id), None)
+        all_rows = ads.get_admin_queue(50) + ads.get_admin_campaigns(limit=50)
+        row = next((x for x in all_rows if x["campaign_id"] == campaign_id), None)
         if not row:
-            await query.edit_message_text("Заявка не найдена или уже обработана.")
+            await query.edit_message_text("Кампания не найдена или уже завершена.")
             return
         context.user_data["ads_admin_campaign"] = campaign_id
         body = (f"📢 {row['title']}\\nСсылка: {row['public_link']}\\n"
                 f"Описание: {row['description']}\\nСрок: {row['requested_days']} дней\\n"
                 f"Статус материала: {row['status']}\\nОплата: {row.get('order_status') or 'нет заказа'}")
+        if row.get("starts_at"):
+            body += f"\\nНачало: {row['starts_at']}"
+        if row.get("ends_at"):
+            body += f"\\nОкончание: {row['ends_at']}"
         buttons = []
         if row["status"] in ("pending_review", "changes_requested"):
             buttons += [[InlineKeyboardButton("✅ Одобрить материал", callback_data=f"ads:mod:approve:{campaign_id}")],
@@ -1943,7 +1964,13 @@ async def button_handler(
         if row.get("order_status") == "payment_submitted":
             buttons += [[InlineKeyboardButton("💰 Подтвердить оплату", callback_data=f"ads:pay:yes:{row['order_id']}")],
                         [InlineKeyboardButton("❌ Отклонить оплату", callback_data=f"ads:pay:no:{row['order_id']}")]]
-        buttons.append([InlineKeyboardButton("‹ К очереди", callback_data="ads:admin")])
+        if row["status"] == "active":
+            buttons.append([InlineKeyboardButton("⏸ Приостановить", callback_data=f"ads:mod:pause:{campaign_id}")])
+            buttons.append([InlineKeyboardButton("🛑 Остановить навсегда", callback_data=f"ads:mod:stop:{campaign_id}")])
+        elif row["status"] == "paused":
+            buttons.append([InlineKeyboardButton("▶️ Возобновить", callback_data=f"ads:mod:resume:{campaign_id}")])
+            buttons.append([InlineKeyboardButton("🛑 Остановить навсегда", callback_data=f"ads:mod:stop:{campaign_id}")])
+        buttons.append([InlineKeyboardButton("‹ К админ-панели", callback_data="ads:admin")])
         await query.edit_message_text(body, reply_markup=InlineKeyboardMarkup(buttons))
 
     elif data.startswith("ads:mod:"):
