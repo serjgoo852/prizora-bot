@@ -136,5 +136,41 @@ jobs:
           assert delivery["impressions"] == 1 and delivery["clicks"] == 1, delivery
           assert delivery["ctr"] == 100.0, delivery
 
+          # Only the configured Telegram account may approve payments or moderate ads.
+          for protected_call in (
+              lambda: ads.set_payment_review(order2, advertiser, True, "forbidden"),
+              lambda: ads.set_campaign_moderation(campaign2, advertiser, "approve", "forbidden"),
+          ):
+              try:
+                  protected_call()
+              except PermissionError:
+                  pass
+              else:
+                  raise AssertionError("Non-admin account changed ad state")
+
+          # Rejecting a submitted payment returns the order to awaiting_payment;
+          # a fresh proof can then be submitted and independently reviewed.
+          campaign3 = ads.create_campaign_draft(
+              advertiser, "Retry payment channel", "https://t.me/retry_test",
+              "Payment retry test", 7, None
+          )
+          order3 = ads.create_ad_order(campaign3, advertiser)
+          payment3 = ads.record_payment_submission(order3, advertiser, advertiser_note="first proof")
+          ads.set_payment_review(order3, 853680962, False, "Proof did not match")
+          with sqlite3.connect(os.environ["DATABASE_PATH"]) as db:
+              payment_state = db.execute(
+                  "SELECT status FROM ad_payments WHERE payment_id=?", (payment3,)
+              ).fetchone()[0]
+              order_state = db.execute(
+                  "SELECT status FROM ad_orders WHERE order_id=?", (order3,)
+              ).fetchone()[0]
+          assert payment_state == "rejected", payment_state
+          assert order_state == "awaiting_payment", order_state
+          payment4 = ads.record_payment_submission(order3, advertiser, advertiser_note="replacement proof")
+          assert payment4 > payment3
+          ads.set_payment_review(order3, 853680962, True, "Replacement proof verified")
+          assert ads.get_order(order3, advertiser)["status"] == "paid"
+          assert ads.activate_paid_approved_campaigns() == 0
+
           print("PRIZORA Ads database and placement tests passed")
           PY
