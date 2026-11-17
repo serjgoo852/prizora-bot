@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import os
 import sqlite3
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 DATABASE_PATH = os.getenv("DATABASE_PATH", "/data/prizora.sqlite3")
@@ -383,6 +383,13 @@ def activate_paid_approved_campaigns() -> int:
                )""",
             (now, now, now),
         )
+        # The first placement is deliberately limited to the safe home screen.
+        db.execute(
+            """INSERT OR IGNORE INTO ad_placements
+               (campaign_id, placement_key, enabled, created_at)
+               SELECT campaign_id, 'home', 1, ? FROM ad_campaigns WHERE status='active'""",
+            (now,),
+        )
         return cursor.rowcount
 
 
@@ -409,3 +416,145 @@ def get_order(order_id: str, advertiser_id: int) -> Optional[dict]:
             (order_id, advertiser_id),
         ).fetchone()
         return dict(row) if row else None
+
+
+
+# Placement engine: only the non-critical home screen is enabled initially.
+AD_PLACEMENT_HOME = "home"
+AD_CAMPAIGN_COOLDOWN_HOURS = 24
+AD_GLOBAL_COOLDOWN_HOURS = 6
+
+
+def get_next_ad(user_id: int, placement_key: str = AD_PLACEMENT_HOME) -> Optional[dict]:
+    """Select and atomically record one eligible ad impression for a user."""
+    if user_id is None or not placement_key:
+        return None
+    now_dt = datetime.now(timezone.utc)
+    now = now_dt.isoformat(timespec="seconds")
+    campaign_cutoff = (now_dt - timedelta(hours=AD_CAMPAIGN_COOLDOWN_HOURS)).isoformat(timespec="seconds")
+    global_cutoff = (now_dt - timedelta(hours=AD_GLOBAL_COOLDOWN_HOURS)).isoformat(timespec="seconds")
+    with _connect() as db:
+        # One ad at most across all campaigns per user in the global cooldown.
+        recent_global = db.execute(
+            "SELECT 1 FROM ad_impressions WHERE user_id=? AND shown_at>? LIMIT 1",
+            (int(user_id), global_cutoff),
+        ).fetchone()
+        if recent_global:
+            return None
+        rows = db.execute(
+            """SELECT c.campaign_id, c.advertiser_id, c.title, c.public_link,
+                      c.description, c.image_file_id, c.starts_at, c.ends_at
+               FROM ad_campaigns c
+               JOIN ad_placements p ON p.campaign_id=c.campaign_id
+               WHERE c.status='active' AND p.enabled=1 AND p.placement_key=?
+                 AND c.starts_at IS NOT NULL AND c.ends_at IS NOT NULL
+                 AND c.starts_at<=? AND c.ends_at>?
+                 AND c.advertiser_id<>?
+                 AND NOT EXISTS (
+                     SELECT 1 FROM ad_impressions i
+                     WHERE i.campaign_id=c.campaign_id AND i.user_id=?
+                       AND i.shown_at>?
+                 )
+               ORDER BY (
+                   SELECT COUNT(*) FROM ad_impressions x
+                   WHERE x.campaign_id=c.campaign_id
+               ) ASC, c.created_at ASC LIMIT 20""",
+            (placement_key, now, now, int(user_id), int(user_id), campaign_cutoff),
+        ).fetchall()
+        if not rows:
+            return None
+        chosen = dict(rows[0])
+        db.execute(
+            """INSERT INTO ad_impressions
+               (campaign_id, user_id, placement_key, shown_at) VALUES (?, ?, ?, ?)""",
+            (chosen["campaign_id"], int(user_id), placement_key, now),
+        )
+        return chosen
+
+
+def record_ad_click(campaign_id: str, user_id: int, placement_key: str = AD_PLACEMENT_HOME) -> bool:
+    """Record one click only when this user has a prior impression for the same ad."""
+    if not campaign_id or user_id is None or not placement_key:
+        return False
+    now = _now()
+    with _connect() as db:
+        impression = db.execute(
+            """SELECT 1 FROM ad_impressions
+               WHERE campaign_id=? AND user_id=? AND placement_key=?
+               ORDER BY shown_at DESC LIMIT 1""",
+            (campaign_id, int(user_id), placement_key),
+        ).fetchone()
+        if impression is None:
+            return False
+        exists = db.execute(
+            """SELECT 1 FROM ad_clicks
+               WHERE campaign_id=? AND user_id=? AND placement_key=? LIMIT 1""",
+            (campaign_id, int(user_id), placement_key),
+        ).fetchone()
+        if exists:
+            return False
+        db.execute(
+            """INSERT INTO ad_clicks
+               (campaign_id, user_id, placement_key, clicked_at) VALUES (?, ?, ?, ?)""",
+            (campaign_id, int(user_id), placement_key, now),
+        )
+        return True
+
+
+def get_campaign_ad_stats(campaign_id: str) -> Optional[dict]:
+    """Return delivery and engagement counts for one campaign."""
+    with _connect() as db:
+        campaign = db.execute(
+            "SELECT campaign_id, title, status FROM ad_campaigns WHERE campaign_id=?",
+            (campaign_id,),
+        ).fetchone()
+        if campaign is None:
+            return None
+        impressions = db.execute(
+            "SELECT COUNT(*) FROM ad_impressions WHERE campaign_id=?", (campaign_id,)
+        ).fetchone()[0]
+        clicks = db.execute(
+            "SELECT COUNT(*) FROM ad_clicks WHERE campaign_id=?", (campaign_id,)
+        ).fetchone()[0]
+    impressions, clicks = int(impressions), int(clicks)
+    return {
+        "campaign_id": campaign["campaign_id"],
+        "title": campaign["title"],
+        "status": campaign["status"],
+        "impressions": impressions,
+        "clicks": clicks,
+        "ctr": round((clicks / impressions) * 100, 2) if impressions else 0.0,
+    }
+
+
+def get_ads_delivery_summary() -> dict:
+    """Aggregate impression, click and CTR metrics for the admin dashboard."""
+    with _connect() as db:
+        impressions = int(db.execute("SELECT COUNT(*) FROM ad_impressions").fetchone()[0])
+        clicks = int(db.execute("SELECT COUNT(*) FROM ad_clicks").fetchone()[0])
+        campaigns = db.execute(
+            """SELECT c.campaign_id, c.title, c.status,
+                      COUNT(DISTINCT i.impression_id) AS impressions,
+                      COUNT(DISTINCT k.click_id) AS clicks
+               FROM ad_campaigns c
+               LEFT JOIN ad_impressions i ON i.campaign_id=c.campaign_id
+               LEFT JOIN ad_clicks k ON k.campaign_id=c.campaign_id
+               GROUP BY c.campaign_id ORDER BY impressions DESC, clicks DESC LIMIT 20"""
+        ).fetchall()
+    return {
+        "impressions": impressions,
+        "clicks": clicks,
+        "ctr": round((clicks / impressions) * 100, 2) if impressions else 0.0,
+        "campaigns": [
+            {
+                "campaign_id": row["campaign_id"],
+                "title": row["title"],
+                "status": row["status"],
+                "impressions": int(row["impressions"]),
+                "clicks": int(row["clicks"]),
+                "ctr": round((int(row["clicks"]) / int(row["impressions"])) * 100, 2)
+                       if int(row["impressions"]) else 0.0,
+            }
+            for row in campaigns
+        ],
+    }
