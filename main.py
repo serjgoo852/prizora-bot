@@ -893,6 +893,38 @@ def artwork_menu(context: ContextTypes.DEFAULT_TYPE):
 
 async def artwork_photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.message
+
+    # Ads artwork and payment receipts are handled independently from contest artwork.
+    if context.user_data.get("ads_step") == "image":
+        photo = message.photo[-1] if message.photo else None
+        if not photo:
+            await message.reply_text("Пришли изображение как фото Telegram.")
+            return
+        context.user_data.setdefault("ads_draft", {})["image_file_id"] = photo.file_id
+        context.user_data["ads_step"] = "days"
+        await message.reply_text("Изображение сохранено. Выбери срок размещения:",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("7 дней — 299 ₽", callback_data="ads:days:7")],
+                [InlineKeyboardButton("14 дней — 499 ₽", callback_data="ads:days:14")],
+                [InlineKeyboardButton("30 дней — 999 ₽", callback_data="ads:days:30")],
+            ]))
+        return
+    if context.user_data.get("ads_step") == "payment_note":
+        photo = message.photo[-1] if message.photo else None
+        if not photo:
+            await message.reply_text("Пришли чек как фото или напиши пояснение текстом.")
+            return
+        order_id = context.user_data.get("ads_payment_order")
+        try:
+            ads.record_payment_submission(order_id, update.effective_user.id, proof_file_id=photo.file_id)
+            context.user_data.pop("ads_payment_order", None)
+            context.user_data.pop("ads_step", None)
+            await message.reply_text("Чек принят. Администратор отдельно проверит оплату.")
+        except Exception:
+            logging.exception("Could not save ads payment proof")
+            await message.reply_text("Не удалось принять чек. Проверь заказ через «Мои заявки».")
+        return
+
     is_logo = context.user_data.get("awaiting_contest_logo")
     is_banner = context.user_data.get("awaiting_contest_banner")
     if not is_logo and not is_banner:
@@ -2312,6 +2344,51 @@ async def prize_text_handler(
     context: ContextTypes.DEFAULT_TYPE
 ):
     message_text = (update.message.text or "").strip()
+
+    ads_step = context.user_data.get("ads_step")
+    if ads_step in ("title", "link", "description", "payment_note"):
+        if not message_text:
+            await update.message.reply_text("Отправь текстовое сообщение.")
+            return
+        if ads_step == "title":
+            if len(message_text) > 80:
+                await update.message.reply_text("Название должно быть не длиннее 80 символов.")
+                return
+            context.user_data.setdefault("ads_draft", {})["title"] = message_text
+            context.user_data["ads_step"] = "link"
+            await update.message.reply_text("Пришли публичную ссылку на канал или группу (например, https://t.me/example).")
+            return
+        if ads_step == "link":
+            import re
+            if not re.match(r"^(https?://)?t\\.me/[A-Za-z0-9_]{5,}$", message_text):
+                await update.message.reply_text("Нужна публичная ссылка вида https://t.me/название_канала.")
+                return
+            if not message_text.startswith("http"):
+                message_text = "https://" + message_text
+            context.user_data.setdefault("ads_draft", {})["link"] = message_text
+            context.user_data["ads_step"] = "description"
+            await update.message.reply_text("Напиши короткое описание рекламы (до 500 символов).")
+            return
+        if ads_step == "description":
+            if len(message_text) > 500:
+                await update.message.reply_text("Описание слишком длинное. Максимум 500 символов.")
+                return
+            context.user_data.setdefault("ads_draft", {})["description"] = message_text
+            context.user_data["ads_step"] = "image"
+            await update.message.reply_text("Пришли рекламное изображение одним фото или нажми «Без изображения».",
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Без изображения", callback_data="ads:skip_image")]]))
+            return
+        if ads_step == "payment_note":
+            order_id = context.user_data.get("ads_payment_order")
+            try:
+                ads.record_payment_submission(order_id, update.effective_user.id, advertiser_note=message_text[:1000])
+                context.user_data.pop("ads_payment_order", None)
+                context.user_data.pop("ads_step", None)
+                await update.message.reply_text("Сообщение принято. Администратор отдельно проверит оплату.")
+            except Exception:
+                logging.exception("Could not save ads payment note")
+                await update.message.reply_text("Не удалось принять подтверждение. Проверь заказ через «Мои заявки».")
+            return
 
     if context.user_data.get("awaiting_announcement_start"):
         try:
