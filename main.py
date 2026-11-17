@@ -3,6 +3,9 @@ import os
 import logging
 import sqlite3
 import uuid
+import asyncio
+import json
+import random
 from io import BytesIO
 from datetime import datetime, timedelta, timezone
 
@@ -670,6 +673,22 @@ def init_database():
             connection.execute(
                 "ALTER TABLE contests ADD COLUMN registration_mode TEXT NOT NULL DEFAULT 'scheduled'"
             )
+        for column, definition in (
+            ("automation_enabled", "INTEGER NOT NULL DEFAULT 0"),
+            ("drawn_at", "TEXT"),
+            ("winners_json", "TEXT"),
+            ("result_message_id", "INTEGER"),
+            ("language", "TEXT NOT NULL DEFAULT 'ru'"),
+        ):
+            if column not in contest_columns:
+                connection.execute(f"ALTER TABLE contests ADD COLUMN {column} {definition}")
+        # Existing future contests continue under the new automatic lifecycle;
+        # expired historical/test contests are deliberately left untouched.
+        connection.execute(
+            """UPDATE contests SET automation_enabled = 1
+               WHERE ends_at > ? AND drawn_at IS NULL""",
+            (datetime.now(timezone.utc).isoformat(),),
+        )
         connection.execute("""
             CREATE TABLE IF NOT EXISTS participants (
                 contest_id TEXT NOT NULL,
@@ -700,8 +719,8 @@ def save_published_contest(context: ContextTypes.DEFAULT_TYPE, organizer_id: int
                 contest_id, organizer_id, destination_chat_id, destination_title,
                 prize_name, contest_format, participant_limit, winner_count,
                 subscription_chat_id, starts_at, ends_at, rules, created_at, published_at,
-                registration_mode
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                registration_mode, automation_enabled, language
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)""",
             (
                 contest_id,
                 organizer_id,
@@ -718,6 +737,7 @@ def save_published_contest(context: ContextTypes.DEFAULT_TYPE, organizer_id: int
                 saved_at,
                 saved_at,
                 context.user_data.get("contest_registration_mode", "scheduled"),
+                current_language(context),
             ),
         )
     context.user_data["contest_id"] = contest_id
@@ -1443,11 +1463,9 @@ def register_participant(contest_id: str, user) -> str:
         ).fetchone()
         if contest is None:
             return "not_found"
-        starts_at = datetime.fromisoformat(contest["starts_at"])
-        registration_mode = contest["registration_mode"] if "registration_mode" in contest.keys() else "scheduled"
-        if registration_mode != "immediate" and now < starts_at.astimezone(timezone.utc):
-            return "not_started"
         ends_at = datetime.fromisoformat(contest["ends_at"])
+        if contest["drawn_at"]:
+            return "ended"
         if now >= ends_at.astimezone(timezone.utc):
             return "ended"
         existing = connection.execute(
@@ -2314,12 +2332,131 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
     )
 
 
+def draw_due_contests():
+    """Persist one immutable random draw for every contest whose end time passed."""
+    now = datetime.now(timezone.utc).isoformat()
+    drawn = []
+    with sqlite3.connect(DATABASE_PATH, timeout=30) as connection:
+        connection.row_factory = sqlite3.Row
+        connection.execute("BEGIN IMMEDIATE")
+        due = connection.execute(
+            """SELECT * FROM contests
+               WHERE automation_enabled = 1 AND drawn_at IS NULL AND ends_at <= ?
+               ORDER BY ends_at""",
+            (now,),
+        ).fetchall()
+        for contest in due:
+            people = connection.execute(
+                """SELECT user_id, username, full_name FROM participants
+                   WHERE contest_id = ? ORDER BY joined_at, user_id""",
+                (contest["contest_id"],),
+            ).fetchall()
+            winners = random.SystemRandom().sample(
+                list(people), min(int(contest["winner_count"]), len(people))
+            ) if people else []
+            winner_data = [
+                {"user_id": row["user_id"], "username": row["username"], "full_name": row["full_name"]}
+                for row in winners
+            ]
+            connection.execute(
+                """UPDATE contests SET drawn_at = ?, winners_json = ?
+                   WHERE contest_id = ? AND drawn_at IS NULL""",
+                (now, json.dumps(winner_data, ensure_ascii=False), contest["contest_id"]),
+            )
+            drawn.append(contest["contest_id"])
+    return drawn
+
+
+def pending_result_posts():
+    with sqlite3.connect(DATABASE_PATH) as connection:
+        connection.row_factory = sqlite3.Row
+        return connection.execute(
+            """SELECT * FROM contests
+               WHERE automation_enabled = 1 AND drawn_at IS NOT NULL
+                 AND result_message_id IS NULL"""
+        ).fetchall()
+
+
+def format_result_message(contest):
+    language = contest["language"] if contest["language"] in ("ru", "en", "de") else "ru"
+    winners = json.loads(contest["winners_json"] or "[]")
+    count = sqlite3.connect(DATABASE_PATH)
+    try:
+        total = count.execute(
+            "SELECT COUNT(*) FROM participants WHERE contest_id = ?",
+            (contest["contest_id"],),
+        ).fetchone()[0]
+    finally:
+        count.close()
+
+    if language == "en":
+        lines = ["🏁 CONTEST FINISHED", f"🎁 Prize: {contest['prize_name']}",
+                 f"👥 Participants: {total}/{contest['participant_limit']}", "🏆 WINNERS:"]
+        no_winners = "No participants registered, so there are no winners."
+    elif language == "de":
+        lines = ["🏁 WETTBEWERB BEENDET", f"🎁 Preis: {contest['prize_name']}",
+                 f"👥 Teilnehmer: {total}/{contest['participant_limit']}", "🏆 GEWINNER:"]
+        no_winners = "Es gab keine Anmeldungen und daher keine Gewinner."
+    else:
+        lines = ["🏁 ИГРА ЗАВЕРШЕНА", f"🎁 Приз: {contest['prize_name']}",
+                 f"👥 Участников: {total}/{contest['participant_limit']}", "🏆 ПОБЕДИТЕЛИ:"]
+        no_winners = "Участников не было — победители не определены."
+
+    if not winners:
+        lines.append(no_winners)
+    else:
+        for index, winner in enumerate(winners, 1):
+            name = (winner.get("full_name") or str(winner["user_id"])).replace("\n", " ")[:80]
+            username = f" (@{winner['username']})" if winner.get("username") else ""
+            lines.append(f"{index}. {name}{username}")
+    lines.append("✨ PRIZORA")
+    return "\n".join(lines)
+
+
+async def publish_pending_results(application):
+    for contest in pending_result_posts():
+        try:
+            message = await application.bot.send_message(
+                chat_id=contest["destination_chat_id"],
+                text=format_result_message(contest),
+            )
+            with sqlite3.connect(DATABASE_PATH, timeout=30) as connection:
+                connection.execute(
+                    """UPDATE contests SET result_message_id = ?
+                       WHERE contest_id = ? AND result_message_id IS NULL""",
+                    (message.message_id, contest["contest_id"]),
+                )
+            logging.info("Published automatic result for contest %s", contest["contest_id"])
+        except TelegramError:
+            # The draw is already stored; retries always publish the same winners.
+            logging.exception("Could not publish result for contest %s; will retry", contest["contest_id"])
+        except Exception:
+            logging.exception("Unexpected result publication error for contest %s", contest["contest_id"])
+
+
+async def contest_scheduler(application):
+    """Background clock: runs even when nobody sends the bot a message."""
+    while True:
+        try:
+            drawn = draw_due_contests()
+            if drawn:
+                logging.info("Automatically drew contests: %s", ", ".join(drawn))
+            await publish_pending_results(application)
+        except Exception:
+            logging.exception("Contest scheduler iteration failed")
+        await asyncio.sleep(15)
+
+
+async def post_init(application):
+    application.create_task(contest_scheduler(application), name="prizora-contest-scheduler")
+
+
 def main():
     if not BOT_TOKEN:
         raise RuntimeError("BOT_TOKEN environment variable is not set.")
 
     init_database()
-    application = Application.builder().token(BOT_TOKEN).build()
+    application = Application.builder().token(BOT_TOKEN).post_init(post_init).build()
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
