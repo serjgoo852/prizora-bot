@@ -148,7 +148,7 @@ I18N = {
             "🏆 Победителей: {winners}\n"
             "🔐 Подписка: {subscription}\n\n"
             "Следующий этап — подготовка публикации. "
-            "После публикации участники смогут зарегистрироваться по кнопке. Победителей пока выбирает организатор. "
+            "После публикации участники смогут зарегистрироваться по кнопке. В назначенное время бот сам выберет победителей и опубликует результат. "
             "Тарифные ограничения пока не применяются."
         ),
         "summary_home": "🏠 Главное меню",
@@ -187,7 +187,7 @@ I18N = {
             "📅 СТАРТ: {start_at} МСК\n"
             "⏰ ФИНИШ: {end_at} МСК\n\n"
             "📌 КАК УЧАСТВОВАТЬ\n{rules}\n\n"
-            "👇 Нажми «Участвовать», чтобы зарегистрироваться. Победителей определяет организатор."
+            "👇 Нажми «Участвовать», чтобы зарегистрироваться. Победителей случайным образом выберет PRIZORA."
         ),
         "announcement_start_prompt": "📅 Укажи дату и время начала конкурса в формате ДД.ММ.ГГГГ ЧЧ:ММ (московское время, МСК UTC+3).\nНапример: 14.11.2026 18:00",
         "announcement_end_prompt": "⏰ Укажи дату и время завершения конкурса в том же формате. Время завершения должно быть позже начала.",
@@ -200,7 +200,7 @@ I18N = {
         "announcement_review_prompt": "👑 ПРЕДПРОСМОТР ГОТОВ\n━━━━━━━━━━━━\nПроверь карточку конкурса выше. Если всё верно, подтверди публикацию кнопкой ниже.",
         "announcement_publish_button": "👑 Опубликовать конкурс",
         "announcement_cancel_button": "✖️ Отменить",
-        "announcement_publish_success": "✨ Конкурс опубликован в чате: {destination}.\n\nУчастники могут зарегистрироваться по кнопке под объявлением до окончания конкурса. Победителя пока выбирает организатор.",
+        "announcement_publish_success": "✨ Конкурс опубликован в чате: {destination}.\n\nРегистрация доступна по кнопке до окончания игры или заполнения мест. В назначенное время PRIZORA автоматически выберет победителей и опубликует результат.",
         "announcement_publish_error": "Не удалось отправить объявление. Проверь, что бот всё ещё администратор чата и имеет право публиковать сообщения. Можно попробовать ещё раз.",
         "artwork_button": "✨ Оформление конкурса",
         "artwork_title": "👑 ФИРМЕННЫЙ СТИЛЬ PRIZORA\n━━━━━━━━━━━━\nДобавь логотип и/или баннер. Изображения необязательны.\n\nЛоготип: {logo}\nБаннер: {banner}",
@@ -221,7 +221,7 @@ I18N = {
             "1. Выбери язык интерфейса.\n"
             "2. Выбери формат и место проведения конкурса.\n"
             "3. Укажи приз, лимит участников и количество победителей.\n\n"
-            "Подготовка публикации и регистрация участников доступны. Победителей пока вручную выбирает организатор."
+            "Регистрация доступна до окончания игры или заполнения мест. В назначенное время PRIZORA автоматически выберет победителей и опубликует результат."
         ),
     },
     "en": {
@@ -375,7 +375,7 @@ I18N = {
             "📅 START: {start_at} MSK\n"
             "⏰ END: {end_at} MSK\n\n"
             "📌 HOW TO ENTER\n{rules}\n\n"
-            "👇 Tap “Join contest” to register. The organizer selects the winners."
+            "👇 Tap “Join contest” to register. PRIZORA randomly selects the winners and publishes the result automatically."
         ),
         "announcement_start_prompt": "📅 Enter the start date and time as DD.MM.YYYY HH:MM (Moscow time, MSK, UTC+3).\nExample: 14.11.2026 18:00",
         "announcement_end_prompt": "⏰ Enter the end date and time in the same format. The end must be later than the start.",
@@ -409,7 +409,7 @@ I18N = {
             "1. Choose your interface language.\n"
             "2. Select a contest format and where it will run.\n"
             "3. Enter the prize, participant limit, and number of winners.\n\n"
-            "Contest announcements and participant registration are available. The organizer currently selects the winners manually."
+            "Registration stays open until the game ends or the participant limit is reached. PRIZORA randomly selects winners and publishes the result automatically."
         ),
     },
     "de": {
@@ -563,7 +563,7 @@ I18N = {
             "📅 START: {start_at} MSK\n"
             "⏰ ENDE: {end_at} MSK\n\n"
             "📌 TEILNAHMEBEDINGUNGEN\n{rules}\n\n"
-            "👇 Tippe auf „Teilnehmen“, um dich anzumelden. Der Veranstalter wählt die Gewinner aus."
+            "👇 Tippe auf „Teilnehmen“, um dich anzumelden. PRIZORA wählt die Gewinner zufällig aus und veröffentlicht das Ergebnis automatisch."
         ),
         "announcement_start_prompt": "📅 Gib Startdatum und Uhrzeit als TT.MM.JJJJ HH:MM ein (Moskauer Zeit, MSK, UTC+3).\nBeispiel: 14.11.2026 18:00",
         "announcement_end_prompt": "⏰ Gib Enddatum und Uhrzeit im selben Format ein. Das Ende muss nach dem Beginn liegen.",
@@ -597,7 +597,7 @@ I18N = {
             "1. Wähle die Sprache der Oberfläche.\n"
             "2. Wähle ein Format und den Veranstaltungsort.\n"
             "3. Gib den Preis, die Teilnehmergrenze und die Anzahl der Gewinner ein.\n\n"
-            "Wettbewerbsankündigungen und Teilnehmerregistrierung sind verfügbar. Der Veranstalter wählt die Gewinner derzeit manuell aus."
+            "Die Anmeldung bleibt bis zum Spielende oder bis zum Erreichen des Teilnehmerlimits geöffnet. PRIZORA wählt die Gewinner zufällig aus und veröffentlicht das Ergebnis automatisch."
         ),
     },
 }
@@ -686,7 +686,7 @@ def init_database():
         # expired historical/test contests are deliberately left untouched.
         connection.execute(
             """UPDATE contests SET automation_enabled = 1
-               WHERE ends_at > ? AND drawn_at IS NULL""",
+               WHERE julianday(ends_at) > julianday(?) AND drawn_at IS NULL""",
             (datetime.now(timezone.utc).isoformat(),),
         )
         connection.execute("""
@@ -2341,7 +2341,7 @@ def draw_due_contests():
         connection.execute("BEGIN IMMEDIATE")
         due = connection.execute(
             """SELECT * FROM contests
-               WHERE automation_enabled = 1 AND drawn_at IS NULL AND ends_at <= ?
+               WHERE automation_enabled = 1 AND drawn_at IS NULL AND julianday(ends_at) <= julianday(?)
                ORDER BY ends_at""",
             (now,),
         ).fetchall()
