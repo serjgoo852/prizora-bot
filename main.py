@@ -917,6 +917,13 @@ async def artwork_photo_handler(update: Update, context: ContextTypes.DEFAULT_TY
         order_id = context.user_data.get("ads_payment_order")
         try:
             ads.record_payment_submission(order_id, update.effective_user.id, proof_file_id=photo.file_id)
+            admin_id = os.getenv("PRIZORA_ADMIN_TELEGRAM_ID", "").strip()
+            if admin_id:
+                try:
+                    await context.bot.send_photo(chat_id=int(admin_id), photo=photo.file_id,
+                        caption=f"💳 Подтверждение оплаты по заказу {order_id} от пользователя {update.effective_user.id}")
+                except Exception:
+                    logging.exception("Could not notify admin about ads payment receipt")
             context.user_data.pop("ads_payment_order", None)
             context.user_data.pop("ads_step", None)
             await message.reply_text("Чек принят. Администратор отдельно проверит оплату.")
@@ -1777,6 +1784,23 @@ async def button_handler(
             return
         context.user_data.pop("ads_draft", None)
         context.user_data.pop("ads_step", None)
+        # Deliver the submitted creative to the configured admin for human review.
+        admin_id = os.getenv("PRIZORA_ADMIN_TELEGRAM_ID", "").strip()
+        if admin_id:
+            try:
+                admin_caption = (
+                    f"📨 Новая рекламная заявка\\nID: {campaign_id}\\n"
+                    f"Заказ: {order_id}\\nНазвание: {draft['title']}\\n"
+                    f"Ссылка: {draft['link']}\\nОписание: {draft['description']}\\n"
+                    f"Срок: {days} дней"
+                )
+                if draft.get("image_file_id"):
+                    await context.bot.send_photo(chat_id=int(admin_id),
+                        photo=draft["image_file_id"], caption=admin_caption)
+                else:
+                    await context.bot.send_message(chat_id=int(admin_id), text=admin_caption)
+            except Exception:
+                logging.exception("Could not notify PRIZORA Ads admin about new campaign")
         amount = {7: 299, 14: 499, 30: 999}[days]
         details = os.getenv("PRIZORA_ADS_PAYMENT_DETAILS", "").strip()
         payment_text = details if details else "Реквизиты для оплаты пока не настроены. Не переводите деньги; дождитесь сообщения администратора."
@@ -2382,6 +2406,13 @@ async def prize_text_handler(
             order_id = context.user_data.get("ads_payment_order")
             try:
                 ads.record_payment_submission(order_id, update.effective_user.id, advertiser_note=message_text[:1000])
+                admin_id = os.getenv("PRIZORA_ADMIN_TELEGRAM_ID", "").strip()
+                if admin_id:
+                    try:
+                        await context.bot.send_message(chat_id=int(admin_id),
+                            text=f"💳 Подтверждение оплаты по заказу {order_id} от пользователя {update.effective_user.id}:\\n{message_text[:1000]}")
+                    except Exception:
+                        logging.exception("Could not notify admin about ads payment note")
                 context.user_data.pop("ads_payment_order", None)
                 context.user_data.pop("ads_step", None)
                 await update.message.reply_text("Сообщение принято. Администратор отдельно проверит оплату.")
