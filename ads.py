@@ -291,7 +291,7 @@ def update_and_resubmit_campaign(
     if not description or len(description) > 500:
         raise ValueError("description must contain 1-500 characters")
     import re
-    if not re.match(r"^https?://t\\.me/[A-Za-z0-9_]{5,}$", public_link):
+    if not re.match(r"^https?://t\.me/[A-Za-z0-9_]{5,}$", public_link):
         raise ValueError("public_link must be a public t.me link")
 
     now = _now()
