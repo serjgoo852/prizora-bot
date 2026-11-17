@@ -273,6 +273,50 @@ def create_ad_order(campaign_id: str, advertiser_id: int) -> str:
     return order_id
 
 
+def update_and_resubmit_campaign(
+    campaign_id: str,
+    advertiser_id: int,
+    title: str,
+    public_link: str,
+    description: str,
+) -> None:
+    """Update a changes-requested creative and resubmit it without creating or altering an order."""
+    title = (title or "").strip()
+    public_link = (public_link or "").strip()
+    description = (description or "").strip()
+    if not title or len(title) > 80:
+        raise ValueError("title must contain 1-80 characters")
+    if not public_link or len(public_link) > 200:
+        raise ValueError("public_link is required")
+    if not description or len(description) > 500:
+        raise ValueError("description must contain 1-500 characters")
+    import re
+    if not re.match(r"^https?://t\\.me/[A-Za-z0-9_]{5,}$", public_link):
+        raise ValueError("public_link must be a public t.me link")
+
+    now = _now()
+    with _connect() as db:
+        campaign = db.execute(
+            "SELECT advertiser_id, status FROM ad_campaigns WHERE campaign_id=?",
+            (campaign_id,),
+        ).fetchone()
+        if campaign is None or int(campaign["advertiser_id"]) != int(advertiser_id):
+            raise ValueError("campaign not found")
+        if campaign["status"] != "changes_requested":
+            raise ValueError("campaign is not awaiting creative changes")
+        db.execute(
+            """UPDATE ad_campaigns SET title=?, public_link=?, description=?,
+               status='pending_review', updated_at=? WHERE campaign_id=?""",
+            (title, public_link, description, now, campaign_id),
+        )
+        db.execute(
+            """INSERT INTO ad_moderation
+               (campaign_id, action, note, created_at)
+               VALUES (?, 'submitted', ?, ?)""",
+            (campaign_id, "Исправленный материал повторно отправлен на модерацию", now),
+        )
+
+
 def get_advertiser_campaigns(advertiser_id: int) -> list:
     with _connect() as db:
         rows = db.execute(
