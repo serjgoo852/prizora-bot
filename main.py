@@ -1770,11 +1770,7 @@ async def button_handler(
     elif data.startswith("ads:click:"):
         campaign_id = data.split(":", 2)[2]
         if ads.record_ad_click(campaign_id, query.from_user.id, "home"):
-            with ads._connect() as db:
-                row = db.execute(
-                    "SELECT public_link, title FROM ad_campaigns WHERE campaign_id=? AND status='active'",
-                    (campaign_id,),
-                ).fetchone()
+            row = ads.get_campaign_public_link(campaign_id)
             if row:
                 await query.message.reply_text(
                     f"🔗 {row['title']}",
@@ -1900,6 +1896,7 @@ async def button_handler(
             await query.edit_message_text("⛔ Доступ запрещён.")
             return
         summary = ads.get_admin_summary()
+        delivery = ads.get_ads_delivery_summary()
         rows = ads.get_admin_queue()
         keyboard = []
         for row in rows[:8]:
@@ -1914,7 +1911,15 @@ async def button_handler(
             "🛠 PRIZORA ADS — АДМИН-ПАНЕЛЬ\\n"
             f"Кампаний: {summary['campaigns']} · На проверке: {summary['pending_review']}\\n"
             f"Ожидают проверки оплаты: {summary['payment_submitted']} · Оплачено: {summary['paid']}\\n"
-            f"Активных: {summary['active']}\\n\\nВыбери заявку:",
+            f"Активных: {summary['active']}\\n\\n"
+            f"📊 ПОКАЗЫ И ПЕРЕХОДЫ\\n"
+            f"Показы: {delivery['impressions']} · Переходы: {delivery['clicks']}\\n"
+            f"CTR: {delivery['ctr']:.2f}%\\n\\n"
+            + ("По кампаниям:\\n" + "\\n".join(
+                f"• {item['title'][:28]}: {item['impressions']} / {item['clicks']} · {item['ctr']:.2f}%"
+                for item in delivery["campaigns"][:5]
+            ) + "\\n\\n" if delivery["campaigns"] else "")
+            + "Выбери заявку:",
             reply_markup=InlineKeyboardMarkup(keyboard))
 
     elif data.startswith("ads:item:"):
