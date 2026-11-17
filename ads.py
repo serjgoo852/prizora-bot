@@ -344,10 +344,26 @@ def set_campaign_moderation(campaign_id: str, admin_id: int, action: str, note: 
     now = _now()
     with _connect() as db:
         campaign = db.execute(
-            "SELECT status FROM ad_campaigns WHERE campaign_id=?", (campaign_id,)
+            "SELECT status, ends_at FROM ad_campaigns WHERE campaign_id=?", (campaign_id,)
         ).fetchone()
         if campaign is None:
             raise ValueError("campaign not found")
+
+        allowed_statuses = {
+            "approve": ("pending_review", "changes_requested"),
+            "reject": ("pending_review", "changes_requested"),
+            "changes": ("pending_review", "changes_requested"),
+            "pause": ("active",),
+            "resume": ("paused",),
+            "stop": ("pending_review", "changes_requested", "approved", "active", "paused"),
+        }
+        if campaign["status"] not in allowed_statuses[action]:
+            raise ValueError("campaign cannot perform this action in its current state")
+        if action == "resume":
+            ends_at = campaign["ends_at"]
+            if not ends_at or ends_at <= now:
+                raise ValueError("campaign placement term has expired")
+
         db.execute(
             "UPDATE ad_campaigns SET status=?, updated_at=? WHERE campaign_id=?",
             (status, now, campaign_id),
