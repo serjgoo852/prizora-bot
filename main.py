@@ -1429,23 +1429,23 @@ async def show_contest(query, context, contest_id):
     if row["drawn_at"]:
         winner_rows=json.loads(row["winners_json"] or "[]")
         if lang=="en":
-            body += "\\n\\n🏁 RESULT"
-            body += f"\\n👥 Participants: {row['participant_count']}/{row['participant_limit']}"
-            body += "\\n🏆 Winners:"
+            body += "\n\n🏁 RESULT"
+            body += f"\n👥 Participants: {row['participant_count']}/{row['participant_limit']}"
+            body += "\n🏆 Winners:"
             empty_result="No participants — no winners."
         elif lang=="de":
-            body += "\\n\\n🏁 ERGEBNIS"
-            body += f"\\n👥 Teilnehmer: {row['participant_count']}/{row['participant_limit']}"
-            body += "\\n🏆 Gewinner:"
+            body += "\n\n🏁 ERGEBNIS"
+            body += f"\n👥 Teilnehmer: {row['participant_count']}/{row['participant_limit']}"
+            body += "\n🏆 Gewinner:"
             empty_result="Keine Teilnehmer — keine Gewinner."
         else:
-            body += "\\n\\n🏁 РЕЗУЛЬТАТ ИГРЫ"
-            body += f"\\n👥 Участников: {row['participant_count']}/{row['participant_limit']}"
-            body += "\\n🏆 Победители:"
+            body += "\n\n🏁 РЕЗУЛЬТАТ ИГРЫ"
+            body += f"\n👥 Участников: {row['participant_count']}/{row['participant_limit']}"
+            body += "\n🏆 Победители:"
             empty_result="Участников не было — победители не определены."
         if winner_rows:
             for number,winner in enumerate(winner_rows,1):
-                name=(winner.get("full_name") or str(winner["user_id"])).replace("\\n"," ")[:65]
+                name=(winner.get("full_name") or str(winner["user_id"])).replace("\n"," ")[:65]
                 username=(" (@"+winner["username"]+")") if winner.get("username") else ""
                 body += f"\\n{number}. {name}{username}"
         else:
@@ -1508,6 +1508,9 @@ def register_participant(contest_id: str, user) -> str:
             return "ended"
         if now >= ends_at.astimezone(timezone.utc):
             return "ended"
+        starts_at = datetime.fromisoformat(contest["starts_at"])
+        if contest["registration_mode"] != "immediate" and now < starts_at.astimezone(timezone.utc):
+            return "not_started"
         existing = connection.execute(
             "SELECT 1 FROM participants WHERE contest_id = ? AND user_id = ?",
             (contest_id, user.id),
