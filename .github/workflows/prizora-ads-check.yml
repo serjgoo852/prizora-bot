@@ -1,0 +1,70 @@
+name: PRIZORA Ads safety checks
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "main.py"
+      - "ads.py"
+      - ".github/workflows/prizora-ads-check.yml"
+  workflow_dispatch:
+
+jobs:
+  compile-and-smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile Python files
+        run: python -m py_compile main.py ads.py
+      - name: Test isolated Ads database workflow
+        env:
+          DATABASE_PATH: ${{ runner.temp }}/prizora-ads-test.sqlite3
+          PRIZORA_ADMIN_TELEGRAM_ID: "853680962"
+        run: |
+          python - <<'PY'
+          import os
+          import ads
+
+          ads.init_ads_database()
+          advertiser = 123456789
+          campaign = ads.create_campaign_draft(
+              advertiser, "Test channel", "https://t.me/test_channel",
+              "Automated test campaign", 7, None
+          )
+          order = ads.create_ad_order(campaign, advertiser)
+
+          # Ownership checks: a different user cannot submit payment.
+          try:
+              ads.record_payment_submission(order, advertiser + 1, advertiser_note="forbidden")
+          except ValueError:
+              pass
+          else:
+              raise AssertionError("Foreign advertiser submitted payment")
+
+          # Payment confirmation alone must not activate unmoderated content.
+          ads.record_payment_submission(order, advertiser, advertiser_note="test payment")
+          ads.set_payment_review(order, 853680962, True, "CI test")
+          assert ads.activate_paid_approved_campaigns() == 0
+
+          # Content approval alone must not activate unpaid content.
+          campaign2 = ads.create_campaign_draft(
+              advertiser, "Second channel", "https://t.me/second_test",
+              "Unpaid test campaign", 7, None
+          )
+          order2 = ads.create_ad_order(campaign2, advertiser)
+          ads.set_campaign_moderation(campaign2, 853680962, "approve", "CI test")
+          assert ads.activate_paid_approved_campaigns() == 0
+
+          # Both independent approvals permit activation.
+          ads.set_payment_review(order2, 853680962, True, "CI test")
+          assert ads.activate_paid_approved_campaigns() == 1
+          row = ads.get_order(order2, advertiser)
+          assert row["campaign_status"] == "active", row
+
+          summary = ads.get_admin_summary()
+          assert summary["campaigns"] == 2, summary
+          print("PRIZORA Ads database smoke tests passed")
+          PY
