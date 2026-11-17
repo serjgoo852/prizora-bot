@@ -1786,12 +1786,12 @@ async def button_handler(
             "Материал отправлен на модерацию. Оплата проверяется отдельно.\\n\\n"
             f"Информация об оплате:\\n{payment_text}\\n\\n"
             "После оплаты нажми кнопку ниже и при желании приложи чек.",
-            parse_mode="HTML",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("💳 Я оплатил", callback_data=f"ads:paid:{order_id}")],
-                [InlineKeyboardButton("📋 Мои заявки", callback_data="ads:mine")],
-                [InlineKeyboardButton("В меню", callback_data="home")],
-            ]))
+            reply_markup=InlineKeyboardMarkup(
+                ([[InlineKeyboardButton("💳 Я оплатил", callback_data=f"ads:paid:{order_id}")]]
+                 if details else [])
+                + [[InlineKeyboardButton("📋 Мои заявки", callback_data="ads:mine")],
+                   [InlineKeyboardButton("В меню", callback_data="home")]]
+            ))
 
     elif data.startswith("ads:paid:"):
         order_id = data.split(":", 2)[2]
