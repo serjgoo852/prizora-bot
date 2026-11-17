@@ -294,5 +294,47 @@ jobs:
           else:
               raise AssertionError("Foreign advertiser edited a campaign")
 
+          # A changes-requested advertiser can update the creative and resubmit
+          # without creating a second order or resetting its payment state.
+          campaign6 = ads.create_campaign_draft(
+              advertiser, "Creative revision", "https://t.me/revision_old",
+              "Original description", 14, "existing-image-file-id"
+          )
+          order6 = ads.create_ad_order(campaign6, advertiser)
+          ads.record_payment_submission(order6, advertiser, advertiser_note="proof submitted")
+          ads.set_campaign_moderation(campaign6, 853680962, "changes", "Please revise copy")
+          before = ads.get_order(order6, advertiser)
+          ads.update_and_resubmit_campaign(
+              campaign6, advertiser, "Revised title", "https://t.me/revision_new",
+              "Revised description"
+          )
+          after = ads.get_order(order6, advertiser)
+          assert after["order_id"] == before["order_id"] == order6, after
+          assert after["status"] == before["status"] == "payment_submitted", after
+          assert after["campaign_status"] == "pending_review", after
+          with sqlite3.connect(os.environ["DATABASE_PATH"]) as db:
+              revised = db.execute(
+                  "SELECT title, public_link, description, image_file_id FROM ad_campaigns WHERE campaign_id=?",
+                  (campaign6,),
+              ).fetchone()
+              order_count = db.execute(
+                  "SELECT COUNT(*) FROM ad_orders WHERE campaign_id=?", (campaign6,)
+              ).fetchone()[0]
+              audit = db.execute(
+                  "SELECT action FROM ad_moderation WHERE campaign_id=? ORDER BY moderation_id DESC LIMIT 1",
+                  (campaign6,),
+              ).fetchone()[0]
+          assert revised == ("Revised title", "https://t.me/revision_new", "Revised description", "existing-image-file-id"), revised
+          assert order_count == 1, order_count
+          assert audit == "submitted", audit
+          try:
+              ads.update_and_resubmit_campaign(
+                  campaign6, advertiser + 1, "Intrusion", "https://t.me/intrusion", "Intrusion"
+              )
+          except ValueError:
+              pass
+          else:
+              raise AssertionError("Foreign advertiser edited a campaign")
+
           print("PRIZORA Ads database and placement tests passed")
           PY
