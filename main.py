@@ -1411,12 +1411,52 @@ async def show_contest(query, context, contest_id):
     now=datetime.now(timezone.utc)
     start=datetime.fromisoformat(row["starts_at"]).astimezone(timezone.utc)
     end=datetime.fromisoformat(row["ends_at"]).astimezone(timezone.utc)
-    status="contest_status_ended" if now>=end else ("contest_status_waiting" if row["registration_mode"]!="immediate" and now<start else "contest_status_active")
     lang=current_language(context)
+    if row["drawn_at"]:
+        status="contest_status_ended"
+    elif now>=end:
+        status="contest_status_ended"
+    elif row["participant_count"] >= row["participant_limit"]:
+        status="contest_status_full"
+    elif row["registration_mode"]!="immediate" and now<start:
+        status="contest_status_waiting"
+    else:
+        status="contest_status_active"
     body=tr(context,"contest_card",prize=row["prize_name"],
         format=FORMAT_NAMES[lang].get(row["contest_format"],row["contest_format"]),
         destination=row["destination_title"],count=row["participant_count"],
         limit=row["participant_limit"],winners=row["winner_count"],status=tr(context,status))
+    if row["drawn_at"]:
+        winner_rows=json.loads(row["winners_json"] or "[]")
+        if lang=="en":
+            body += "\\n\\n🏁 RESULT"
+            body += f"\\n👥 Participants: {row['participant_count']}/{row['participant_limit']}"
+            body += "\\n🏆 Winners:"
+            empty_result="No participants — no winners."
+        elif lang=="de":
+            body += "\\n\\n🏁 ERGEBNIS"
+            body += f"\\n👥 Teilnehmer: {row['participant_count']}/{row['participant_limit']}"
+            body += "\\n🏆 Gewinner:"
+            empty_result="Keine Teilnehmer — keine Gewinner."
+        else:
+            body += "\\n\\n🏁 РЕЗУЛЬТАТ ИГРЫ"
+            body += f"\\n👥 Участников: {row['participant_count']}/{row['participant_limit']}"
+            body += "\\n🏆 Победители:"
+            empty_result="Участников не было — победители не определены."
+        if winner_rows:
+            for number,winner in enumerate(winner_rows,1):
+                name=(winner.get("full_name") or str(winner["user_id"])).replace("\\n"," ")[:65]
+                username=(" (@"+winner["username"]+")") if winner.get("username") else ""
+                body += f"\\n{number}. {name}{username}"
+        else:
+            body += "\\n"+empty_result
+    elif row["automation_enabled"]:
+        if lang=="en":
+            body += "\\n\\n⏳ The result will appear here automatically when the game ends."
+        elif lang=="de":
+            body += "\\n\\n⏳ Das Ergebnis erscheint hier automatisch nach Spielende."
+        else:
+            body += "\\n\\n⏳ Результат появится здесь автоматически после окончания игры."
     keys=[[InlineKeyboardButton(tr(context,"contest_open_participants",count=row["participant_count"]),callback_data="contest:people:"+contest_id+":0")],
           [InlineKeyboardButton(tr(context,"contest_back_list"),callback_data="mycontests")],
           [InlineKeyboardButton(tr(context,"back_home"),callback_data="home")]]
