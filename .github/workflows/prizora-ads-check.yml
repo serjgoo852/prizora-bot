@@ -128,6 +128,41 @@ jobs:
           assert ads.get_order(order2, advertiser)["campaign_status"] == "cancelled"
           assert ads.get_next_ad(333333333, "home") is None
 
+          # Invalid lifecycle transitions must fail closed.
+          for invalid_call in (
+              lambda: ads.set_campaign_moderation(campaign2, 853680962, "resume", "invalid"),
+              lambda: ads.set_campaign_moderation(campaign2, 853680962, "pause", "invalid"),
+          ):
+              try:
+                  invalid_call()
+              except ValueError:
+                  pass
+              else:
+                  raise AssertionError("Invalid campaign transition was accepted")
+
+          # A paused campaign whose paid term has expired cannot be resumed.
+          campaign4 = ads.create_campaign_draft(
+              advertiser, "Expired paused channel", "https://t.me/expired_paused",
+              "Expired resume test", 7, None
+          )
+          order4 = ads.create_ad_order(campaign4, advertiser)
+          ads.record_payment_submission(order4, advertiser, advertiser_note="test")
+          ads.set_payment_review(order4, 853680962, True, "CI test")
+          ads.set_campaign_moderation(campaign4, 853680962, "approve", "CI test")
+          assert ads.activate_paid_approved_campaigns() == 1
+          with sqlite3.connect(os.environ["DATABASE_PATH"]) as db:
+              db.execute(
+                  "UPDATE ad_campaigns SET status='paused', ends_at='2000-01-01T00:00:00+00:00' WHERE campaign_id=?",
+                  (campaign4,),
+              )
+          try:
+              ads.set_campaign_moderation(campaign4, 853680962, "resume", "expired")
+          except ValueError:
+              pass
+          else:
+              raise AssertionError("Expired campaign was resumed")
+          assert ads.get_order(order4, advertiser)["campaign_status"] == "paused"
+
           campaign_stats = ads.get_campaign_ad_stats(campaign2)
           assert campaign_stats["impressions"] == 1, campaign_stats
           assert campaign_stats["clicks"] == 1, campaign_stats
