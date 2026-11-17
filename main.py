@@ -1447,16 +1447,16 @@ async def show_contest(query, context, contest_id):
             for number,winner in enumerate(winner_rows,1):
                 name=(winner.get("full_name") or str(winner["user_id"])).replace("\n"," ")[:65]
                 username=(" (@"+winner["username"]+")") if winner.get("username") else ""
-                body += f"\\n{number}. {name}{username}"
+                body += f"\n{number}. {name}{username}"
         else:
-            body += "\\n"+empty_result
+            body += "\n"+empty_result
     elif row["automation_enabled"]:
         if lang=="en":
-            body += "\\n\\n⏳ The result will appear here automatically when the game ends."
+            body += "\n\n⏳ The result will appear here automatically when the game ends."
         elif lang=="de":
-            body += "\\n\\n⏳ Das Ergebnis erscheint hier automatisch nach Spielende."
+            body += "\n\n⏳ Das Ergebnis erscheint hier automatisch nach Spielende."
         else:
-            body += "\\n\\n⏳ Результат появится здесь автоматически после окончания игры."
+            body += "\n\n⏳ Результат появится здесь автоматически после окончания игры."
     keys=[[InlineKeyboardButton(tr(context,"contest_open_participants",count=row["participant_count"]),callback_data="contest:people:"+contest_id+":0")],
           [InlineKeyboardButton(tr(context,"contest_back_list"),callback_data="mycontests")],
           [InlineKeyboardButton(tr(context,"back_home"),callback_data="home")]]
