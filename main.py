@@ -1655,6 +1655,39 @@ async def handle_join_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(messages["subscription_error"])
 
 
+
+
+async def maybe_show_home_ad(chat_id: int, user_id: int, context: ContextTypes.DEFAULT_TYPE):
+    """Best-effort ad delivery after the main menu; never interrupts core flows."""
+    if ads.is_ads_admin(user_id):
+        return
+    try:
+        campaign = ads.get_next_ad(user_id, "home")
+        if not campaign:
+            return
+        text = (
+            "📢 РЕКЛАМА\\n"
+            f"{campaign['title']}\\n\\n"
+            f"{campaign['description'][:700]}"
+        )
+        keyboard = InlineKeyboardMarkup([[
+            InlineKeyboardButton("Подробнее", callback_data=f"ads:click:{campaign['campaign_id']}")
+        ]])
+        if campaign.get("image_file_id"):
+            await context.bot.send_photo(
+                chat_id=chat_id, photo=campaign["image_file_id"], caption=text,
+                reply_markup=keyboard,
+            )
+        else:
+            await context.bot.send_message(
+                chat_id=chat_id, text=text, reply_markup=keyboard,
+            )
+    except TelegramError:
+        logging.exception("PRIZORA home ad delivery failed")
+    except Exception:
+        logging.exception("PRIZORA home ad selection failed")
+
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.args and context.args[0].startswith("join_"):
         await handle_join_start(update, context)
@@ -1675,6 +1708,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         tr(context, "welcome"),
         reply_markup=main_menu(current_language(context)),
     )
+    await maybe_show_home_ad(update.effective_chat.id, update.effective_user.id, context)
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1731,6 +1765,27 @@ async def button_handler(
             tr(context, "home_title"),
             reply_markup=main_menu(language),
         )
+        await maybe_show_home_ad(query.message.chat_id, query.from_user.id, context)
+
+    elif data.startswith("ads:click:"):
+        campaign_id = data.split(":", 2)[2]
+        if ads.record_ad_click(campaign_id, query.from_user.id, "home"):
+            with ads._connect() as db:
+                row = db.execute(
+                    "SELECT public_link, title FROM ad_campaigns WHERE campaign_id=? AND status='active'",
+                    (campaign_id,),
+                ).fetchone()
+            if row:
+                await query.message.reply_text(
+                    f"🔗 {row['title']}",
+                    reply_markup=InlineKeyboardMarkup([[
+                        InlineKeyboardButton("Открыть канал", url=row["public_link"])
+                    ]]),
+                )
+            else:
+                await query.answer("Объявление больше недоступно.", show_alert=True)
+        else:
+            await query.answer("Переход уже учтён или объявление недоступно.", show_alert=True)
 
     elif data == "ads:home":
         text = (
