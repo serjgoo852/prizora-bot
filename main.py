@@ -2783,8 +2783,21 @@ async def contest_scheduler(application):
         await asyncio.sleep(15)
 
 
+async def ads_expiry_scheduler():
+    """Expire paid PRIZORA Ads campaigns independently of contest scheduling."""
+    while True:
+        try:
+            expired = ads.expire_campaigns()
+            if expired:
+                logging.info("Expired PRIZORA Ads campaigns: %s", expired)
+        except Exception:
+            logging.exception("PRIZORA Ads expiry iteration failed")
+        await asyncio.sleep(60)
+
+
 async def post_init(application):
     application.create_task(contest_scheduler(application), name="prizora-contest-scheduler")
+    application.create_task(ads_expiry_scheduler(), name="prizora-ads-expiry-scheduler")
 
 
 def main():
