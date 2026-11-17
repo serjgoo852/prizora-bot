@@ -1,6 +1,8 @@
 name: PRIZORA Ads safety checks
 
 on:
+  pull_request:
+    branches: [main]
   push:
     branches: [main]
     paths:
