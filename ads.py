@@ -386,6 +386,20 @@ def activate_paid_approved_campaigns() -> int:
         return cursor.rowcount
 
 
+
+def expire_campaigns() -> int:
+    """Mark active campaigns completed once their paid placement term has ended."""
+    now = _now()
+    with _connect() as db:
+        cursor = db.execute(
+            """UPDATE ad_campaigns
+               SET status='completed', updated_at=?
+               WHERE status='active' AND ends_at IS NOT NULL AND ends_at <= ?""",
+            (now, now),
+        )
+        return cursor.rowcount
+
+
 def get_order(order_id: str, advertiser_id: int) -> Optional[dict]:
     with _connect() as db:
         row = db.execute(
