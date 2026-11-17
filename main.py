@@ -53,6 +53,20 @@ I18N = {
         "menu_plans": "💰 Мои тарифы",
         "menu_help": "📖 Помощь",
         "menu_language": "🌐 Язык",
+        "menu_my_contests": "📋 Мои конкурсы",
+        "my_contests_empty": "Пока нет опубликованных конкурсов.",
+        "contest_card": "🎁 {prize}\n🎡 Формат: {format}\n📍 Площадка: {destination}\n👥 Участники: {count}/{limit}\n🏆 Победителей: {winners}\n🕒 Статус: {status}",
+        "contest_status_active": "регистрация открыта",
+        "contest_status_waiting": "ожидает начала",
+        "contest_status_ended": "регистрация завершена",
+        "contest_participants_title": "👥 Участники конкурса",
+        "contest_participants_empty": "Пока никто не зарегистрировался.",
+        "participants_page": "Страница {page}/{pages}",
+        "participants_prev": "‹ Назад",
+        "participants_next": "Далее ›",
+        "contest_open_participants": "👥 Участники ({count})",
+        "contest_back_list": "‹ К конкурсам",
+        "contest_not_found": "Конкурс не найден или нет доступа.",
         "home_title": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n✨ ПРЕМИАЛЬНАЯ ПЛОЩАДКА КОНКУРСОВ\n━━━━━━━━━━━━━━━━━━\n\n👇 Выбери действие:",
         "formats_title": "✨ ВЫБОР ФОРМАТА\n━━━━━━━━━━━━\nВыбери стиль своего розыгрыша:",
         "create_title": "👑 НОВЫЙ КОНКУРС\n━━━━━━━━━━━━\nВыбери формат розыгрыша:",
@@ -227,6 +241,20 @@ I18N = {
         "menu_plans": "💰 My plans",
         "menu_help": "📖 Help",
         "menu_language": "🌐 Language",
+        "menu_my_contests": "📋 My contests",
+        "my_contests_empty": "No published contests yet.",
+        "contest_card": "🎁 {prize}\n🎡 Format: {format}\n📍 Destination: {destination}\n👥 Participants: {count}/{limit}\n🏆 Winners: {winners}\n🕒 Status: {status}",
+        "contest_status_active": "registration open",
+        "contest_status_waiting": "waiting to start",
+        "contest_status_ended": "registration ended",
+        "contest_participants_title": "👥 Contest participants",
+        "contest_participants_empty": "No one has registered yet.",
+        "participants_page": "Page {page}/{pages}",
+        "participants_prev": "‹ Previous",
+        "participants_next": "Next ›",
+        "contest_open_participants": "👥 Participants ({count})",
+        "contest_back_list": "‹ Back to contests",
+        "contest_not_found": "Contest not found or access denied.",
         "home_title": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n✨ YOUR PREMIUM GIVEAWAY STUDIO\n━━━━━━━━━━━━━━━━━━\n\n👇 Choose an action:",
         "formats_title": "✨ CHOOSE A FORMAT\n━━━━━━━━━━━━\nSelect your giveaway style:",
         "create_title": "👑 NEW CONTEST\n━━━━━━━━━━━━\nChoose a giveaway format:",
@@ -401,6 +429,20 @@ I18N = {
         "menu_plans": "💎 Meine Tarife",
         "menu_help": "📖 Hilfe",
         "menu_language": "🌐 Sprache",
+        "menu_my_contests": "📋 Meine Wettbewerbe",
+        "my_contests_empty": "Noch keine Wettbewerbe veröffentlicht.",
+        "contest_card": "🎁 {prize}\n🎡 Format: {format}\n📍 Ort: {destination}\n👥 Teilnehmer: {count}/{limit}\n🏆 Gewinner: {winners}\n🕒 Status: {status}",
+        "contest_status_active": "Anmeldung geöffnet",
+        "contest_status_waiting": "wartet auf den Start",
+        "contest_status_ended": "Anmeldung beendet",
+        "contest_participants_title": "👥 Wettbewerbsteilnehmer",
+        "contest_participants_empty": "Noch niemand angemeldet.",
+        "participants_page": "Seite {page}/{pages}",
+        "participants_prev": "‹ Zurück",
+        "participants_next": "Weiter ›",
+        "contest_open_participants": "👥 Teilnehmer ({count})",
+        "contest_back_list": "‹ Zu den Wettbewerben",
+        "contest_not_found": "Wettbewerb nicht gefunden oder kein Zugriff.",
         "home_title": "👑 PRIZORA\n━━━━━━━━━━━━━━━━━━\n✨ DEIN PREMIUM-GEWINNSPIELSTUDIO\n━━━━━━━━━━━━━━━━━━\n\n👇 Wähle eine Aktion:",
         "formats_title": "✨ FORMAT AUSWÄHLEN\n━━━━━━━━━━━━\nWähle deinen Wettbewerbsstil:",
         "create_title": "👑 NEUER WETTBEWERB\n━━━━━━━━━━━━\nWähle ein Format:",
@@ -1236,6 +1278,7 @@ def main_menu(language: str):
             InlineKeyboardButton(t["menu_formats"], callback_data="formats"),
             InlineKeyboardButton(t["menu_plans"], callback_data="plans"),
         ],
+        [InlineKeyboardButton(t["menu_my_contests"], callback_data="mycontests")],
         [
             InlineKeyboardButton(t["menu_help"], callback_data="help"),
             InlineKeyboardButton(t["menu_language"], callback_data="language"),
@@ -1288,6 +1331,105 @@ def plans_menu(language: str):
         [InlineKeyboardButton(t["back_home"], callback_data="home")],
     ]
     return InlineKeyboardMarkup(keyboard)
+
+
+def get_organizer_contests(owner_id):
+    with sqlite3.connect(DATABASE_PATH, timeout=15) as db:
+        db.row_factory = sqlite3.Row
+        return db.execute("""SELECT c.*, COUNT(p.user_id) AS participant_count
+            FROM contests c LEFT JOIN participants p ON p.contest_id=c.contest_id
+            WHERE c.organizer_id=? GROUP BY c.contest_id
+            ORDER BY c.published_at DESC LIMIT 50""",(owner_id,)).fetchall()
+
+
+def get_owned_contest(contest_id, owner_id):
+    with sqlite3.connect(DATABASE_PATH, timeout=15) as db:
+        db.row_factory = sqlite3.Row
+        return db.execute("""SELECT c.*, COUNT(p.user_id) AS participant_count
+            FROM contests c LEFT JOIN participants p ON p.contest_id=c.contest_id
+            WHERE c.contest_id=? AND c.organizer_id=? GROUP BY c.contest_id""",
+            (contest_id,owner_id)).fetchone()
+
+
+def get_owned_participants(contest_id, owner_id, limit, offset):
+    with sqlite3.connect(DATABASE_PATH, timeout=15) as db:
+        db.row_factory = sqlite3.Row
+        owner=db.execute("SELECT 1 FROM contests WHERE contest_id=? AND organizer_id=?",
+                         (contest_id,owner_id)).fetchone()
+        if owner is None:
+            return None
+        return db.execute("""SELECT user_id,username,full_name FROM participants
+            WHERE contest_id=? ORDER BY joined_at LIMIT ? OFFSET ?""",
+            (contest_id,limit,offset)).fetchall()
+
+
+async def show_my_contests(query, context):
+    try:
+        rows=get_organizer_contests(query.from_user.id)
+    except sqlite3.Error:
+        logging.exception("Organizer contest list failed")
+        await query.edit_message_text(tr(context,"contest_not_found"))
+        return
+    if not rows:
+        await query.edit_message_text(tr(context,"my_contests_empty"),
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(tr(context,"back_home"),callback_data="home")]]))
+        return
+    keyboard=[]
+    for row in rows:
+        label="🎁 "+row["prize_name"][:35]+" · "+str(row["participant_count"])+"/"+str(row["participant_limit"])
+        keyboard.append([InlineKeyboardButton(label,callback_data="contest:view:"+row["contest_id"])])
+    keyboard.append([InlineKeyboardButton(tr(context,"back_home"),callback_data="home")])
+    await query.edit_message_text(tr(context,"menu_my_contests"),
+        reply_markup=InlineKeyboardMarkup(keyboard))
+
+
+async def show_contest(query, context, contest_id):
+    row=get_owned_contest(contest_id,query.from_user.id)
+    if row is None:
+        await query.edit_message_text(tr(context,"contest_not_found"))
+        return
+    now=datetime.now(timezone.utc)
+    start=datetime.fromisoformat(row["starts_at"]).astimezone(timezone.utc)
+    end=datetime.fromisoformat(row["ends_at"]).astimezone(timezone.utc)
+    status="contest_status_ended" if now>=end else ("contest_status_waiting" if row["registration_mode"]!="immediate" and now<start else "contest_status_active")
+    lang=current_language(context)
+    body=tr(context,"contest_card",prize=row["prize_name"],
+        format=FORMAT_NAMES[lang].get(row["contest_format"],row["contest_format"]),
+        destination=row["destination_title"],count=row["participant_count"],
+        limit=row["participant_limit"],winners=row["winner_count"],status=tr(context,status))
+    keys=[[InlineKeyboardButton(tr(context,"contest_open_participants",count=row["participant_count"]),callback_data="contest:people:"+contest_id+":0")],
+          [InlineKeyboardButton(tr(context,"contest_back_list"),callback_data="mycontests")],
+          [InlineKeyboardButton(tr(context,"back_home"),callback_data="home")]]
+    await query.edit_message_text(body,reply_markup=InlineKeyboardMarkup(keys))
+
+
+async def show_participants(query, context, contest_id, page):
+    size=20
+    row=get_owned_contest(contest_id,query.from_user.id)
+    if row is None:
+        await query.edit_message_text(tr(context,"contest_not_found"))
+        return
+    count=row["participant_count"]
+    pages=max(1,(count+size-1)//size)
+    page=max(0,min(page,pages-1))
+    people=get_owned_participants(contest_id,query.from_user.id,size,page*size)
+    if people is None:
+        await query.edit_message_text(tr(context,"contest_not_found"))
+        return
+    lines=[tr(context,"contest_participants_title")]
+    if not people:
+        lines.append(tr(context,"contest_participants_empty"))
+    else:
+        for n,p in enumerate(people,page*size+1):
+            name=(p["full_name"] or str(p["user_id"])).replace("\n"," ")[:65]
+            username=(" (@"+p["username"]+")") if p["username"] else ""
+            lines.append(str(n)+". "+name+username)
+    lines.append(tr(context,"participants_page",page=page+1,pages=pages))
+    nav=[]
+    if page: nav.append(InlineKeyboardButton(tr(context,"participants_prev"),callback_data="contest:people:"+contest_id+":"+str(page-1)))
+    if page+1<pages: nav.append(InlineKeyboardButton(tr(context,"participants_next"),callback_data="contest:people:"+contest_id+":"+str(page+1)))
+    keys=([nav] if nav else [])+[[InlineKeyboardButton(tr(context,"contest_back_list"),callback_data="contest:view:"+contest_id)]]
+    await query.edit_message_text("\n".join(lines),reply_markup=InlineKeyboardMarkup(keys))
 
 
 def register_participant(contest_id: str, user) -> str:
@@ -1484,6 +1626,23 @@ async def button_handler(
             tr(context, "home_title"),
             reply_markup=main_menu(language),
         )
+
+    elif data == "mycontests":
+        await show_my_contests(query, context)
+
+    elif data.startswith("contest:view:"):
+        contest_id = data.split(":", 2)[2]
+        if len(contest_id) > 32:
+            await query.edit_message_text(tr(context, "contest_not_found"))
+            return
+        await show_contest(query, context, contest_id)
+
+    elif data.startswith("contest:people:"):
+        parts = data.split(":")
+        if len(parts) != 4 or len(parts[2]) > 32 or not parts[3].isdigit():
+            await query.edit_message_text(tr(context, "contest_not_found"))
+            return
+        await show_participants(query, context, parts[2], int(parts[3]))
 
     elif data == "create":
         await query.edit_message_text(
