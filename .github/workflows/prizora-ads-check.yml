@@ -77,5 +77,29 @@ jobs:
 
           summary = ads.get_admin_summary()
           assert summary["campaigns"] == 2, summary
-          print("PRIZORA Ads database smoke tests passed")
+
+          # Placement safety: advertisers never see their own campaigns.
+          assert ads.get_next_ad(advertiser, "home") is None
+
+          # A different user receives the approved, paid and active campaign.
+          shown = ads.get_next_ad(987654321, "home")
+          assert shown and shown["campaign_id"] == campaign2, shown
+
+          # A click requires a prior impression and is counted only once.
+          assert ads.record_ad_click(campaign2, 987654321, "home") is True
+          assert ads.record_ad_click(campaign2, 987654321, "home") is False
+          assert ads.record_ad_click(campaign2, 111111111, "home") is False
+
+          # Global frequency cap prevents a second ad immediately afterward.
+          assert ads.get_next_ad(987654321, "home") is None
+
+          campaign_stats = ads.get_campaign_ad_stats(campaign2)
+          assert campaign_stats["impressions"] == 1, campaign_stats
+          assert campaign_stats["clicks"] == 1, campaign_stats
+          assert campaign_stats["ctr"] == 100.0, campaign_stats
+          delivery = ads.get_ads_delivery_summary()
+          assert delivery["impressions"] == 1 and delivery["clicks"] == 1, delivery
+          assert delivery["ctr"] == 100.0, delivery
+
+          print("PRIZORA Ads database and placement tests passed")
           PY
