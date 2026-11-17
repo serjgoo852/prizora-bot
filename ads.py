@@ -297,6 +297,29 @@ def get_admin_queue(limit: int = 20) -> list:
         return [dict(row) for row in rows]
 
 
+
+def get_admin_campaigns(statuses=("active", "paused"), limit: int = 20) -> list:
+    """List live and paused campaigns for the admin lifecycle manager."""
+    allowed = {"active", "paused"}
+    selected = tuple(status for status in statuses if status in allowed)
+    if not selected:
+        return []
+    placeholders = ",".join("?" for _ in selected)
+    with _connect() as db:
+        rows = db.execute(
+            f"""SELECT c.campaign_id, c.advertiser_id, c.title, c.public_link,
+                       c.description, c.image_file_id, c.requested_days, c.status,
+                       c.starts_at, c.ends_at,
+                       o.order_id, o.amount_rub, o.status AS order_status
+                FROM ad_campaigns c
+                LEFT JOIN ad_orders o ON o.campaign_id=c.campaign_id
+                WHERE c.status IN ({placeholders})
+                ORDER BY c.updated_at DESC LIMIT ?""",
+            (*selected, max(1, min(int(limit), 50))),
+        ).fetchall()
+        return [dict(row) for row in rows]
+
+
 def set_payment_review(order_id: str, admin_id: int, approved: bool, note: str = "") -> None:
     """Confirm or reject payment independently of content moderation."""
     if not is_ads_admin(admin_id):
