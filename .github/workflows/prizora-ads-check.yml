@@ -197,7 +197,21 @@ jobs:
               "Payment retry test", 7, None
           )
           order3 = ads.create_ad_order(campaign3, advertiser)
+
+          # The advertiser's "My requests" list is private and reflects order states.
+          mine = ads.get_advertiser_campaigns(advertiser)
+          own_campaign = next((item for item in mine if item["campaign_id"] == campaign3), None)
+          assert own_campaign is not None, mine
+          assert own_campaign["order_id"] == order3, own_campaign
+          assert own_campaign["order_status"] == "awaiting_payment", own_campaign
+          assert all(item["advertiser_id"] == advertiser for item in mine), mine
+          assert all(item["campaign_id"] != campaign3 for item in ads.get_advertiser_campaigns(advertiser + 1))
+
           payment3 = ads.record_payment_submission(order3, advertiser, advertiser_note="first proof")
+          mine = ads.get_advertiser_campaigns(advertiser)
+          own_campaign = next(item for item in mine if item["campaign_id"] == campaign3)
+          assert own_campaign["order_status"] == "payment_submitted", own_campaign
+
           ads.set_payment_review(order3, 853680962, False, "Proof did not match")
           with sqlite3.connect(os.environ["DATABASE_PATH"]) as db:
               payment_state = db.execute(
@@ -208,10 +222,20 @@ jobs:
               ).fetchone()[0]
           assert payment_state == "rejected", payment_state
           assert order_state == "awaiting_payment", order_state
+          mine = ads.get_advertiser_campaigns(advertiser)
+          own_campaign = next(item for item in mine if item["campaign_id"] == campaign3)
+          assert own_campaign["order_status"] == "awaiting_payment", own_campaign
+
           payment4 = ads.record_payment_submission(order3, advertiser, advertiser_note="replacement proof")
           assert payment4 > payment3
+          mine = ads.get_advertiser_campaigns(advertiser)
+          own_campaign = next(item for item in mine if item["campaign_id"] == campaign3)
+          assert own_campaign["order_status"] == "payment_submitted", own_campaign
           ads.set_payment_review(order3, 853680962, True, "Replacement proof verified")
           assert ads.get_order(order3, advertiser)["status"] == "paid"
+          mine = ads.get_advertiser_campaigns(advertiser)
+          own_campaign = next(item for item in mine if item["campaign_id"] == campaign3)
+          assert own_campaign["order_status"] == "paid", own_campaign
           assert ads.activate_paid_approved_campaigns() == 0
 
           print("PRIZORA Ads database and placement tests passed")
