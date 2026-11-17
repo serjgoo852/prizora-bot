@@ -20,6 +20,8 @@ from telegram.ext import (
 )
 from telegram.error import TelegramError
 
+import ads
+
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
 
 MOSCOW_TZ = timezone(timedelta(hours=3), "MSK")
@@ -1301,6 +1303,7 @@ def main_menu(language: str):
             InlineKeyboardButton(t["menu_plans"], callback_data="plans"),
         ],
         [InlineKeyboardButton(t["menu_my_contests"], callback_data="mycontests")],
+        [InlineKeyboardButton("📢 Рекламировать канал", callback_data="ads:home")],
         [
             InlineKeyboardButton(t["menu_help"], callback_data="help"),
             InlineKeyboardButton(t["menu_language"], callback_data="language"),
@@ -1688,6 +1691,40 @@ async def button_handler(
         await query.edit_message_text(
             tr(context, "home_title"),
             reply_markup=main_menu(language),
+        )
+
+    elif data == "ads:home":
+        text = (
+            "📢 РЕКЛАМА В PRIZORA\n"
+            "━━━━━━━━━━━━━━━━━━\n\n"
+            "Раздел рекламы готовится к запуску. Здесь можно будет подать канал или группу "
+            "на размещение внутри PRIZORA.\n\n"
+            "Все заявки будут проходить ручную проверку материала и отдельное подтверждение оплаты."
+        )
+        keyboard = []
+        if ads.is_ads_admin(query.from_user.id):
+            keyboard.append([InlineKeyboardButton("🛠 Админ-панель рекламы", callback_data="ads:admin")])
+        keyboard.append([InlineKeyboardButton(tr(context, "back_home"), callback_data="home")])
+        await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
+
+    elif data == "ads:admin":
+        if not ads.is_ads_admin(query.from_user.id):
+            await query.edit_message_text("⛔ Доступ запрещён.")
+            return
+        summary = ads.get_admin_summary()
+        await query.edit_message_text(
+            "🛠 PRIZORA ADS — АДМИН-ПАНЕЛЬ\n"
+            "━━━━━━━━━━━━━━━━━━\n"
+            f"📨 Всего кампаний: {summary['campaigns']}\n"
+            f"🕓 На проверке: {summary['pending_review']}\n"
+            f"💳 Заявок на оплату: {summary['payment_submitted']}\n"
+            f"✅ Оплачено: {summary['paid']}\n"
+            f"🟢 Активных: {summary['active']}\n\n"
+            "Пока доступен только обзор базы. Управление заявками подключим следующим этапом.",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("‹ Назад к рекламе", callback_data="ads:home")],
+                [InlineKeyboardButton(tr(context, "back_home"), callback_data="home")],
+            ]),
         )
 
     elif data == "mycontests":
@@ -2516,6 +2553,7 @@ def main():
         raise RuntimeError("BOT_TOKEN environment variable is not set.")
 
     init_database()
+    ads.init_ads_database()
     application = Application.builder().token(BOT_TOKEN).post_init(post_init).build()
 
     application.add_handler(CommandHandler("start", start))
