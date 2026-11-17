@@ -488,10 +488,15 @@ def record_ad_click(campaign_id: str, user_id: int, placement_key: str = AD_PLAC
     now = _now()
     with _connect() as db:
         impression = db.execute(
-            """SELECT 1 FROM ad_impressions
-               WHERE campaign_id=? AND user_id=? AND placement_key=?
-               ORDER BY shown_at DESC LIMIT 1""",
-            (campaign_id, int(user_id), placement_key),
+            """SELECT 1
+               FROM ad_impressions i
+               JOIN ad_campaigns c ON c.campaign_id=i.campaign_id
+               WHERE i.campaign_id=? AND i.user_id=? AND i.placement_key=?
+                 AND c.status='active'
+                 AND c.starts_at IS NOT NULL AND c.ends_at IS NOT NULL
+                 AND c.starts_at<=? AND c.ends_at>?
+               ORDER BY i.shown_at DESC LIMIT 1""",
+            (campaign_id, int(user_id), placement_key, now, now),
         ).fetchone()
         if impression is None:
             return False
