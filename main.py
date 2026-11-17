@@ -1695,37 +1695,168 @@ async def button_handler(
 
     elif data == "ads:home":
         text = (
-            "📢 РЕКЛАМА В PRIZORA\n"
-            "━━━━━━━━━━━━━━━━━━\n\n"
-            "Раздел рекламы готовится к запуску. Здесь можно будет подать канал или группу "
-            "на размещение внутри PRIZORA.\n\n"
-            "Все заявки будут проходить ручную проверку материала и отдельное подтверждение оплаты."
+            "📢 РЕКЛАМА В PRIZORA\\n━━━━━━━━━━━━━━━━━━\\n\\n"
+            "Подай заявку на размещение своего Telegram-канала или группы. "
+            "Каждая публикация проходит ручную модерацию, оплата подтверждается отдельно.\\n\\n"
+            "Тарифы: 7 дней — 299 ₽, 14 дней — 499 ₽, 30 дней — 999 ₽."
         )
-        keyboard = []
+        keyboard = [[InlineKeyboardButton("➕ Подать заявку", callback_data="ads:new")],
+                    [InlineKeyboardButton("📋 Мои заявки", callback_data="ads:mine")]]
         if ads.is_ads_admin(query.from_user.id):
             keyboard.append([InlineKeyboardButton("🛠 Админ-панель рекламы", callback_data="ads:admin")])
         keyboard.append([InlineKeyboardButton(tr(context, "back_home"), callback_data="home")])
         await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
+
+    elif data == "ads:new":
+        context.user_data["ads_draft"] = {}
+        context.user_data["ads_step"] = "title"
+        await query.edit_message_text("✍️ Напиши название канала или группы (до 80 символов).",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Отмена", callback_data="ads:home")]]))
+
+    elif data == "ads:skip_image":
+        context.user_data["ads_step"] = "days"
+        await query.edit_message_text("Выбери срок размещения:",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("7 дней — 299 ₽", callback_data="ads:days:7")],
+                [InlineKeyboardButton("14 дней — 499 ₽", callback_data="ads:days:14")],
+                [InlineKeyboardButton("30 дней — 999 ₽", callback_data="ads:days:30")],
+                [InlineKeyboardButton("Отмена", callback_data="ads:home")],
+            ]))
+
+    elif data.startswith("ads:days:"):
+        try:
+            days = int(data.rsplit(":", 1)[1])
+            if days not in (7, 14, 30):
+                raise ValueError
+        except ValueError:
+            return
+        draft = context.user_data.get("ads_draft") or {}
+        if not all(draft.get(k) for k in ("title", "link", "description")):
+            await query.edit_message_text("Заявка не заполнена. Начни заново через раздел рекламы.")
+            return
+        try:
+            campaign_id = ads.create_campaign_draft(
+                query.from_user.id, draft["title"], draft["link"], draft["description"],
+                days, draft.get("image_file_id"))
+            order_id = ads.create_ad_order(campaign_id, query.from_user.id)
+        except Exception:
+            logging.exception("Could not create PRIZORA ad order")
+            await query.edit_message_text("Не удалось создать заявку. Попробуй позже.")
+            return
+        context.user_data.pop("ads_draft", None)
+        context.user_data.pop("ads_step", None)
+        amount = {7: 299, 14: 499, 30: 999}[days]
+        details = os.getenv("PRIZORA_ADS_PAYMENT_DETAILS", "").strip()
+        payment_text = details if details else "Реквизиты для оплаты пока не настроены. Не переводите деньги; дождитесь сообщения администратора."
+        await query.edit_message_text(
+            f"✅ Заявка создана.\\nНомер: <code>{order_id}</code>\\n"
+            f"Тариф: {days} дней — {amount} ₽.\\n\\n"
+            "Материал отправлен на модерацию. Оплата проверяется отдельно.\\n\\n"
+            f"Информация об оплате:\\n{payment_text}\\n\\n"
+            "После оплаты нажми кнопку ниже и при желании приложи чек.",
+            parse_mode="HTML",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("💳 Я оплатил", callback_data=f"ads:paid:{order_id}")],
+                [InlineKeyboardButton("📋 Мои заявки", callback_data="ads:mine")],
+                [InlineKeyboardButton("В меню", callback_data="home")],
+            ]))
+
+    elif data.startswith("ads:paid:"):
+        order_id = data.split(":", 2)[2]
+        order = ads.get_order(order_id, query.from_user.id)
+        if not order or order["status"] != "awaiting_payment":
+            await query.edit_message_text("Этот заказ не ожидает подтверждения оплаты.")
+            return
+        context.user_data["ads_payment_order"] = order_id
+        context.user_data["ads_step"] = "payment_note"
+        await query.edit_message_text("Пришли фото/скрин чека или напиши текстовое подтверждение оплаты. Если отправляешь текст, укажи дату и сумму.")
+
+    elif data == "ads:mine":
+        rows = ads.get_advertiser_campaigns(query.from_user.id)
+        if not rows:
+            await query.edit_message_text("Пока заявок нет.", reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("➕ Подать заявку", callback_data="ads:new")],
+                [InlineKeyboardButton("Назад", callback_data="ads:home")]]))
+        else:
+            lines = ["📋 ТВОИ РЕКЛАМНЫЕ ЗАЯВКИ", ""]
+            for row in rows[:10]:
+                lines.append(f"• {row['title']} — {row['status']}; оплата: {row.get('order_status') or 'заказ не создан'}")
+            await query.edit_message_text("\\n".join(lines), reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("Назад", callback_data="ads:home")]]))
 
     elif data == "ads:admin":
         if not ads.is_ads_admin(query.from_user.id):
             await query.edit_message_text("⛔ Доступ запрещён.")
             return
         summary = ads.get_admin_summary()
+        rows = ads.get_admin_queue()
+        keyboard = []
+        for row in rows[:8]:
+            keyboard.append([InlineKeyboardButton(
+                f"{row['title'][:35]} · {row['status']}",
+                callback_data=f"ads:item:{row['campaign_id']}")])
+        keyboard.extend([
+            [InlineKeyboardButton("‹ Назад к рекламе", callback_data="ads:home")],
+            [InlineKeyboardButton(tr(context, "back_home"), callback_data="home")],
+        ])
         await query.edit_message_text(
-            "🛠 PRIZORA ADS — АДМИН-ПАНЕЛЬ\n"
-            "━━━━━━━━━━━━━━━━━━\n"
-            f"📨 Всего кампаний: {summary['campaigns']}\n"
-            f"🕓 На проверке: {summary['pending_review']}\n"
-            f"💳 Заявок на оплату: {summary['payment_submitted']}\n"
-            f"✅ Оплачено: {summary['paid']}\n"
-            f"🟢 Активных: {summary['active']}\n\n"
-            "Пока доступен только обзор базы. Управление заявками подключим следующим этапом.",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("‹ Назад к рекламе", callback_data="ads:home")],
-                [InlineKeyboardButton(tr(context, "back_home"), callback_data="home")],
-            ]),
-        )
+            "🛠 PRIZORA ADS — АДМИН-ПАНЕЛЬ\\n"
+            f"Кампаний: {summary['campaigns']} · На проверке: {summary['pending_review']}\\n"
+            f"Ожидают проверки оплаты: {summary['payment_submitted']} · Оплачено: {summary['paid']}\\n"
+            f"Активных: {summary['active']}\\n\\nВыбери заявку:",
+            reply_markup=InlineKeyboardMarkup(keyboard))
+
+    elif data.startswith("ads:item:"):
+        if not ads.is_ads_admin(query.from_user.id):
+            await query.edit_message_text("⛔ Доступ запрещён.")
+            return
+        campaign_id = data.split(":", 2)[2]
+        row = next((x for x in ads.get_admin_queue(50) if x["campaign_id"] == campaign_id), None)
+        if not row:
+            await query.edit_message_text("Заявка не найдена или уже обработана.")
+            return
+        context.user_data["ads_admin_campaign"] = campaign_id
+        body = (f"📢 {row['title']}\\nСсылка: {row['public_link']}\\n"
+                f"Описание: {row['description']}\\nСрок: {row['requested_days']} дней\\n"
+                f"Статус материала: {row['status']}\\nОплата: {row.get('order_status') or 'нет заказа'}")
+        buttons = []
+        if row["status"] in ("pending_review", "changes_requested"):
+            buttons += [[InlineKeyboardButton("✅ Одобрить материал", callback_data=f"ads:mod:approve:{campaign_id}")],
+                        [InlineKeyboardButton("✏️ Запросить изменения", callback_data=f"ads:mod:changes:{campaign_id}")],
+                        [InlineKeyboardButton("⛔ Отклонить", callback_data=f"ads:mod:reject:{campaign_id}")]]
+        if row.get("order_status") == "payment_submitted":
+            buttons += [[InlineKeyboardButton("💰 Подтвердить оплату", callback_data=f"ads:pay:yes:{row['order_id']}")],
+                        [InlineKeyboardButton("❌ Отклонить оплату", callback_data=f"ads:pay:no:{row['order_id']}")]]
+        buttons.append([InlineKeyboardButton("‹ К очереди", callback_data="ads:admin")])
+        await query.edit_message_text(body, reply_markup=InlineKeyboardMarkup(buttons))
+
+    elif data.startswith("ads:mod:"):
+        if not ads.is_ads_admin(query.from_user.id):
+            await query.edit_message_text("⛔ Доступ запрещён.")
+            return
+        _, _, action, campaign_id = data.split(":", 3)
+        try:
+            ads.set_campaign_moderation(campaign_id, query.from_user.id, action)
+            ads.activate_paid_approved_campaigns()
+            await query.edit_message_text("Решение по рекламному материалу сохранено отдельно от оплаты.",
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("К админ-панели", callback_data="ads:admin")]]))
+        except Exception:
+            logging.exception("Ads moderation action failed")
+            await query.edit_message_text("Не удалось выполнить действие. Проверь заявку и повтори.")
+
+    elif data.startswith("ads:pay:"):
+        if not ads.is_ads_admin(query.from_user.id):
+            await query.edit_message_text("⛔ Доступ запрещён.")
+            return
+        _, _, decision, order_id = data.split(":", 3)
+        try:
+            ads.set_payment_review(order_id, query.from_user.id, decision == "yes")
+            ads.activate_paid_approved_campaigns()
+            await query.edit_message_text("Решение по оплате сохранено. Статус кампании обновлён только при наличии обоих подтверждений.",
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("К админ-панели", callback_data="ads:admin")]]))
+        except Exception:
+            logging.exception("Ads payment review failed")
+            await query.edit_message_text("Не удалось обработать оплату. Возможно, заявка уже проверена.")
 
     elif data == "mycontests":
         await show_my_contests(query, context)
