@@ -1896,7 +1896,7 @@ async def button_handler(
             buttons.append([InlineKeyboardButton("Назад", callback_data="ads:home")])
             await query.edit_message_text("\\n".join(lines), reply_markup=InlineKeyboardMarkup(buttons))
 
-    elif data.startswith("ads:edit:"):
+    elif data.startswith("ads:edit:") and data != "ads:edit:save":
         campaign_id = data.split(":", 2)[2]
         rows = ads.get_advertiser_campaigns(query.from_user.id)
         row = next((item for item in rows if item["campaign_id"] == campaign_id), None)
