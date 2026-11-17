@@ -1886,10 +1886,64 @@ async def button_handler(
                 [InlineKeyboardButton("Назад", callback_data="ads:home")]]))
         else:
             lines = ["📋 ТВОИ РЕКЛАМНЫЕ ЗАЯВКИ", ""]
+            buttons = []
             for row in rows[:10]:
                 lines.append(f"• {row['title']} — {row['status']}; оплата: {row.get('order_status') or 'заказ не создан'}")
-            await query.edit_message_text("\\n".join(lines), reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("Назад", callback_data="ads:home")]]))
+                if row["status"] == "changes_requested":
+                    buttons.append([InlineKeyboardButton(
+                        f"✏️ Исправить: {row['title'][:28]}",
+                        callback_data=f"ads:edit:{row['campaign_id']}")])
+            buttons.append([InlineKeyboardButton("Назад", callback_data="ads:home")])
+            await query.edit_message_text("\\n".join(lines), reply_markup=InlineKeyboardMarkup(buttons))
+
+    elif data.startswith("ads:edit:"):
+        campaign_id = data.split(":", 2)[2]
+        rows = ads.get_advertiser_campaigns(query.from_user.id)
+        row = next((item for item in rows if item["campaign_id"] == campaign_id), None)
+        if not row or row["status"] != "changes_requested":
+            await query.edit_message_text("Эта заявка сейчас не ожидает исправлений.")
+            return
+        context.user_data["ads_edit_campaign"] = campaign_id
+        context.user_data["ads_edit_draft"] = {
+            "title": row["title"], "link": row["public_link"],
+            "description": row["description"],
+        }
+        context.user_data["ads_step"] = "edit_title"
+        await query.edit_message_text(
+            "✏️ Исправление рекламной заявки\\n\\n"
+            "Сначала пришли новое название. Затем бот попросит ссылку и описание. "
+            "Изображение и прежний заказ на оплату сохранятся.",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Отмена", callback_data="ads:mine")]]),
+        )
+
+    elif data == "ads:edit:save":
+        campaign_id = context.user_data.get("ads_edit_campaign")
+        draft = context.user_data.get("ads_edit_draft") or {}
+        try:
+            ads.update_and_resubmit_campaign(
+                campaign_id, query.from_user.id,
+                draft.get("title", ""), draft.get("link", ""), draft.get("description", ""),
+            )
+            context.user_data.pop("ads_edit_campaign", None)
+            context.user_data.pop("ads_edit_draft", None)
+            context.user_data.pop("ads_step", None)
+            admin_id = os.getenv("PRIZORA_ADMIN_TELEGRAM_ID", "").strip()
+            if admin_id:
+                try:
+                    await context.bot.send_message(
+                        chat_id=int(admin_id),
+                        text=f"🔁 Исправленная рекламная заявка отправлена на повторную модерацию.\\nID: {campaign_id}",
+                    )
+                except Exception:
+                    logging.exception("Could not notify admin about resubmitted ad creative")
+            await query.edit_message_text(
+                "✅ Исправления сохранены. Заявка повторно отправлена на модерацию. "
+                "Новый заказ и повторная оплата не создавались.",
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("📋 Мои заявки", callback_data="ads:mine")]]),
+            )
+        except Exception:
+            logging.exception("Could not resubmit edited ad campaign")
+            await query.edit_message_text("Не удалось отправить исправления. Проверь данные и попробуй снова.")
 
     elif data == "ads:admin":
         if not ads.is_ads_admin(query.from_user.id):
@@ -2457,9 +2511,39 @@ async def prize_text_handler(
     message_text = (update.message.text or "").strip()
 
     ads_step = context.user_data.get("ads_step")
-    if ads_step in ("title", "link", "description", "payment_note"):
+    if ads_step in ("title", "link", "description", "payment_note", "edit_title", "edit_link", "edit_description"):
         if not message_text:
             await update.message.reply_text("Отправь текстовое сообщение.")
+            return
+        if ads_step == "edit_title":
+            if len(message_text) > 80:
+                await update.message.reply_text("Название должно быть не длиннее 80 символов.")
+                return
+            context.user_data["ads_edit_draft"]["title"] = message_text
+            context.user_data["ads_step"] = "edit_link"
+            await update.message.reply_text("Теперь пришли новую публичную ссылку вида https://t.me/example.")
+            return
+        if ads_step == "edit_link":
+            import re
+            if not re.match(r"^(https?://)?t\\.me/[A-Za-z0-9_]{5,}$", message_text):
+                await update.message.reply_text("Нужна публичная ссылка вида https://t.me/название_канала.")
+                return
+            if not message_text.startswith("http"):
+                message_text = "https://" + message_text
+            context.user_data["ads_edit_draft"]["link"] = message_text
+            context.user_data["ads_step"] = "edit_description"
+            await update.message.reply_text("Теперь пришли исправленное описание (до 500 символов).")
+            return
+        if ads_step == "edit_description":
+            if len(message_text) > 500:
+                await update.message.reply_text("Описание слишком длинное. Максимум 500 символов.")
+                return
+            context.user_data["ads_edit_draft"]["description"] = message_text
+            context.user_data["ads_step"] = "edit_ready"
+            await update.message.reply_text(
+                "Проверь исправления. Изображение и заказ на оплату останутся прежними.",
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔁 Отправить на повторную модерацию", callback_data="ads:edit:save")], [InlineKeyboardButton("Отмена", callback_data="ads:mine")]]),
+            )
             return
         if ads_step == "title":
             if len(message_text) > 80:
