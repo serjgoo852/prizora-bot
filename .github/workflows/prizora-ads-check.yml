@@ -163,6 +163,13 @@ jobs:
               raise AssertionError("Expired campaign was resumed")
           assert ads.get_order(order4, advertiser)["campaign_status"] == "paused"
 
+          # Admin lifecycle list includes active/paused campaigns, but excludes stopped ones.
+          managed = ads.get_admin_campaigns()
+          managed_ids = {item["campaign_id"] for item in managed}
+          assert campaign4 in managed_ids, managed
+          assert campaign2 not in managed_ids, managed
+          assert all(item["status"] in ("active", "paused") for item in managed), managed
+
           campaign_stats = ads.get_campaign_ad_stats(campaign2)
           assert campaign_stats["impressions"] == 1, campaign_stats
           assert campaign_stats["clicks"] == 1, campaign_stats
