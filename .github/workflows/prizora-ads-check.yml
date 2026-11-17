@@ -75,6 +75,16 @@ jobs:
           assert ads.expire_campaigns() == 1
           assert ads.get_order(order2, advertiser)["campaign_status"] == "completed"
 
+          # Restore a valid active window for the independent placement tests.
+          from datetime import datetime, timedelta, timezone
+          future = (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(timespec="seconds")
+          current = datetime.now(timezone.utc).isoformat(timespec="seconds")
+          with sqlite3.connect(os.environ["DATABASE_PATH"]) as db:
+              db.execute(
+                  "UPDATE ad_campaigns SET status='active', starts_at=?, ends_at=? WHERE campaign_id=?",
+                  (current, future, campaign2),
+              )
+
           summary = ads.get_admin_summary()
           assert summary["campaigns"] == 2, summary
 
