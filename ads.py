@@ -200,3 +200,32 @@ def record_payment_submission(
             (now, order_id),
         )
         return int(cursor.lastrowid)
+
+
+
+def get_admin_summary() -> dict:
+    """Return compact aggregate counts for the private admin dashboard."""
+    summary = {
+        "campaigns": 0,
+        "pending_review": 0,
+        "payment_submitted": 0,
+        "paid": 0,
+        "active": 0,
+    }
+    with _connect() as db:
+        summary["campaigns"] = db.execute(
+            "SELECT COUNT(*) FROM ad_campaigns"
+        ).fetchone()[0]
+        summary["pending_review"] = db.execute(
+            "SELECT COUNT(*) FROM ad_campaigns WHERE status = 'pending_review'"
+        ).fetchone()[0]
+        summary["payment_submitted"] = db.execute(
+            "SELECT COUNT(*) FROM ad_orders WHERE status = 'payment_submitted'"
+        ).fetchone()[0]
+        summary["paid"] = db.execute(
+            "SELECT COUNT(*) FROM ad_orders WHERE status = 'paid'"
+        ).fetchone()[0]
+        summary["active"] = db.execute(
+            "SELECT COUNT(*) FROM ad_campaigns WHERE status = 'active'"
+        ).fetchone()[0]
+    return {key: int(value) for key, value in summary.items()}
