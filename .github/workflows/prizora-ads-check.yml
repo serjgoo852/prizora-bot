@@ -103,6 +103,31 @@ jobs:
           # Global frequency cap prevents a second ad immediately afterward.
           assert ads.get_next_ad(987654321, "home") is None
 
+          # Pausing immediately blocks new clicks and delivery; resuming restores
+          # the already-paid campaign without extending its original end date.
+          with sqlite3.connect(os.environ["DATABASE_PATH"]) as db:
+              original_end = db.execute(
+                  "SELECT ends_at FROM ad_campaigns WHERE campaign_id=?", (campaign2,)
+              ).fetchone()[0]
+          ads.set_campaign_moderation(campaign2, 853680962, "pause", "CI pause")
+          assert ads.record_ad_click(campaign2, 987654321, "home") is False
+          assert ads.get_next_ad(222222222, "home") is None
+          ads.set_campaign_moderation(campaign2, 853680962, "resume", "CI resume")
+          assert ads.activate_paid_approved_campaigns() == 1
+          resumed = ads.get_order(order2, advertiser)
+          assert resumed["campaign_status"] == "active", resumed
+          with sqlite3.connect(os.environ["DATABASE_PATH"]) as db:
+              resumed_end = db.execute(
+                  "SELECT ends_at FROM ad_campaigns WHERE campaign_id=?", (campaign2,)
+              ).fetchone()[0]
+          assert resumed_end == original_end, (original_end, resumed_end)
+
+          # A stopped campaign cannot be reactivated by the approval scheduler.
+          ads.set_campaign_moderation(campaign2, 853680962, "stop", "CI stop")
+          assert ads.activate_paid_approved_campaigns() == 0
+          assert ads.get_order(order2, advertiser)["campaign_status"] == "cancelled"
+          assert ads.get_next_ad(333333333, "home") is None
+
           campaign_stats = ads.get_campaign_ad_stats(campaign2)
           assert campaign_stats["impressions"] == 1, campaign_stats
           assert campaign_stats["clicks"] == 1, campaign_stats
