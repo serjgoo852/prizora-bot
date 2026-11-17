@@ -2360,7 +2360,7 @@ async def prize_text_handler(
             return
         if ads_step == "link":
             import re
-            if not re.match(r"^(https?://)?t\\.me/[A-Za-z0-9_]{5,}$", message_text):
+            if not re.match(r"^(https?://)?t\.me/[A-Za-z0-9_]{5,}$", message_text):
                 await update.message.reply_text("Нужна публичная ссылка вида https://t.me/название_канала.")
                 return
             if not message_text.startswith("http"):
