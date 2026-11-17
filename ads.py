@@ -180,13 +180,18 @@ def record_payment_submission(
     now = _now()
     with _connect() as db:
         order = db.execute(
-            "SELECT advertiser_id, status FROM ad_orders WHERE order_id = ?",
+            """SELECT o.advertiser_id, o.status, c.status AS campaign_status
+               FROM ad_orders o
+               JOIN ad_campaigns c ON c.campaign_id=o.campaign_id
+               WHERE o.order_id = ?""",
             (order_id,),
         ).fetchone()
         if order is None or int(order["advertiser_id"]) != int(advertiser_id):
             raise ValueError("order not found")
         if order["status"] != "awaiting_payment":
             raise ValueError("order is not awaiting payment")
+        if order["campaign_status"] in ("rejected", "cancelled", "completed"):
+            raise ValueError("campaign is not eligible for payment")
         cursor = db.execute(
             """
             INSERT INTO ad_payments
