@@ -95,6 +95,27 @@ def init_admin_database(db_path: Optional[str] = None) -> None:
             created_by INTEGER NOT NULL,
             created_at TEXT NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS support_conversations (
+            user_id INTEGER PRIMARY KEY,
+            status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open','closed')),
+            unread_count INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            last_message_preview TEXT NOT NULL DEFAULT ''
+        );
+        CREATE TABLE IF NOT EXISTS support_messages (
+            message_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            sender_id INTEGER NOT NULL,
+            sender_role TEXT NOT NULL CHECK (sender_role IN ('user','admin')),
+            message_text TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            read_at TEXT
+        );
+        CREATE INDEX IF NOT EXISTS idx_support_messages_user
+            ON support_messages(user_id, message_id DESC);
+        CREATE INDEX IF NOT EXISTS idx_support_conversations_status
+            ON support_conversations(status, updated_at DESC);
         CREATE TABLE IF NOT EXISTS admin_audit (
             audit_id INTEGER PRIMARY KEY AUTOINCREMENT,
             admin_id INTEGER NOT NULL,
@@ -299,6 +320,207 @@ def unblock_user(user_id: int, admin_id: int, db_path: Optional[str] = None) -> 
         return bool(cursor.rowcount)
 
 
+def save_support_message(user_id: int, sender_id: int, sender_role: str,
+                        message_text: str, db_path: Optional[str] = None) -> None:
+    """Persist a user/admin support message and maintain the conversation inbox."""
+    if sender_role not in ("user", "admin"):
+        raise ValueError("invalid sender role")
+    message_text = (message_text or "").strip()
+    if not message_text or len(message_text) > 2000:
+        raise ValueError("message must contain 1-2000 characters")
+    now = _stamp()
+    with _connect(db_path) as db:
+        db.execute("BEGIN IMMEDIATE")
+        db.execute("""
+            INSERT INTO support_conversations
+                (user_id, status, unread_count, created_at, updated_at, last_message_preview)
+            VALUES (?, 'open', 0, ?, ?, '')
+            ON CONFLICT(user_id) DO NOTHING
+        """, (int(user_id), now, now))
+        db.execute("""
+            INSERT INTO support_messages
+                (user_id, sender_id, sender_role, message_text, created_at)
+            VALUES (?, ?, ?, ?, ?)
+        """, (int(user_id), int(sender_id), sender_role, message_text, now))
+        db.execute("""
+            UPDATE support_conversations
+            SET status='open', unread_count=unread_count + ?, updated_at=?,
+                last_message_preview=?
+            WHERE user_id=?
+        """, (1 if sender_role == "user" else 0, now, message_text[:180], int(user_id)))
+
+
+def list_support_conversations(db_path: Optional[str] = None, limit: int = 20) -> list:
+    with _connect(db_path) as db:
+        return db.execute("""
+            SELECT c.user_id, c.status, c.unread_count, c.updated_at,
+                   c.last_message_preview, p.full_name, p.username
+            FROM support_conversations c
+            LEFT JOIN user_profiles p ON p.user_id=c.user_id
+            ORDER BY CASE c.status WHEN 'open' THEN 0 ELSE 1 END,
+                     c.updated_at DESC LIMIT ?
+        """, (max(1, min(int(limit), 50)),)).fetchall()
+
+
+def get_support_messages(user_id: int, db_path: Optional[str] = None, limit: int = 12) -> list:
+    with _connect(db_path) as db:
+        rows = db.execute("""
+            SELECT sender_role, message_text, created_at
+            FROM support_messages WHERE user_id=?
+            ORDER BY message_id DESC LIMIT ?
+        """, (int(user_id), max(1, min(int(limit), 50)))).fetchall()
+    return list(reversed(rows))
+
+
+def mark_support_read(user_id: int, db_path: Optional[str] = None) -> None:
+    now = _stamp()
+    with _connect(db_path) as db:
+        db.execute("UPDATE support_conversations SET unread_count=0 WHERE user_id=?", (int(user_id),))
+        db.execute("""
+            UPDATE support_messages SET read_at=?
+            WHERE user_id=? AND sender_role='user' AND read_at IS NULL
+        """, (now, int(user_id)))
+
+
+def set_support_status(user_id: int, status: str, db_path: Optional[str] = None) -> None:
+    if status not in ("open", "closed"):
+        raise ValueError("invalid support status")
+    with _connect(db_path) as db:
+        db.execute("UPDATE support_conversations SET status=?, updated_at=? WHERE user_id=?",
+                   (status, _stamp(), int(user_id)))
+
+
+async def support_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    user = update.effective_user
+    message = update.effective_message
+    if not user or not message:
+        return
+    if update.effective_chat and update.effective_chat.type != "private":
+        await message.reply_text("Напиши /support в личном чате с PRIZORA.")
+        return
+    if is_user_blocked(user.id, scope="account"):
+        await message.reply_text("⛔ Доступ к PRIZORA ограничен.")
+        return
+    register_user(user)
+    context.user_data["support_flow"] = True
+    await message.reply_text(
+        "✉️ Служба поддержки PRIZORA\n\n"
+        "Напиши сообщение одним текстом (до 2000 символов). "
+        "Оно попадёт в закрытый чат поддержки. Ответ администратора придёт сюда."
+    )
+
+
+async def handle_support_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
+    if not context.user_data.get("support_flow"):
+        return False
+    user = update.effective_user
+    message = update.effective_message
+    if not user or not message or is_owner(user.id):
+        context.user_data.pop("support_flow", None)
+        return False
+    body = (message.text or "").strip()
+    if not body or len(body) > 2000:
+        await message.reply_text("Сообщение должно содержать от 1 до 2000 символов. Попробуй ещё раз.")
+        return True
+    register_user(user)
+    save_support_message(user.id, user.id, "user", body)
+    context.user_data.pop("support_flow", None)
+    await message.reply_text("✅ Сообщение отправлено в поддержку. Ответ придёт сюда в этот чат.")
+    owner_id = configured_admin_id()
+    if owner_id:
+        preview = html.escape(body[:350])
+        try:
+            await context.bot.send_message(
+                chat_id=owner_id,
+                text=(f"✉️ Новое обращение в поддержку от <b>{html.escape(user.full_name or str(user.id))}</b>\n"
+                      f"Telegram ID: <code>{user.id}</code>\n\n{preview}"),
+                parse_mode="HTML",
+                reply_markup=InlineKeyboardMarkup([[
+                    InlineKeyboardButton("Открыть обращение", callback_data=f"admin:support:open:{user.id}")
+                ]]),
+            )
+        except Exception:
+            # The message is safely stored; it remains available in the admin inbox.
+            pass
+    return True
+
+
+async def handle_admin_support_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
+    target = context.user_data.get("admin_support_reply_to")
+    user = update.effective_user
+    message = update.effective_message
+    if target is None or not user or not message:
+        return False
+    if not is_owner(user.id) or not has_session(user.id):
+        context.user_data.pop("admin_support_reply_to", None)
+        return False
+    body = (message.text or "").strip()
+    if not body or len(body) > 2000:
+        await message.reply_text("Ответ должен содержать от 1 до 2000 символов.")
+        return True
+    target = int(target)
+    save_support_message(target, user.id, "admin", body)
+    context.user_data.pop("admin_support_reply_to", None)
+    try:
+        await context.bot.send_message(
+            chat_id=target,
+            text="✉️ Ответ поддержки PRIZORA:\n\n" + body,
+        )
+    except Exception:
+        await message.reply_text("Ответ сохранён в истории, но Telegram не доставил его пользователю.")
+        return True
+    await message.reply_text("✅ Ответ отправлен пользователю.")
+    return True
+
+
+async def _show_support_conversation(query, user_id: int) -> None:
+    mark_support_read(user_id)
+    rows = get_support_messages(user_id)
+    user = _user_row(user_id)
+    name = (user["full_name"] if user else "Пользователь") or "Пользователь"
+    lines = [f"✉️ ПОДДЕРЖКА · {html.escape(name)}", f"Telegram ID: <code>{user_id}</code>", "━━━━━━━━━━━━━━━━━━"]
+    for row in rows:
+        who = "👤 Пользователь" if row["sender_role"] == "user" else "👑 Администратор"
+        stamp = html.escape(str(row["created_at"])[:16].replace("T", " "))
+        lines.append(f"{who} · {stamp}\n{html.escape(row['message_text'])}")
+    with _connect() as db:
+        conversation = db.execute(
+            "SELECT status FROM support_conversations WHERE user_id=?", (user_id,)
+        ).fetchone()
+    status = conversation["status"] if conversation else "open"
+    toggle = "Закрыть обращение" if status == "open" else "Открыть обращение"
+    toggle_action = "close" if status == "open" else "reopen"
+    await query.edit_message_text(
+        "\n\n".join(lines)[:3900],
+        parse_mode="HTML",
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("↩️ Ответить", callback_data=f"admin:support:reply:{user_id}")],
+            [InlineKeyboardButton(toggle, callback_data=f"admin:support:{toggle_action}:{user_id}")],
+            [InlineKeyboardButton("‹ К обращениям", callback_data="admin:support")],
+        ]),
+    )
+
+
+async def _show_support_inbox(query) -> None:
+    rows = list_support_conversations()
+    unread = sum(int(row["unread_count"]) for row in rows)
+    buttons = []
+    for row in rows:
+        name = (row["full_name"] or str(row["user_id"]))[:18]
+        badge = f" · 🆕{row['unread_count']}" if row["unread_count"] else ""
+        status = "🟢" if row["status"] == "open" else "⚪"
+        buttons.append([InlineKeyboardButton(
+            f"{status} {name}{badge}",
+            callback_data=f"admin:support:open:{row['user_id']}"
+        )])
+    buttons.append([InlineKeyboardButton("‹ В панель", callback_data="admin:home")])
+    await query.edit_message_text(
+        f"✉️ СЛУЖБА ПОДДЕРЖКИ\nОткрытых/закрытых обращений: {len(rows)} · непрочитанных: {unread}\n"
+        "Выбери диалог:",
+        reply_markup=InlineKeyboardMarkup(buttons),
+    )
+
+
 def _money(kopecks: int) -> str:
     return f"{kopecks / 100:,.2f}".replace(",", " ").replace(".", ",") + " ₽"
 
@@ -381,6 +603,7 @@ def _dashboard_keyboard() -> InlineKeyboardMarkup:
         [InlineKeyboardButton("🔎 Найти пользователя", callback_data="admin:find")],
         [InlineKeyboardButton("💰 Финансы и балансы", callback_data="admin:finance")],
         [InlineKeyboardButton("🚫 Блокировки", callback_data="admin:blocks")],
+        [InlineKeyboardButton("✉️ Поддержка", callback_data="admin:support")],
         [InlineKeyboardButton("💳 Платежи", callback_data="admin:payments")],
         [InlineKeyboardButton("📊 Статистика", callback_data="admin:stats")],
         [InlineKeyboardButton("🔐 Завершить сеанс", callback_data="admin:logout")],
@@ -699,6 +922,18 @@ async def handle_admin_callback(update: Update, context: ContextTypes.DEFAULT_TY
         )] for row in rows]
         buttons.append([InlineKeyboardButton("‹ В панель", callback_data="admin:home")])
         await query.edit_message_text("🚫 ЗАБЛОКИРОВАННЫЕ ПОЛЬЗОВАТЕЛИ", reply_markup=InlineKeyboardMarkup(buttons))
+    elif data == "admin:support":
+        await _show_support_inbox(query)
+    elif data.startswith("admin:support:open:"):
+        await _show_support_conversation(query, int(data.rsplit(":", 1)[1]))
+    elif data.startswith("admin:support:reply:"):
+        target = int(data.rsplit(":", 1)[1])
+        context.user_data["admin_support_reply_to"] = target
+        await query.message.reply_text(f"Напиши ответ пользователю {target} (до 2000 символов).")
+    elif data.startswith("admin:support:close:") or data.startswith("admin:support:reopen:"):
+        action, target = data.rsplit(":", 2)[1:]
+        set_support_status(int(target), "closed" if action == "close" else "open")
+        await _show_support_conversation(query, int(target))
     elif data == "admin:payments":
         import ads
         summary = ads.get_admin_summary()
