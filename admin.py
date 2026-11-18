@@ -339,7 +339,8 @@ def _user_row(user_id: int, db_path: Optional[str] = None):
 
 
 def _user_list(db_path: Optional[str] = None, blocked_only: bool = False) -> list:
-    where = "WHERE b.user_id IS NOT NULL" if blocked_only else ""
+    where = ("WHERE b.user_id IS NOT NULL AND (b.expires_at IS NULL OR julianday(b.expires_at)>julianday(?))"
+             if blocked_only else "")
     with _connect(db_path) as db:
         return db.execute(f"""
             SELECT p.user_id, p.username, p.full_name,
@@ -350,7 +351,7 @@ def _user_list(db_path: Optional[str] = None, blocked_only: bool = False) -> lis
             LEFT JOIN user_blocks b ON b.user_id=p.user_id
             {where}
             ORDER BY p.last_seen DESC LIMIT 12
-        """).fetchall()
+        """, ((_stamp(),) if blocked_only else ())).fetchall()
 
 
 def _dashboard_text(db_path: Optional[str] = None) -> str:
