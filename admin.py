@@ -821,21 +821,19 @@ async def handle_admin_text(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         if not raw or len(raw) > 240:
             await context.bot.send_message(chat_id=user_id, text="Причина должна содержать от 1 до 240 символов.")
             return True
-        target = int(context.user_data.pop("admin_target_user"))
-        amount = int(context.user_data.pop("admin_pending_amount"))
-        try:
-            balance = adjust_balance(target, user_id, amount, raw)
-        except ValueError as exc:
-            await context.bot.send_message(chat_id=user_id, text=f"Операция не выполнена: {exc}")
-            context.user_data.pop("admin_flow", None)
-            return True
-        context.user_data.pop("admin_flow", None)
+        context.user_data["admin_pending_reason"] = raw
+        context.user_data["admin_flow"] = "wallet_confirm"
+        amount = int(context.user_data["admin_pending_amount"])
+        target = int(context.user_data["admin_target_user"])
         sign = "+" if amount > 0 else "−"
         await context.bot.send_message(
             chat_id=user_id,
-            text=f"✅ Баланс пользователя {target} изменён на {sign}{_money(abs(amount))}.\nНовый баланс: {_money(balance)}."
+            text="Проверь операцию:\nПользователь: {}\nИзменение: {}{}\nПричина: {}\n\nПодтвердить?".format(target, sign, _money(abs(amount)), raw),
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("✅ Подтвердить", callback_data="admin:walletapply")],
+                [InlineKeyboardButton("✖️ Отмена", callback_data="admin:walletcancel")],
+            ])
         )
-        await _send_user_card(context, target)
         return True
 
     if flow == "block_reason":
@@ -867,6 +865,9 @@ async def _send_user_card(context: ContextTypes.DEFAULT_TYPE, user_id: int) -> N
         block = html.escape(row["block_level"]) + " · " + html.escape(row["block_reason"] or "")
         if row["expires_at"]:
             block += " · до " + html.escape(row["expires_at"])
+    with _connect() as db:
+        block_events = db.execute("SELECT action, details, created_at FROM admin_audit WHERE target_user_id=? AND action IN (?, ?) ORDER BY audit_id DESC LIMIT 5", (int(user_id), "user_blocked", "user_unblocked")).fetchall()
+    block_history = "\n".join("{} · {}".format(item["created_at"], html.escape(item["details"])) for item in block_events) or "изменений блокировки нет"
     history = _audit_user(user_id)
     history_text = "\n".join(
         "• {}{} — {}".format("+" if item["amount_kopecks"] > 0 else "−", _money(abs(int(item["amount_kopecks"]))), html.escape(item["reason"]))
@@ -876,6 +877,7 @@ async def _send_user_card(context: ContextTypes.DEFAULT_TYPE, user_id: int) -> N
         "👤 ПОЛЬЗОВАТЕЛЬ PRIZORA\n━━━━━━━━━━━━━━━━━━\n"
         + "Имя: {}\nUsername: {}\nTelegram ID: <code>{}</code>\n".format(display_name, username, user_id)
         + "Баланс: <b>{}</b>\nБлокировка: {}\n\n".format(_money(int(row["balance_kopecks"])), block)
+        + "История блокировок:\n" + block_history + "\n\n"
         + "Последние операции:\n" + history_text
     )
     await context.bot.send_message(
@@ -990,6 +992,24 @@ async def handle_admin_callback(update: Update, context: ContextTypes.DEFAULT_TY
         unblock_user(target, admin_id)
         await query.edit_message_text(f"✅ Пользователь {target} разблокирован.")
         await _send_user_card(context, target)
+    elif data == "admin:walletapply":
+        target = int(context.user_data.get("admin_target_user", 0))
+        amount = int(context.user_data.get("admin_pending_amount", 0))
+        reason = context.user_data.get("admin_pending_reason", "")
+        try:
+            balance = adjust_balance(target, admin_id, amount, reason)
+        except (ValueError, PermissionError) as exc:
+            await query.edit_message_text("Операция не выполнена: {}".format(exc))
+            return True
+        for key in ("admin_target_user", "admin_pending_amount", "admin_pending_reason", "admin_flow"):
+            context.user_data.pop(key, None)
+        sign = "+" if amount > 0 else "−"
+        await query.edit_message_text("✅ Баланс пользователя {} изменён на {}{}. Новый баланс: {}.".format(target, sign, _money(abs(amount)), _money(balance)))
+        await _send_user_card(context, target)
+    elif data == "admin:walletcancel":
+        for key in ("admin_target_user", "admin_pending_amount", "admin_pending_reason", "admin_flow"):
+            context.user_data.pop(key, None)
+        await query.edit_message_text("Операция отменена. Баланс не изменён.")
     else:
         await query.edit_message_text("Неизвестное действие. Вернись в панель командой /admin.")
     return True
