@@ -70,6 +70,34 @@ class AdminFoundationTests(unittest.TestCase):
             db.execute("UPDATE user_blocks SET expires_at=? WHERE user_id=?", (past, 700005))
         self.assertFalse(admin.is_user_blocked(700005, db_path=self.db_path))
 
+    def test_support_inbox_tracks_unread_history_and_status(self):
+        admin.save_support_message(700010, 700010, "user", "Нужна помощь", self.db_path)
+        rows = admin.list_support_conversations(self.db_path)
+        conversation = next(row for row in rows if row["user_id"] == 700010)
+        self.assertEqual(conversation["status"], "open")
+        self.assertEqual(conversation["unread_count"], 1)
+
+        admin.mark_support_read(700010, self.db_path)
+        rows = admin.list_support_conversations(self.db_path)
+        conversation = next(row for row in rows if row["user_id"] == 700010)
+        self.assertEqual(conversation["unread_count"], 0)
+
+        admin.save_support_message(700010, 900001, "admin", "Чем помочь?", self.db_path)
+        messages = admin.get_support_messages(700010, self.db_path)
+        self.assertEqual([row["sender_role"] for row in messages], ["user", "admin"])
+        self.assertEqual(messages[-1]["message_text"], "Чем помочь?")
+
+        admin.set_support_status(700010, "closed", self.db_path)
+        conversation = next(row for row in admin.list_support_conversations(self.db_path)
+                            if row["user_id"] == 700010)
+        self.assertEqual(conversation["status"], "closed")
+
+    def test_support_message_validation(self):
+        with self.assertRaises(ValueError):
+            admin.save_support_message(700011, 700011, "system", "bad", self.db_path)
+        with self.assertRaises(ValueError):
+            admin.save_support_message(700011, 700011, "user", "   ", self.db_path)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
