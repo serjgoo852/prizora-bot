@@ -192,12 +192,13 @@ def has_session(admin_id: int, db_path: Optional[str] = None) -> bool:
         return valid
 
 
-def is_user_blocked(user_id: int, db_path: Optional[str] = None) -> bool:
+def is_user_blocked(user_id: int, scope: str = "account", db_path: Optional[str] = None) -> bool:
+    """Account/full blocks stop bot use; participation blocks only stop contest entry."""
     if is_owner(user_id):
         return False
     with _connect(db_path) as db:
         row = db.execute(
-            "SELECT expires_at FROM user_blocks WHERE user_id=?", (int(user_id),)
+            "SELECT block_level, expires_at FROM user_blocks WHERE user_id=?", (int(user_id),)
         ).fetchone()
         if not row:
             return False
@@ -208,6 +209,8 @@ def is_user_blocked(user_id: int, db_path: Optional[str] = None) -> bool:
                     return False
             except ValueError:
                 return True
+        if row["block_level"] == "participation":
+            return scope == "participation"
         return True
 
 
@@ -654,7 +657,6 @@ async def handle_admin_callback(update: Update, context: ContextTypes.DEFAULT_TY
     query = update.callback_query
     if not query or not (query.data or "").startswith("admin:"):
         return False
-    await query.answer()
     admin_id = int(query.from_user.id)
     if not is_owner(admin_id) or not has_session(admin_id):
         await query.answer("Сеанс администратора завершён. Введи /admin.", show_alert=True)
@@ -711,13 +713,20 @@ async def handle_admin_callback(update: Update, context: ContextTypes.DEFAULT_TY
         ]))
     elif data.startswith("admin:level:"):
         _, _, target, level = data.split(":")
+        await query.edit_message_text("Выбери срок блокировки:", reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("24 часа", callback_data=f"admin:duration:{target}:{level}:24")],
+            [InlineKeyboardButton("7 дней", callback_data=f"admin:duration:{target}:{level}:168")],
+            [InlineKeyboardButton("30 дней", callback_data=f"admin:duration:{target}:{level}:720")],
+            [InlineKeyboardButton("Навсегда", callback_data=f"admin:duration:{target}:{level}:0")],
+            [InlineKeyboardButton("‹ Отмена", callback_data=f"admin:profile:{target}")],
+        ]))
+    elif data.startswith("admin:duration:"):
+        _, _, target, level, duration = data.split(":")
         context.user_data["admin_target_user"] = int(target)
         context.user_data["admin_block_level"] = level
+        context.user_data["admin_block_duration"] = int(duration)
         context.user_data["admin_flow"] = "block_reason"
-        await query.message.reply_text(
-            "Укажи причину блокировки (до 240 символов). После этого можно будет выбрать срок."
-        )
-        context.user_data["admin_block_duration"] = 0
+        await query.message.reply_text("Укажи причину блокировки (до 240 символов).")
     elif data.startswith("admin:unblock:"):
         target = int(data.rsplit(":", 1)[1])
         unblock_user(target, admin_id)
