@@ -1586,7 +1586,7 @@ def register_participant(contest_id: str, user) -> str:
 
 async def handle_join_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     admin.register_user(update.effective_user)
-    if admin.is_user_blocked(update.effective_user.id, scope="account"):
+    if admin.is_user_blocked(update.effective_user.id, scope="participation"):
         await update.message.reply_text("⛔ Доступ к PRIZORA ограничен. Если считаешь это ошибкой, обратись к администратору.")
         return
     language = current_language(context)
@@ -1700,11 +1700,11 @@ async def maybe_show_home_ad(chat_id: int, user_id: int, context: ContextTypes.D
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     admin.register_user(update.effective_user)
-    if admin.is_user_blocked(update.effective_user.id, scope="account"):
-        await update.message.reply_text("⛔ Доступ к PRIZORA ограничен. Если считаешь это ошибкой, обратись к администратору.")
-        return
     if context.args and context.args[0].startswith("join_"):
         await handle_join_start(update, context)
+        return
+    if admin.is_user_blocked(update.effective_user.id, scope="account"):
+        await update.message.reply_text("⛔ Доступ к PRIZORA ограничен. Если считаешь это ошибкой, обратись к администратору.")
         return
 
     if "language" not in context.user_data:
