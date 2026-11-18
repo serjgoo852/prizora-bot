@@ -526,8 +526,8 @@ async def _show_support_inbox(query) -> None:
     )
 
 
-def _admin_contests(limit: int = 15) -> list:
-    with _connect() as db:
+def _admin_contests(limit: int = 15, db_path: Optional[str] = None) -> list:
+    with _connect(db_path) as db:
         return db.execute("""
             SELECT c.contest_id, c.prize_name, c.contest_format, c.destination_title,
                    c.starts_at, c.ends_at, c.drawn_at, c.winners_json,
@@ -540,8 +540,8 @@ def _admin_contests(limit: int = 15) -> list:
         """, (max(1, min(int(limit), 30)),)).fetchall()
 
 
-def _admin_contest(contest_id: str):
-    with _connect() as db:
+def _admin_contest(contest_id: str, db_path: Optional[str] = None):
+    with _connect(db_path) as db:
         return db.execute("""
             SELECT c.*,
                    (SELECT COUNT(*) FROM participants p WHERE p.contest_id=c.contest_id) AS participant_count
@@ -549,8 +549,8 @@ def _admin_contest(contest_id: str):
         """, (contest_id,)).fetchone()
 
 
-def _admin_participants(contest_id: str, limit: int = 20) -> list:
-    with _connect() as db:
+def _admin_participants(contest_id: str, limit: int = 20, db_path: Optional[str] = None) -> list:
+    with _connect(db_path) as db:
         return db.execute("""
             SELECT user_id, username, full_name, joined_at
             FROM participants WHERE contest_id=?
