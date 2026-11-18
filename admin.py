@@ -142,7 +142,7 @@ def register_user(user) -> None:
                 username=excluded.username,
                 full_name=excluded.full_name,
                 last_seen=excluded.last_seen
-        """, (int(user.id), user.username, (user.full_name or str(user.id))[:160], now, now))
+        """, (int(user.id), getattr(user, "username", None), (getattr(user, "full_name", None) or str(user.id))[:160], now, now))
         db.execute(
             "INSERT OR IGNORE INTO user_wallets(user_id, balance_kopecks, updated_at) VALUES (?, 0, ?)",
             (int(user.id), now),
