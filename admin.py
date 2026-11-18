@@ -358,7 +358,7 @@ def _dashboard_text(db_path: Optional[str] = None) -> str:
     with _connect(db_path) as db:
         users = db.execute("SELECT COUNT(*) FROM user_profiles").fetchone()[0]
         wallets = db.execute("SELECT COALESCE(SUM(balance_kopecks),0) FROM user_wallets").fetchone()[0]
-        blocked = db.execute("SELECT COUNT(*) FROM user_blocks").fetchone()[0]
+        blocked = db.execute("SELECT COUNT(*) FROM user_blocks WHERE expires_at IS NULL OR julianday(expires_at)>julianday(?)", (_stamp(),)).fetchone()[0]
         contests = db.execute("SELECT COUNT(*) FROM contests").fetchone()[0]
         active = db.execute(
             "SELECT COUNT(*) FROM contests WHERE drawn_at IS NULL AND julianday(ends_at)>julianday(?)",
@@ -381,6 +381,7 @@ def _dashboard_keyboard() -> InlineKeyboardMarkup:
         [InlineKeyboardButton("🔎 Найти пользователя", callback_data="admin:find")],
         [InlineKeyboardButton("💰 Финансы и балансы", callback_data="admin:finance")],
         [InlineKeyboardButton("🚫 Блокировки", callback_data="admin:blocks")],
+        [InlineKeyboardButton("💳 Платежи", callback_data="admin:payments")],
         [InlineKeyboardButton("📊 Статистика", callback_data="admin:stats")],
         [InlineKeyboardButton("🔐 Завершить сеанс", callback_data="admin:logout")],
     ])
@@ -636,23 +637,23 @@ async def _send_user_card(context: ContextTypes.DEFAULT_TYPE, user_id: int) -> N
     if not row:
         await context.bot.send_message(chat_id=configured_admin_id(), text="Пользователь не найден.")
         return
-    username = f"@{html.escape(row['username'])}" if row["username"] else "не указан"
+    username = "@" + html.escape(row["username"]) if row["username"] else "не указан"
     display_name = html.escape(row["full_name"] or str(user_id))
     block = "нет"
     if row["block_level"]:
-        block = f"{html.escape(row['block_level'])} · {html.escape(row['block_reason'] or '')}"
+        block = html.escape(row["block_level"]) + " · " + html.escape(row["block_reason"] or "")
         if row["expires_at"]:
-            block += f" · до {row['expires_at']}"
+            block += " · до " + html.escape(row["expires_at"])
     history = _audit_user(user_id)
-    history_text = "\n".join(
-        f"• {('+' if item['amount_kopecks'] > 0 else '−')}{_money(abs(int(item['amount_kopecks'])))} — {item['reason']}"
+    history_text = "\\n".join(
+        "• {}{} — {}".format("+" if item["amount_kopecks"] > 0 else "−", _money(abs(int(item["amount_kopecks"]))), html.escape(item["reason"]))
         for item in history
     ) or "операций пока нет"
     text = (
-        f"👤 ПОЛЬЗОВАТЕЛЬ PRIZORA\n━━━━━━━━━━━━━━━━━━\n"
-        f"Имя: {row['full_name']}\nUsername: {username}\nTelegram ID: <code>{user_id}</code>\n"
-        f"Баланс: <b>{_money(int(row['balance_kopecks']))}</b>\nБлокировка: {block}\n\n"
-        f"Последние операции:\n{history_text}"
+        "👤 ПОЛЬЗОВАТЕЛЬ PRIZORA\\n━━━━━━━━━━━━━━━━━━\\n"
+        + "Имя: {}\\nUsername: {}\\nTelegram ID: <code>{}</code>\\n".format(display_name, username, user_id)
+        + "Баланс: <b>{}</b>\\nБлокировка: {}\\n\\n".format(_money(int(row["balance_kopecks"])), block)
+        + "Последние операции:\\n" + history_text
     )
     await context.bot.send_message(
         chat_id=configured_admin_id(), text=text, parse_mode="HTML",
@@ -698,6 +699,20 @@ async def handle_admin_callback(update: Update, context: ContextTypes.DEFAULT_TY
         )] for row in rows]
         buttons.append([InlineKeyboardButton("‹ В панель", callback_data="admin:home")])
         await query.edit_message_text("🚫 ЗАБЛОКИРОВАННЫЕ ПОЛЬЗОВАТЕЛИ", reply_markup=InlineKeyboardMarkup(buttons))
+    elif data == "admin:payments":
+        import ads
+        summary = ads.get_admin_summary()
+        payment_text = (
+            "💳 ПЛАТЕЖИ PRIZORA\\n━━━━━━━━━━━━━━━━━━\\n"
+            + "Заявок на рекламу: {}\\n".format(summary["campaigns"])
+            + "Ожидают проверки оплаты: {}\\n".format(summary["payment_submitted"])
+            + "Оплачено заказов: {}\\n".format(summary["paid"])
+            + "Активных рекламных размещений: {}\\n\\n".format(summary["active"])
+            + "Оплата PRO/PREMIUM и автоматический приём платежей пока не подключены."
+        )
+        await query.edit_message_text(payment_text, reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("‹ В панель", callback_data="admin:home")]
+        ]))
     elif data == "admin:stats":
         await query.edit_message_text(_dashboard_text(), reply_markup=InlineKeyboardMarkup([
             [InlineKeyboardButton("‹ В панель", callback_data="admin:home")]
