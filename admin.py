@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import html
 import hmac
+import json
 import os
 import secrets
 import sqlite3
@@ -525,6 +526,172 @@ async def _show_support_inbox(query) -> None:
     )
 
 
+def _admin_contests(limit: int = 15) -> list:
+    with _connect() as db:
+        return db.execute("""
+            SELECT c.contest_id, c.prize_name, c.contest_format, c.destination_title,
+                   c.starts_at, c.ends_at, c.drawn_at, c.winners_json,
+                   c.registration_mode, c.automation_enabled,
+                   COUNT(p.user_id) AS participant_count
+            FROM contests c
+            LEFT JOIN participants p ON p.contest_id=c.contest_id
+            GROUP BY c.contest_id
+            ORDER BY c.created_at DESC LIMIT ?
+        """, (max(1, min(int(limit), 30)),)).fetchall()
+
+
+def _admin_contest(contest_id: str):
+    with _connect() as db:
+        return db.execute("""
+            SELECT c.*,
+                   (SELECT COUNT(*) FROM participants p WHERE p.contest_id=c.contest_id) AS participant_count
+            FROM contests c WHERE c.contest_id=?
+        """, (contest_id,)).fetchone()
+
+
+def _admin_participants(contest_id: str, limit: int = 20) -> list:
+    with _connect() as db:
+        return db.execute("""
+            SELECT user_id, username, full_name, joined_at
+            FROM participants WHERE contest_id=?
+            ORDER BY joined_at, user_id LIMIT ?
+        """, (contest_id, max(1, min(int(limit), 30)))).fetchall()
+
+
+def _contest_status(contest) -> str:
+    if contest["drawn_at"]:
+        return "🏁 Завершён · победители определены"
+    try:
+        now = _now()
+        starts = datetime.fromisoformat(contest["starts_at"])
+        ends = datetime.fromisoformat(contest["ends_at"])
+        if ends <= now:
+            return "⏳ Ожидает автоматического розыгрыша"
+        if starts > now and contest["registration_mode"] != "immediate":
+            return "🕒 Ожидает старта"
+        return "🟢 Регистрация открыта"
+    except (TypeError, ValueError):
+        return "⚪ Статус не определён"
+
+
+async def _show_admin_contest(query, contest_id: str) -> None:
+    contest = _admin_contest(contest_id)
+    if not contest:
+        await query.edit_message_text("Конкурс не найден.")
+        return
+    prize = html.escape(contest["prize_name"] or "Не указан")
+    destination = html.escape(contest["destination_title"] or "Не указана")
+    text = (
+        "🎁 <b>КАРТОЧКА КОНКУРСА</b>\n━━━━━━━━━━━━━━━━━━\n"
+        f"Приз: {prize}\n"
+        f"Формат: {html.escape(contest['contest_format'] or '—')}\n"
+        f"Площадка: {destination}\n"
+        f"Участников: {int(contest['participant_count'])}/{int(contest['participant_limit'])}\n"
+        f"Победителей: {int(contest['winner_count'])}\n"
+        f"Начало: {html.escape(str(contest['starts_at']))}\n"
+        f"Завершение: {html.escape(str(contest['ends_at']))}\n"
+        f"Статус: {_contest_status(contest)}\n"
+        f"Автоматический розыгрыш: {'включён' if contest['automation_enabled'] else 'выключен'}"
+    )
+    buttons = [
+        [InlineKeyboardButton("👥 Участники", callback_data=f"admin:contest:participants:{contest_id}")],
+    ]
+    if contest["drawn_at"]:
+        buttons.append([InlineKeyboardButton("🏆 Результаты", callback_data=f"admin:contest:results:{contest_id}")])
+    buttons.append([InlineKeyboardButton("‹ К конкурсам", callback_data="admin:contests")])
+    await query.edit_message_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(buttons))
+
+
+async def _show_admin_contests(query) -> None:
+    rows = _admin_contests()
+    buttons = []
+    for row in rows:
+        prize = (row["prize_name"] or "Без названия")[:24]
+        buttons.append([InlineKeyboardButton(
+            f"{prize} · {row['participant_count']} уч.",
+            callback_data=f"admin:contest:{row['contest_id']}"
+        )])
+    buttons.append([InlineKeyboardButton("‹ В панель", callback_data="admin:home")])
+    await query.edit_message_text(
+        "🎁 <b>КОНКУРСЫ И ПРИЗЫ</b>\nВыбери конкурс, чтобы посмотреть карточку, участников и результаты.",
+        parse_mode="HTML",
+        reply_markup=InlineKeyboardMarkup(buttons),
+    )
+
+
+async def _show_admin_participants(query, contest_id: str) -> None:
+    contest = _admin_contest(contest_id)
+    if not contest:
+        await query.edit_message_text("Конкурс не найден.")
+        return
+    rows = _admin_participants(contest_id)
+    lines = [f"👥 УЧАСТНИКИ · {html.escape(contest['prize_name'] or contest_id)}",
+             f"Показаны первые {len(rows)} записей."]
+    for row in rows:
+        name = html.escape((row["full_name"] or str(row["user_id"]))[:70])
+        username = f" (@{html.escape(row['username'])})" if row["username"] else ""
+        lines.append(f"• {name}{username} · <code>{row['user_id']}</code>")
+    if not rows:
+        lines.append("Участников пока нет.")
+    await query.edit_message_text(
+        "\n".join(lines)[:3900], parse_mode="HTML",
+        reply_markup=InlineKeyboardMarkup([[
+            InlineKeyboardButton("‹ К конкурсу", callback_data=f"admin:contest:{contest_id}")
+        ]]),
+    )
+
+
+async def _show_admin_results(query, contest_id: str) -> None:
+    contest = _admin_contest(contest_id)
+    if not contest or not contest["drawn_at"]:
+        await query.edit_message_text("Результаты ещё не сформированы.")
+        return
+    try:
+        winners = json.loads(contest["winners_json"] or "[]")
+    except (TypeError, ValueError):
+        winners = []
+    lines = [
+        "🏆 <b>РЕЗУЛЬТАТЫ РОЗЫГРЫША</b>",
+        f"Приз: {html.escape(contest['prize_name'] or '—')}",
+        f"Дата розыгрыша: {html.escape(str(contest['drawn_at']))}",
+    ]
+    if winners:
+        for index, winner in enumerate(winners, 1):
+            name = html.escape(str(winner.get("full_name") or winner.get("user_id", "—"))[:80])
+            username = f" (@{html.escape(str(winner['username']))})" if winner.get("username") else ""
+            lines.append(f"{index}. {name}{username}")
+    else:
+        lines.append("Участников не было — победители не определены.")
+    await query.edit_message_text(
+        "\n".join(lines)[:3900], parse_mode="HTML",
+        reply_markup=InlineKeyboardMarkup([[
+            InlineKeyboardButton("‹ К конкурсу", callback_data=f"admin:contest:{contest_id}")
+        ]]),
+    )
+
+
+async def _show_admin_security(query, admin_id: int) -> None:
+    with _connect() as db:
+        security = _security_row(db)
+        session = db.execute(
+            "SELECT expires_at FROM admin_sessions WHERE admin_id=?", (admin_id,)
+        ).fetchone()
+    changed = security["updated_at"] if security else "пароль ещё не создан"
+    expires = session["expires_at"] if session else "нет активного сеанса"
+    await query.edit_message_text(
+        "🔐 <b>БЕЗОПАСНОСТЬ PRIZORA</b>\n━━━━━━━━━━━━━━━━━━\n"
+        f"ID администратора: <code>{admin_id}</code>\n"
+        f"Пароль изменён: {html.escape(str(changed))}\n"
+        f"Сеанс действует до: {html.escape(str(expires))}\n\n"
+        "Пароль хранится в виде стойкого хеша. Резервный код можно использовать один раз. "
+        "Для смены пароля введи /recover в личном чате с ботом.",
+        parse_mode="HTML",
+        reply_markup=InlineKeyboardMarkup([[
+            InlineKeyboardButton("‹ В панель", callback_data="admin:home")
+        ]]),
+    )
+
+
 def _money(kopecks: int) -> str:
     return f"{kopecks / 100:,.2f}".replace(",", " ").replace(".", ",") + " ₽"
 
@@ -607,6 +774,8 @@ def _dashboard_keyboard() -> InlineKeyboardMarkup:
         [InlineKeyboardButton("🔎 Найти пользователя", callback_data="admin:find")],
         [InlineKeyboardButton("💰 Финансы и балансы", callback_data="admin:finance")],
         [InlineKeyboardButton("🚫 Блокировки", callback_data="admin:blocks")],
+        [InlineKeyboardButton("🎁 Конкурсы, призы и результаты", callback_data="admin:contests")],
+        [InlineKeyboardButton("🔐 Безопасность", callback_data="admin:security")],
         [InlineKeyboardButton("✉️ Поддержка", callback_data="admin:support")],
         [InlineKeyboardButton("💳 Платежи", callback_data="admin:payments")],
         [InlineKeyboardButton("📊 Статистика", callback_data="admin:stats")],
@@ -956,6 +1125,16 @@ async def handle_admin_callback(update: Update, context: ContextTypes.DEFAULT_TY
         )] for row in rows]
         buttons.append([InlineKeyboardButton("‹ В панель", callback_data="admin:home")])
         await query.edit_message_text("🚫 ЗАБЛОКИРОВАННЫЕ ПОЛЬЗОВАТЕЛИ", reply_markup=InlineKeyboardMarkup(buttons))
+    elif data == "admin:contests":
+        await _show_admin_contests(query)
+    elif data.startswith("admin:contest:participants:"):
+        await _show_admin_participants(query, data.rsplit(":", 1)[1])
+    elif data.startswith("admin:contest:results:"):
+        await _show_admin_results(query, data.rsplit(":", 1)[1])
+    elif data.startswith("admin:contest:"):
+        await _show_admin_contest(query, data.rsplit(":", 1)[1])
+    elif data == "admin:security":
+        await _show_admin_security(query, admin_id)
     elif data == "admin:support":
         await _show_support_inbox(query)
     elif data == "admin:support:find":
