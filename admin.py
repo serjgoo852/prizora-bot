@@ -233,6 +233,8 @@ def is_user_blocked(user_id: int, scope: str = "account", db_path: Optional[str]
                 return True
         if row["block_level"] == "participation":
             return scope == "participation"
+        if row["block_level"] == "account":
+            return scope != "participation"
         return True
 
 
