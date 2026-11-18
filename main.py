@@ -893,6 +893,10 @@ def artwork_menu(context: ContextTypes.DEFAULT_TYPE):
 
 
 async def artwork_photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if admin.is_user_blocked(update.effective_user.id, scope="account"):
+        await update.message.reply_text("⛔ Доступ к PRIZORA ограничен. Если считаешь это ошибкой, обратись к администратору.")
+        return
+    admin.register_user(update.effective_user)
     message = update.message
 
     # Ads artwork and payment receipts are handled independently from contest artwork.
@@ -1726,6 +1730,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if admin.is_user_blocked(update.effective_user.id, scope="account"):
+        await update.message.reply_text("⛔ Доступ к PRIZORA ограничен. Если считаешь это ошибкой, обратись к администратору.")
+        return
     await update.message.reply_text(
         tr(context, "help_text"),
         reply_markup=main_menu(current_language(context)),
