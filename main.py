@@ -21,6 +21,7 @@ from telegram.ext import (
 from telegram.error import TelegramError
 
 import ads
+import admin
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
 
@@ -1537,6 +1538,8 @@ async def show_participants(query, context, contest_id, page):
 
 
 def register_participant(contest_id: str, user) -> str:
+    if admin.is_user_blocked(user.id, scope="participation"):
+        return "blocked"
     now = datetime.now(timezone.utc)
     with sqlite3.connect(DATABASE_PATH, timeout=15) as connection:
         connection.row_factory = sqlite3.Row
@@ -1582,6 +1585,10 @@ def register_participant(contest_id: str, user) -> str:
 
 
 async def handle_join_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    admin.register_user(update.effective_user)
+    if admin.is_user_blocked(update.effective_user.id, scope="account"):
+        await update.message.reply_text("⛔ Доступ к PRIZORA ограничен. Если считаешь это ошибкой, обратись к администратору.")
+        return
     language = current_language(context)
     messages = {
         "ru": {
@@ -1591,6 +1598,7 @@ async def handle_join_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "already_joined": "✅ Ты уже зарегистрирован в этом конкурсе.",
             "full": "К сожалению, все места участников уже заняты.",
             "joined": "🎉 Готово! Ты зарегистрирован в конкурсе.",
+            "blocked": "⛔ Тебе временно запрещено участвовать в конкурсах PRIZORA.",
             "subscription": "Чтобы участвовать, сначала подпишись на канал {channel}, затем нажми /start по ссылке конкурса ещё раз.",
             "subscription_error": "Не удалось проверить подписку. Сообщи организатору: возможно, боту нужны права администратора в канале.",
         },
@@ -1601,6 +1609,7 @@ async def handle_join_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "already_joined": "✅ You are already registered for this contest.",
             "full": "Sorry, all participant places have been taken.",
             "joined": "🎉 You're in! Your contest registration is confirmed.",
+            "blocked": "⛔ You are currently not allowed to enter PRIZORA contests.",
             "subscription": "To enter, subscribe to {channel}, then open the contest link again.",
             "subscription_error": "I couldn't verify your subscription. Please contact the organizer; the bot may need admin rights in the channel.",
         },
@@ -1611,6 +1620,7 @@ async def handle_join_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "already_joined": "✅ Du bist für diesen Wettbewerb bereits angemeldet.",
             "full": "Leider sind bereits alle Teilnehmerplätze vergeben.",
             "joined": "🎉 Geschafft! Du bist für den Wettbewerb angemeldet.",
+            "blocked": "⛔ Du darfst derzeit nicht an PRIZORA-Wettbewerben teilnehmen.",
             "subscription": "Abonniere zuerst {channel} und öffne danach den Wettbewerbslink erneut.",
             "subscription_error": "Dein Abonnement konnte nicht geprüft werden. Bitte kontaktiere den Veranstalter; der Bot benötigt möglicherweise Adminrechte im Kanal.",
         },
@@ -1689,6 +1699,10 @@ async def maybe_show_home_ad(chat_id: int, user_id: int, context: ContextTypes.D
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    admin.register_user(update.effective_user)
+    if admin.is_user_blocked(update.effective_user.id, scope="account"):
+        await update.message.reply_text("⛔ Доступ к PRIZORA ограничен. Если считаешь это ошибкой, обратись к администратору.")
+        return
     if context.args and context.args[0].startswith("join_"):
         await handle_join_start(update, context)
         return
@@ -1723,8 +1737,14 @@ async def button_handler(
     context: ContextTypes.DEFAULT_TYPE
 ):
     query = update.callback_query
-    await query.answer()
     data = query.data
+    if data.startswith("admin:"):
+        await admin.handle_admin_callback(update, context)
+        return
+    if admin.is_user_blocked(query.from_user.id, scope="account"):
+        await query.answer("⛔ Доступ к PRIZORA ограничен.", show_alert=True)
+        return
+    await query.answer()
     language = current_language(context)
 
     if data == "language":
@@ -2514,6 +2534,12 @@ async def prize_text_handler(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE
 ):
+    if await admin.handle_admin_text(update, context):
+        return
+    if admin.is_user_blocked(update.effective_user.id, scope="account"):
+        await update.message.reply_text("⛔ Доступ к PRIZORA ограничен. Если считаешь это ошибкой, обратись к администратору.")
+        return
+    admin.register_user(update.effective_user)
     message_text = (update.message.text or "").strip()
 
     ads_step = context.user_data.get("ads_step")
@@ -2982,11 +3008,14 @@ def main():
         raise RuntimeError("BOT_TOKEN environment variable is not set.")
 
     init_database()
+    admin.init_admin_database(DATABASE_PATH)
     ads.init_ads_database()
     application = Application.builder().token(BOT_TOKEN).post_init(post_init).build()
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(CommandHandler("admin", admin.admin_command))
+    application.add_handler(CommandHandler("recover", admin.recover_command))
     application.add_handler(CallbackQueryHandler(button_handler))
     application.add_handler(MessageHandler(filters.PHOTO | filters.Document.IMAGE, artwork_photo_handler))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, prize_text_handler))
