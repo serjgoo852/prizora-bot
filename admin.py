@@ -7,6 +7,7 @@ changes Telegram bot tokens or production environment secrets.
 from __future__ import annotations
 
 import hashlib
+import html
 import hmac
 import os
 import secrets
@@ -630,10 +631,11 @@ async def _send_user_card(context: ContextTypes.DEFAULT_TYPE, user_id: int) -> N
     if not row:
         await context.bot.send_message(chat_id=configured_admin_id(), text="Пользователь не найден.")
         return
-    username = f"@{row['username']}" if row["username"] else "не указан"
+    username = f"@{html.escape(row['username'])}" if row["username"] else "не указан"
+    display_name = html.escape(row["full_name"] or str(user_id))
     block = "нет"
     if row["block_level"]:
-        block = f"{row['block_level']} · {row['block_reason']}"
+        block = f"{html.escape(row['block_level'])} · {html.escape(row['block_reason'] or '')}"
         if row["expires_at"]:
             block += f" · до {row['expires_at']}"
     history = _audit_user(user_id)
@@ -661,6 +663,7 @@ async def handle_admin_callback(update: Update, context: ContextTypes.DEFAULT_TY
     if not is_owner(admin_id) or not has_session(admin_id):
         await query.answer("Сеанс администратора завершён. Введи /admin.", show_alert=True)
         return True
+    await query.answer()
     data = query.data
     if data == "admin:home":
         await _show_dashboard(query)
@@ -733,5 +736,5 @@ async def handle_admin_callback(update: Update, context: ContextTypes.DEFAULT_TY
         await query.edit_message_text(f"✅ Пользователь {target} разблокирован.")
         await _send_user_card(context, target)
     else:
-        await query.answer("Неизвестное действие.", show_alert=True)
+        await query.edit_message_text("Неизвестное действие. Вернись в панель командой /admin.")
     return True
