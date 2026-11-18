@@ -60,6 +60,7 @@ I18N = {
         "menu_help": "📖 Помощь",
         "menu_language": "🌐 Язык",
         "menu_my_contests": "📋 Мои конкурсы",
+        "menu_support": "✉️ Поддержка",
         "my_contests_empty": "Пока нет опубликованных конкурсов.",
         "contest_card": "🎁 {prize}\n🎡 Формат: {format}\n📍 Площадка: {destination}\n👥 Участники: {count}/{limit}\n🏆 Победителей: {winners}\n🕒 Статус: {status}",
         "contest_status_active": "регистрация открыта",
@@ -248,6 +249,7 @@ I18N = {
         "menu_help": "📖 Help",
         "menu_language": "🌐 Language",
         "menu_my_contests": "📋 My contests",
+        "menu_support": "✉️ Support",
         "my_contests_empty": "No published contests yet.",
         "contest_card": "🎁 {prize}\n🎡 Format: {format}\n📍 Destination: {destination}\n👥 Participants: {count}/{limit}\n🏆 Winners: {winners}\n🕒 Status: {status}",
         "contest_status_active": "registration open",
@@ -436,6 +438,7 @@ I18N = {
         "menu_help": "📖 Hilfe",
         "menu_language": "🌐 Sprache",
         "menu_my_contests": "📋 Meine Wettbewerbe",
+        "menu_support": "✉️ Support",
         "my_contests_empty": "Noch keine Wettbewerbe veröffentlicht.",
         "contest_card": "🎁 {prize}\n🎡 Format: {format}\n📍 Ort: {destination}\n👥 Teilnehmer: {count}/{limit}\n🏆 Gewinner: {winners}\n🕒 Status: {status}",
         "contest_status_active": "Anmeldung geöffnet",
@@ -1347,6 +1350,7 @@ def main_menu(language: str):
             InlineKeyboardButton(t["menu_plans"], callback_data="plans"),
         ],
         [InlineKeyboardButton(t["menu_my_contests"], callback_data="mycontests")],
+        [InlineKeyboardButton(t["menu_support"], callback_data="support")],
         [InlineKeyboardButton("📢 Рекламировать канал", callback_data="ads:home")],
         [
             InlineKeyboardButton(t["menu_help"], callback_data="help"),
@@ -1754,7 +1758,9 @@ async def button_handler(
     await query.answer()
     language = current_language(context)
 
-    if data == "language":
+    if data == "support":
+        await admin.support_command(update, context)
+    elif data == "language":
         await query.edit_message_text(
             tr(context, "language_prompt"),
             reply_markup=language_menu(),
