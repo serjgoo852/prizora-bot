@@ -15,6 +15,14 @@ class AdminFoundationTests(unittest.TestCase):
         os.environ["PRIZORA_ADMIN_TELEGRAM_ID"] = "900001"
         with sqlite3.connect(self.db_path) as db:
             db.execute("""
+                CREATE TABLE contests (
+                    contest_id TEXT PRIMARY KEY, prize_name TEXT, contest_format TEXT,
+                    destination_title TEXT, starts_at TEXT, ends_at TEXT, drawn_at TEXT,
+                    winners_json TEXT, registration_mode TEXT, automation_enabled INTEGER,
+                    participant_limit INTEGER, winner_count INTEGER, created_at TEXT
+                )
+            """)
+            db.execute("""
                 CREATE TABLE participants (
                     contest_id TEXT, user_id INTEGER, username TEXT,
                     full_name TEXT, joined_at TEXT
@@ -100,6 +108,30 @@ class AdminFoundationTests(unittest.TestCase):
             admin.save_support_message(700011, 700011, "system", "bad", self.db_path)
         with self.assertRaises(ValueError):
             admin.save_support_message(700011, 700011, "user", "   ", self.db_path)
+
+    def test_admin_contest_views_read_contest_participants_and_results(self):
+        starts = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
+        ends = (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat()
+        with sqlite3.connect(self.db_path) as db:
+            db.execute("""
+                INSERT INTO contests (
+                    contest_id, prize_name, contest_format, destination_title,
+                    starts_at, ends_at, drawn_at, winners_json, registration_mode,
+                    automation_enabled, participant_limit, winner_count, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, NULL, NULL, 'immediate', 1, 100, 1, ?)
+            """, ("contest-1", "Тестовый приз", "wheel", "Тестовый канал",
+                  starts, ends, datetime.now(timezone.utc).isoformat()))
+            db.execute(
+                "INSERT INTO participants VALUES (?, ?, ?, ?, ?)",
+                ("contest-1", 700020, "tester", "Тестовый участник", starts)
+            )
+        rows = admin._admin_contests()
+        self.assertEqual(rows[0]["contest_id"], "contest-1")
+        self.assertEqual(rows[0]["participant_count"], 1)
+        contest = admin._admin_contest("contest-1")
+        self.assertEqual(admin._contest_status(contest), "🟢 Регистрация открыта")
+        people = admin._admin_participants("contest-1")
+        self.assertEqual(people[0]["user_id"], 700020)
 
 
 if __name__ == "__main__":
