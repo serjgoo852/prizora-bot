@@ -125,12 +125,12 @@ class AdminFoundationTests(unittest.TestCase):
                 "INSERT INTO participants VALUES (?, ?, ?, ?, ?)",
                 ("contest-1", 700020, "tester", "Тестовый участник", starts)
             )
-        rows = admin._admin_contests()
+        rows = admin._admin_contests(db_path=self.db_path)
         self.assertEqual(rows[0]["contest_id"], "contest-1")
         self.assertEqual(rows[0]["participant_count"], 1)
-        contest = admin._admin_contest("contest-1")
+        contest = admin._admin_contest("contest-1", self.db_path)
         self.assertEqual(admin._contest_status(contest), "🟢 Регистрация открыта")
-        people = admin._admin_participants("contest-1")
+        people = admin._admin_participants("contest-1", db_path=self.db_path)
         self.assertEqual(people[0]["user_id"], 700020)
 
 
