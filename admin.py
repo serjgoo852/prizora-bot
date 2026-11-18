@@ -645,15 +645,15 @@ async def _send_user_card(context: ContextTypes.DEFAULT_TYPE, user_id: int) -> N
         if row["expires_at"]:
             block += " · до " + html.escape(row["expires_at"])
     history = _audit_user(user_id)
-    history_text = "\\n".join(
+    history_text = "\n".join(
         "• {}{} — {}".format("+" if item["amount_kopecks"] > 0 else "−", _money(abs(int(item["amount_kopecks"]))), html.escape(item["reason"]))
         for item in history
     ) or "операций пока нет"
     text = (
-        "👤 ПОЛЬЗОВАТЕЛЬ PRIZORA\\n━━━━━━━━━━━━━━━━━━\\n"
-        + "Имя: {}\\nUsername: {}\\nTelegram ID: <code>{}</code>\\n".format(display_name, username, user_id)
-        + "Баланс: <b>{}</b>\\nБлокировка: {}\\n\\n".format(_money(int(row["balance_kopecks"])), block)
-        + "Последние операции:\\n" + history_text
+        "👤 ПОЛЬЗОВАТЕЛЬ PRIZORA\n━━━━━━━━━━━━━━━━━━\n"
+        + "Имя: {}\nUsername: {}\nTelegram ID: <code>{}</code>\n".format(display_name, username, user_id)
+        + "Баланс: <b>{}</b>\nБлокировка: {}\n\n".format(_money(int(row["balance_kopecks"])), block)
+        + "Последние операции:\n" + history_text
     )
     await context.bot.send_message(
         chat_id=configured_admin_id(), text=text, parse_mode="HTML",
@@ -703,11 +703,11 @@ async def handle_admin_callback(update: Update, context: ContextTypes.DEFAULT_TY
         import ads
         summary = ads.get_admin_summary()
         payment_text = (
-            "💳 ПЛАТЕЖИ PRIZORA\\n━━━━━━━━━━━━━━━━━━\\n"
-            + "Заявок на рекламу: {}\\n".format(summary["campaigns"])
-            + "Ожидают проверки оплаты: {}\\n".format(summary["payment_submitted"])
-            + "Оплачено заказов: {}\\n".format(summary["paid"])
-            + "Активных рекламных размещений: {}\\n\\n".format(summary["active"])
+            "💳 ПЛАТЕЖИ PRIZORA\n━━━━━━━━━━━━━━━━━━\n"
+            + "Заявок на рекламу: {}\n".format(summary["campaigns"])
+            + "Ожидают проверки оплаты: {}\n".format(summary["payment_submitted"])
+            + "Оплачено заказов: {}\n".format(summary["paid"])
+            + "Активных рекламных размещений: {}\n\n".format(summary["active"])
             + "Оплата PRO/PREMIUM и автоматический приём платежей пока не подключены."
         )
         await query.edit_message_text(payment_text, reply_markup=InlineKeyboardMarkup([
