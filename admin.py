@@ -475,14 +475,14 @@ async def handle_admin_support_text(update: Update, context: ContextTypes.DEFAUL
 
 async def _show_support_conversation(query, user_id: int) -> None:
     mark_support_read(user_id)
-    rows = get_support_messages(user_id)
+    rows = get_support_messages(user_id, limit=8)
     user = _user_row(user_id)
     name = (user["full_name"] if user else "Пользователь") or "Пользователь"
     lines = [f"✉️ ПОДДЕРЖКА · {html.escape(name)}", f"Telegram ID: <code>{user_id}</code>", "━━━━━━━━━━━━━━━━━━"]
     for row in rows:
         who = "👤 Пользователь" if row["sender_role"] == "user" else "👑 Администратор"
         stamp = html.escape(str(row["created_at"])[:16].replace("T", " "))
-        lines.append(f"{who} · {stamp}\n{html.escape(row['message_text'])}")
+        lines.append(f"{who} · {stamp}\n{html.escape(row['message_text'][:300])}")
     with _connect() as db:
         conversation = db.execute(
             "SELECT status FROM support_conversations WHERE user_id=?", (user_id,)
@@ -496,6 +496,7 @@ async def _show_support_conversation(query, user_id: int) -> None:
         reply_markup=InlineKeyboardMarkup([
             [InlineKeyboardButton("↩️ Ответить", callback_data=f"admin:support:reply:{user_id}")],
             [InlineKeyboardButton(toggle, callback_data=f"admin:support:{toggle_action}:{user_id}")],
+            [InlineKeyboardButton("👤 Профиль и блокировка", callback_data=f"admin:profile:{user_id}")],
             [InlineKeyboardButton("‹ К обращениям", callback_data="admin:support")],
         ]),
     )
@@ -513,6 +514,7 @@ async def _show_support_inbox(query) -> None:
             f"{status} {name}{badge}",
             callback_data=f"admin:support:open:{row['user_id']}"
         )])
+    buttons.append([InlineKeyboardButton("🔎 Найти по ID / имени", callback_data="admin:support:find")])
     buttons.append([InlineKeyboardButton("‹ В панель", callback_data="admin:home")])
     await query.edit_message_text(
         f"✉️ СЛУЖБА ПОДДЕРЖКИ\nОткрытых/закрытых обращений: {len(rows)} · непрочитанных: {unread}\n"
@@ -790,6 +792,34 @@ async def handle_admin_text(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         await context.bot.send_message(chat_id=user_id, text=_dashboard_text())
         return True
 
+    if flow == "support_find_user":
+        query = raw.lstrip("@")
+        with _connect() as db:
+            if query.isdigit():
+                row = db.execute(
+                    "SELECT user_id FROM support_conversations WHERE user_id=?", (int(query),)
+                ).fetchone()
+            else:
+                row = db.execute("""
+                    SELECT c.user_id FROM support_conversations c
+                    LEFT JOIN user_profiles p ON p.user_id=c.user_id
+                    WHERE lower(COALESCE(p.username,''))=lower(?)
+                       OR lower(COALESCE(p.full_name,'')) LIKE lower(?)
+                    ORDER BY c.updated_at DESC LIMIT 1
+                """, (query, "%" + query + "%")).fetchone()
+        context.user_data.pop("admin_flow", None)
+        if not row:
+            await context.bot.send_message(chat_id=user_id, text="Обращение не найдено.")
+            return True
+        await context.bot.send_message(
+            chat_id=user_id,
+            text="Открываю диалог поддержки.",
+            reply_markup=InlineKeyboardMarkup([[
+                InlineKeyboardButton("Открыть диалог", callback_data=f"admin:support:open:{row['user_id']}")
+            ]])
+        )
+        return True
+
     if flow == "find_user":
         query = raw.lstrip("@")
         with _connect() as db:
@@ -926,6 +956,9 @@ async def handle_admin_callback(update: Update, context: ContextTypes.DEFAULT_TY
         await query.edit_message_text("🚫 ЗАБЛОКИРОВАННЫЕ ПОЛЬЗОВАТЕЛИ", reply_markup=InlineKeyboardMarkup(buttons))
     elif data == "admin:support":
         await _show_support_inbox(query)
+    elif data == "admin:support:find":
+        context.user_data["admin_flow"] = "support_find_user"
+        await query.message.reply_text("Отправь Telegram ID, @username или часть имени пользователя.")
     elif data.startswith("admin:support:open:"):
         await _show_support_conversation(query, int(data.rsplit(":", 1)[1]))
     elif data.startswith("admin:support:reply:"):
