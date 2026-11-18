@@ -1,0 +1,31 @@
+name: PRIZORA tests
+
+on:
+  push:
+    branches:
+      - feature/admin-panel-v1
+  pull_request:
+    branches:
+      - main
+      - feature/admin-panel-v1
+
+jobs:
+  unittest:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_PATH: ${{ github.workspace }}/prizora-tests.sqlite3
+      ADS_DATABASE_PATH: ${{ github.workspace }}/prizora-ads-tests.sqlite3
+      PRIZORA_ADMIN_TELEGRAM_ID: "900001"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run network-free tests
+        run: python -m unittest discover -s tests -v
