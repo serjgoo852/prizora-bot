@@ -67,7 +67,7 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("PRIZORA", args[0])
         self.assertEqual(
             set(callback_data(kwargs["reply_markup"])),
-            {"create", "formats", "plans", "mycontests", "ads:home", "help", "language"},
+            {"create", "formats", "plans", "mycontests", "support", "ads:home", "help", "language"},
         )
 
     async def test_language_selection_returns_to_main_menu(self):
