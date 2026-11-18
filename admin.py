@@ -501,8 +501,11 @@ async def handle_admin_text(update: Update, context: ContextTypes.DEFAULT_TYPE) 
                     if datetime.fromisoformat(attempt["locked_until"]) > now:
                         await context.bot.send_message(chat_id=user_id, text="⏳ Вход временно заблокирован. Попробуй позже.")
                         return True
+                    db.execute("DELETE FROM admin_auth_attempts WHERE admin_id=?", (user_id,))
+                    attempt = None
                 except ValueError:
-                    pass
+                    db.execute("DELETE FROM admin_auth_attempts WHERE admin_id=?", (user_id,))
+                    attempt = None
             security = _security_row(db)
             valid = bool(security and _verify_secret(raw, security["password_salt"], security["password_hash"]))
             if valid:
@@ -549,6 +552,7 @@ async def handle_admin_text(update: Update, context: ContextTypes.DEFAULT_TYPE) 
                     recovery_salt=?, recovery_hash=?, updated_at=? WHERE singleton_id=1
             """, (psalt, phash, rsalt, rhash, _stamp()))
             db.execute("DELETE FROM admin_sessions WHERE admin_id=?", (user_id,))
+            db.execute("DELETE FROM admin_auth_attempts WHERE admin_id=?", (user_id,))
             _set_session(db, user_id)
         context.user_data.pop("admin_flow", None)
         await context.bot.send_message(
