@@ -2543,6 +2543,10 @@ async def prize_text_handler(
 ):
     if await admin.handle_admin_text(update, context):
         return
+    if await admin.handle_admin_support_text(update, context):
+        return
+    if await admin.handle_support_text(update, context):
+        return
     if admin.is_user_blocked(update.effective_user.id, scope="account"):
         await update.message.reply_text("⛔ Доступ к PRIZORA ограничен. Если считаешь это ошибкой, обратись к администратору.")
         return
@@ -3023,6 +3027,7 @@ def main():
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("admin", admin.admin_command))
     application.add_handler(CommandHandler("recover", admin.recover_command))
+    application.add_handler(CommandHandler("support", admin.support_command))
     application.add_handler(CallbackQueryHandler(button_handler))
     application.add_handler(MessageHandler(filters.PHOTO | filters.Document.IMAGE, artwork_photo_handler))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, prize_text_handler))
