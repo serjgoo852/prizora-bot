@@ -12,6 +12,10 @@ on:
 jobs:
   unittest:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_PATH: ${{ runner.temp }}/prizora-tests.sqlite3
+      ADS_DATABASE_PATH: ${{ runner.temp }}/prizora-ads-tests.sqlite3
+      PRIZORA_ADMIN_TELEGRAM_ID: "900001"
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
