@@ -4,6 +4,7 @@ These tests execute the real python-telegram-bot handlers with mocked Telegram
 objects. They catch broken /start, language selection, and main-menu callbacks
 without sending messages to real users or touching production data.
 """
+import asyncio
 import os
 import tempfile
 import unittest
@@ -28,6 +29,22 @@ def callback_data(markup):
 
 
 class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
+    async def test_background_tasks_are_tracked_and_cancelled_on_shutdown(self):
+        async def blocked_scheduler(*args, **kwargs):
+            await asyncio.Event().wait()
+
+        application = SimpleNamespace(bot_data={})
+        with patch.object(main, "contest_scheduler", new=blocked_scheduler), \
+             patch.object(main, "ads_expiry_scheduler", new=blocked_scheduler):
+            await main.post_init(application)
+            tasks = application.bot_data["prizora_background_tasks"]
+            self.assertEqual(len(tasks), 2)
+            await asyncio.sleep(0)
+            await main.post_stop(application)
+
+        self.assertTrue(all(task.cancelled() for task in tasks))
+        self.assertNotIn("prizora_background_tasks", application.bot_data)
+
     async def test_start_first_visit_shows_language_picker(self):
         reply_text = AsyncMock()
         update = SimpleNamespace(
