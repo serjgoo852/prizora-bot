@@ -22,6 +22,8 @@ from telegram.error import TelegramError
 
 import ads
 
+from security import install_secret_redaction
+
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
 
 MOSCOW_TZ = timezone(timedelta(hours=3), "MSK")
@@ -30,6 +32,8 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO,
 )
+
+install_secret_redaction()
 
 SUPPORTED_LANGUAGES = {
     "ru": "🇷🇺 Русский",
