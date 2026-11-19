@@ -50,7 +50,7 @@ jobs:
       - name: Test isolated Ads database workflow
         env:
           DATABASE_PATH: ${{ runner.temp }}/prizora-ads-test.sqlite3
-          PRIZORA_ADMIN_TELEGRAM_ID: "853680962"
+          PRIZORA_ADMIN_TELEGRAM_ID: "987654321"
         run: |
           python - <<'PY'
           import os
@@ -74,7 +74,7 @@ jobs:
 
           # Payment confirmation alone must not activate unmoderated content.
           ads.record_payment_submission(order, advertiser, advertiser_note="test payment")
-          ads.set_payment_review(order, 853680962, True, "CI test")
+          ads.set_payment_review(order, 987654321, True, "CI test")
           assert ads.activate_paid_approved_campaigns() == 0
 
           # Content approval alone must not activate unpaid content.
@@ -83,12 +83,12 @@ jobs:
               "Unpaid test campaign", 7, None
           )
           order2 = ads.create_ad_order(campaign2, advertiser)
-          ads.set_campaign_moderation(campaign2, 853680962, "approve", "CI test")
+          ads.set_campaign_moderation(campaign2, 987654321, "approve", "CI test")
           assert ads.activate_paid_approved_campaigns() == 0
 
           # Both independent approvals permit activation.
           ads.record_payment_submission(order2, advertiser, advertiser_note="second test payment")
-          ads.set_payment_review(order2, 853680962, True, "CI test")
+          ads.set_payment_review(order2, 987654321, True, "CI test")
           assert ads.activate_paid_approved_campaigns() == 1
           row = ads.get_order(order2, advertiser)
           assert row["campaign_status"] == "active", row
@@ -137,10 +137,10 @@ jobs:
               original_end = db.execute(
                   "SELECT ends_at FROM ad_campaigns WHERE campaign_id=?", (campaign2,)
               ).fetchone()[0]
-          ads.set_campaign_moderation(campaign2, 853680962, "pause", "CI pause")
+          ads.set_campaign_moderation(campaign2, 987654321, "pause", "CI pause")
           assert ads.record_ad_click(campaign2, 987654321, "home") is False
           assert ads.get_next_ad(222222222, "home") is None
-          ads.set_campaign_moderation(campaign2, 853680962, "resume", "CI resume")
+          ads.set_campaign_moderation(campaign2, 987654321, "resume", "CI resume")
           assert ads.activate_paid_approved_campaigns() == 1
           resumed = ads.get_order(order2, advertiser)
           assert resumed["campaign_status"] == "active", resumed
@@ -151,15 +151,15 @@ jobs:
           assert resumed_end == original_end, (original_end, resumed_end)
 
           # A stopped campaign cannot be reactivated by the approval scheduler.
-          ads.set_campaign_moderation(campaign2, 853680962, "stop", "CI stop")
+          ads.set_campaign_moderation(campaign2, 987654321, "stop", "CI stop")
           assert ads.activate_paid_approved_campaigns() == 0
           assert ads.get_order(order2, advertiser)["campaign_status"] == "cancelled"
           assert ads.get_next_ad(333333333, "home") is None
 
           # Invalid lifecycle transitions must fail closed.
           for invalid_call in (
-              lambda: ads.set_campaign_moderation(campaign2, 853680962, "resume", "invalid"),
-              lambda: ads.set_campaign_moderation(campaign2, 853680962, "pause", "invalid"),
+              lambda: ads.set_campaign_moderation(campaign2, 987654321, "resume", "invalid"),
+              lambda: ads.set_campaign_moderation(campaign2, 987654321, "pause", "invalid"),
           ):
               try:
                   invalid_call()
@@ -175,8 +175,8 @@ jobs:
           )
           order4 = ads.create_ad_order(campaign4, advertiser)
           ads.record_payment_submission(order4, advertiser, advertiser_note="test")
-          ads.set_payment_review(order4, 853680962, True, "CI test")
-          ads.set_campaign_moderation(campaign4, 853680962, "approve", "CI test")
+          ads.set_payment_review(order4, 987654321, True, "CI test")
+          ads.set_campaign_moderation(campaign4, 987654321, "approve", "CI test")
           assert ads.activate_paid_approved_campaigns() == 1
           with sqlite3.connect(os.environ["DATABASE_PATH"]) as db:
               db.execute(
@@ -184,7 +184,7 @@ jobs:
                   (campaign4,),
               )
           try:
-              ads.set_campaign_moderation(campaign4, 853680962, "resume", "expired")
+              ads.set_campaign_moderation(campaign4, 987654321, "resume", "expired")
           except ValueError:
               pass
           else:
@@ -240,7 +240,7 @@ jobs:
           own_campaign = next(item for item in mine if item["campaign_id"] == campaign3)
           assert own_campaign["order_status"] == "payment_submitted", own_campaign
 
-          ads.set_payment_review(order3, 853680962, False, "Proof did not match")
+          ads.set_payment_review(order3, 987654321, False, "Proof did not match")
           with sqlite3.connect(os.environ["DATABASE_PATH"]) as db:
               payment_state = db.execute(
                   "SELECT status FROM ad_payments WHERE payment_id=?", (payment3,)
@@ -259,7 +259,7 @@ jobs:
           mine = ads.get_advertiser_campaigns(advertiser)
           own_campaign = next(item for item in mine if item["campaign_id"] == campaign3)
           assert own_campaign["order_status"] == "payment_submitted", own_campaign
-          ads.set_payment_review(order3, 853680962, True, "Replacement proof verified")
+          ads.set_payment_review(order3, 987654321, True, "Replacement proof verified")
           assert ads.get_order(order3, advertiser)["status"] == "paid"
           mine = ads.get_advertiser_campaigns(advertiser)
           # Rejected creative must never accept a payment submission.
@@ -268,7 +268,7 @@ jobs:
               "Rejected material test", 7, None
           )
           order5 = ads.create_ad_order(campaign5, advertiser)
-          ads.set_campaign_moderation(campaign5, 853680962, "reject", "CI rejection")
+          ads.set_campaign_moderation(campaign5, 987654321, "reject", "CI rejection")
           try:
               ads.record_payment_submission(order5, advertiser, advertiser_note="must be blocked")
           except ValueError:
@@ -288,7 +288,7 @@ jobs:
           )
           order6 = ads.create_ad_order(campaign6, advertiser)
           ads.record_payment_submission(order6, advertiser, advertiser_note="proof submitted")
-          ads.set_campaign_moderation(campaign6, 853680962, "changes", "Please revise copy")
+          ads.set_campaign_moderation(campaign6, 987654321, "changes", "Please revise copy")
           before = ads.get_order(order6, advertiser)
           ads.update_and_resubmit_campaign(
               campaign6, advertiser, "Revised title", "https://t.me/revision_new",
