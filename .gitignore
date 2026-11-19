@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Local secrets and environment files
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Local databases and runtime artifacts
+*.sqlite
+*.sqlite3
+*.db
+*.log
+
+# Editors and operating systems
+.DS_Store
+.idea/
+.vscode/
