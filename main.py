@@ -2977,8 +2977,22 @@ async def ads_expiry_scheduler():
 
 
 async def post_init(application):
-    application.create_task(contest_scheduler(application), name="prizora-contest-scheduler")
-    application.create_task(ads_expiry_scheduler(), name="prizora-ads-expiry-scheduler")
+    # post_init runs before Application.start(), so Application.create_task()
+    # would warn that these tasks are not tracked for graceful shutdown.
+    tasks = [
+        asyncio.create_task(contest_scheduler(application), name="prizora-contest-scheduler"),
+        asyncio.create_task(ads_expiry_scheduler(), name="prizora-ads-expiry-scheduler"),
+    ]
+    application.bot_data["prizora_background_tasks"] = tasks
+
+
+async def post_stop(application):
+    # Cancel and await our manually-created tasks during PTB's shutdown phase.
+    tasks = application.bot_data.pop("prizora_background_tasks", [])
+    for task in tasks:
+        task.cancel()
+    if tasks:
+        await asyncio.gather(*tasks, return_exceptions=True)
 
 
 def main():
@@ -2987,7 +3001,7 @@ def main():
 
     init_database()
     ads.init_ads_database()
-    application = Application.builder().token(BOT_TOKEN).post_init(post_init).build()
+    application = Application.builder().token(BOT_TOKEN).post_init(post_init).post_stop(post_stop).build()
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
