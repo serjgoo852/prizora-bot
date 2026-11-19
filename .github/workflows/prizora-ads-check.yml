@@ -7,12 +7,30 @@ on:
     branches: [main]
     paths:
       - "main.py"
+      - "security.py"
+      - ".gitignore"
       - "ads.py"
       - "tests/**"
       - ".github/workflows/prizora-ads-check.yml"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Scan repository history for exposed secrets
+        uses: zricethezav/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_SUMMARY: "false"
+          GITLEAKS_ENABLE_COMMENTS: "false"
+
   compile-and-smoke-test:
     runs-on: ubuntu-latest
     steps:
@@ -23,12 +41,12 @@ jobs:
       - name: Install runtime and test dependencies
         run: pip install -r requirements.txt
       - name: Compile Python files
-        run: python -m py_compile main.py ads.py tests/test_telegram_smoke.py
+        run: python -m py_compile main.py ads.py security.py tests/test_telegram_smoke.py tests/test_secret_redaction.py
       - name: Smoke-test Telegram /start and main-menu handlers
         env:
           DATABASE_PATH: ${{ runner.temp }}/prizora-telegram-smoke.sqlite3
           ADS_DATABASE_PATH: ${{ runner.temp }}/prizora-ads-telegram-smoke.sqlite3
-        run: python -m unittest discover -s tests -p "test_telegram_smoke.py" -v
+        run: python -m unittest discover -s tests -v
       - name: Test isolated Ads database workflow
         env:
           DATABASE_PATH: ${{ runner.temp }}/prizora-ads-test.sqlite3
