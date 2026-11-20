@@ -480,11 +480,7 @@ async def support_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         return
     register_user(user)
     context.user_data["support_flow"] = True
-    await message.reply_text(
-        "✉️ Служба поддержки PRIZORA\n\n"
-        "Напиши сообщение одним текстом (до 2000 символов). "
-        "Оно попадёт в закрытый чат поддержки. Ответ администратора придёт сюда."
-    )
+    await message.reply_text(_support_text(context, "title"))
 
 
 async def handle_support_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
