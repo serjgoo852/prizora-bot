@@ -247,6 +247,17 @@ def get_balance(user_id: int, db_path: Optional[str] = None) -> int:
         return int(row["balance_kopecks"]) if row else 0
 
 
+def get_wallet_transactions(user_id: int, limit: int = 10, db_path: Optional[str] = None) -> list:
+    """Return the newest wallet ledger entries for the owning user."""
+    with _connect(db_path) as db:
+        return db.execute("""
+            SELECT amount_kopecks, balance_after_kopecks, reason, created_at
+            FROM wallet_transactions
+            WHERE user_id=?
+            ORDER BY transaction_id DESC LIMIT ?
+        """, (int(user_id), max(1, min(int(limit), 20)))).fetchall()
+
+
 def adjust_balance(user_id: int, admin_id: int, amount_kopecks: int, reason: str,
                    db_path: Optional[str] = None) -> int:
     if not is_owner(admin_id):
