@@ -69,6 +69,7 @@ def init_admin_database(db_path: Optional[str] = None) -> None:
             user_id INTEGER PRIMARY KEY,
             username TEXT,
             full_name TEXT NOT NULL,
+            language TEXT NOT NULL DEFAULT 'en',
             first_seen TEXT NOT NULL,
             last_seen TEXT NOT NULL
         );
@@ -126,6 +127,9 @@ def init_admin_database(db_path: Optional[str] = None) -> None:
             created_at TEXT NOT NULL
         );
         """)
+        profile_columns = {row["name"] for row in db.execute("PRAGMA table_info(user_profiles)").fetchall()}
+        if "language" not in profile_columns:
+            db.execute("ALTER TABLE user_profiles ADD COLUMN language TEXT NOT NULL DEFAULT 'en'")
         # Bring users already present in the contest database into the directory.
         db.execute("""
             INSERT OR IGNORE INTO user_profiles
@@ -169,6 +173,27 @@ def register_user(user) -> None:
             "INSERT OR IGNORE INTO user_wallets(user_id, balance_kopecks, updated_at) VALUES (?, 0, ?)",
             (int(user.id), now),
         )
+
+
+
+
+def get_user_language(user_id: int, db_path: Optional[str] = None) -> str:
+    with _connect(db_path) as db:
+        row = db.execute("SELECT language FROM user_profiles WHERE user_id=?", (int(user_id),)).fetchone()
+    language = row["language"] if row else "en"
+    return language if language in ("ru", "en", "de") else "en"
+
+
+def set_user_language(user_id: int, language: str, db_path: Optional[str] = None) -> None:
+    if language not in ("ru", "en", "de"):
+        raise ValueError("Unsupported PRIZORA language")
+    now = _stamp()
+    with _connect(db_path) as db:
+        db.execute("""
+            INSERT INTO user_profiles(user_id, username, full_name, language, first_seen, last_seen)
+            VALUES (?, NULL, ?, ?, ?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET language=excluded.language, last_seen=excluded.last_seen
+        """, (int(user_id), str(user_id), language, now, now))
 
 
 def _hash_secret(value: str, salt: Optional[str] = None) -> tuple[str, str]:
