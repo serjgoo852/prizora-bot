@@ -18,6 +18,11 @@ os.environ["ADS_DATABASE_PATH"] = os.path.join(_test_dir.name, "prizora-ads-test
 
 import main  # noqa: E402
 
+# Initialize admin tables in the same isolated test database as the bot.
+main.admin.DATABASE_PATH = main.DATABASE_PATH
+main.init_database()
+main.admin.init_admin_database(main.DATABASE_PATH)
+
 
 def callback_data(markup):
     return [
