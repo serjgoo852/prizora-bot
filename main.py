@@ -3011,7 +3011,12 @@ def main():
     application.add_error_handler(error_handler)
 
     logging.info("PRIZORA is starting...")
-    application.run_polling()
+    application.run_polling(
+        timeout=10,
+        read_timeout=30,
+        connect_timeout=10,
+        pool_timeout=10,
+    )
 
 
 if __name__ == "__main__":
