@@ -34,6 +34,15 @@ class AdminFoundationTests(unittest.TestCase):
         self.tmp.cleanup()
         os.environ.pop("PRIZORA_ADMIN_TELEGRAM_ID", None)
 
+    def test_user_language_preference_is_persisted(self):
+        self.assertIsNone(admin.get_user_language(700099, self.db_path))
+        admin.set_user_language(700099, "de", self.db_path)
+        self.assertEqual(admin.get_user_language(700099, self.db_path), "de")
+        admin.set_user_language(700099, "en", self.db_path)
+        self.assertEqual(admin.get_user_language(700099, self.db_path), "en")
+        with self.assertRaises(ValueError):
+            admin.set_user_language(700099, "fr", self.db_path)
+
     def test_password_hash_is_salted_and_verifiable(self):
         salt, digest = admin._hash_secret("11Qawsedrf11")
         self.assertNotEqual(digest, "11Qawsedrf11")
