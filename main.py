@@ -1746,11 +1746,10 @@ async def maybe_show_home_ad(chat_id: int, user_id: int, context: ContextTypes.D
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    saved_language = admin.get_user_language(update.effective_user.id)
     admin.register_user(update.effective_user)
-    if "language" not in context.user_data:
-        saved_language = admin.get_user_language(update.effective_user.id)
-        if saved_language:
-            context.user_data["language"] = saved_language
+    if "language" not in context.user_data and saved_language:
+        context.user_data["language"] = saved_language
     if context.args and context.args[0].startswith("join_"):
         await handle_join_start(update, context)
         return
