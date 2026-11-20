@@ -1749,7 +1749,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     admin.register_user(update.effective_user)
     if "language" not in context.user_data:
         saved_language = admin.get_user_language(update.effective_user.id)
-        if saved_language != "en" or not context.user_data.get("suggested_language"):
+        if saved_language:
             context.user_data["language"] = saved_language
     if context.args and context.args[0].startswith("join_"):
         await handle_join_start(update, context)
