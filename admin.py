@@ -177,10 +177,12 @@ def register_user(user) -> None:
 
 
 
-def get_user_language(user_id: int, db_path: Optional[str] = None) -> str:
+def get_user_language(user_id: int, db_path: Optional[str] = None) -> Optional[str]:
     with _connect(db_path) as db:
         row = db.execute("SELECT language FROM user_profiles WHERE user_id=?", (int(user_id),)).fetchone()
-    language = row["language"] if row else "en"
+    if row is None:
+        return None
+    language = row["language"]
     return language if language in ("ru", "en", "de") else "en"
 
 
