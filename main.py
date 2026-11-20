@@ -1800,12 +1800,13 @@ async def button_handler(
     elif data == "wallet":
         balance = admin.get_balance(query.from_user.id)
         amount = f"{balance / 100:,.2f}".replace(",", " ").replace(".", ",")
+        wallet_text = (
+            tr(context, "wallet_title") + "\n━━━━━━━━━━━━━━━━━━\n"
+            + tr(context, "wallet_available", amount=amount) + "\n\n"
+            + tr(context, "wallet_info")
+        )
         await query.edit_message_text(
-            tr(context, "wallet_title") + "\\n━━━━━━━━━━━━━━━━━━\\n"
-            tr(context, "wallet_available", amount=amount) + "\\n\\n"
-            tr(context, "wallet_info")
-            "Пополнение через платёжную систему пока не подключено. "
-            "Не переводите деньги до появления официальной кнопки оплаты.",
+            wallet_text,
             parse_mode="HTML",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton(tr(context, "wallet_history"), callback_data="wallet:history")],
@@ -1815,19 +1816,16 @@ async def button_handler(
         )
     elif data == "wallet:topup":
         await query.edit_message_text(
-            tr(context, "wallet_topup_title") + "\\n\\n"
-            tr(context, "wallet_topup_info")
-            "Поэтому приём денег временно закрыт. Не отправляй перевод на личные реквизиты. "
-            "Когда официальный способ оплаты будет подключён, здесь появится защищённая оплата и подтверждение платежа.",
+            tr(context, "wallet_topup_title") + "\n\n" + tr(context, "wallet_topup_info"),
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton(tr(context, "wallet_back"), callback_data="wallet")],
-                [InlineKeyboardButton("⌂ Главное меню", callback_data="home")],
+                [InlineKeyboardButton(tr(context, "menu_home"), callback_data="home")],
             ]),
         )
     elif data == "wallet:history":
         rows = admin.get_wallet_transactions(query.from_user.id, limit=10)
         if not rows:
-            body = tr(context, "wallet_history_title") + "\\n\\n" + tr(context, "wallet_history_empty")
+            body = tr(context, "wallet_history_title") + "\n\n" + tr(context, "wallet_history_empty")
         else:
             lines = [tr(context, "wallet_history_title"), "━━━━━━━━━━━━━━━━━━"]
             for row in rows:
@@ -1836,13 +1834,17 @@ async def button_handler(
                 amount = f"{abs(value) / 100:,.2f}".replace(",", " ").replace(".", ",")
                 stamp = str(row["created_at"]).replace("T", " ")[:16]
                 reason = str(row["reason"])[:100]
-                lines.append(f"\\n{stamp}\\n{signed}{amount} ₽ · {reason}\\n{tr(context, "wallet_balance_after", amount=f"{int(row['balance_after_kopecks']) / 100:.2f}")}")
-            body = "\\n".join(lines)
+                after_amount = f"{int(row['balance_after_kopecks']) / 100:.2f}"
+                lines.append(
+                    f"\n{stamp}\n{signed}{amount} ₽ · {reason}\n"
+                    + tr(context, "wallet_balance_after", amount=after_amount)
+                )
+            body = "\n".join(lines)
         await query.edit_message_text(
             body,
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("‹ К балансу", callback_data="wallet")],
-                [InlineKeyboardButton("⌂ Главное меню", callback_data="home")],
+                [InlineKeyboardButton(tr(context, "wallet_back"), callback_data="wallet")],
+                [InlineKeyboardButton(tr(context, "menu_home"), callback_data="home")],
             ]),
         )
     elif data == "language":
