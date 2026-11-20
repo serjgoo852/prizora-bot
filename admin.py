@@ -69,6 +69,7 @@ def init_admin_database(db_path: Optional[str] = None) -> None:
             user_id INTEGER PRIMARY KEY,
             username TEXT,
             full_name TEXT NOT NULL,
+            language TEXT NOT NULL DEFAULT 'en',
             first_seen TEXT NOT NULL,
             last_seen TEXT NOT NULL
         );
@@ -126,6 +127,9 @@ def init_admin_database(db_path: Optional[str] = None) -> None:
             created_at TEXT NOT NULL
         );
         """)
+        profile_columns = {row["name"] for row in db.execute("PRAGMA table_info(user_profiles)").fetchall()}
+        if "language" not in profile_columns:
+            db.execute("ALTER TABLE user_profiles ADD COLUMN language TEXT NOT NULL DEFAULT 'en'")
         # Bring users already present in the contest database into the directory.
         db.execute("""
             INSERT OR IGNORE INTO user_profiles
@@ -137,6 +141,42 @@ def init_admin_database(db_path: Optional[str] = None) -> None:
             INSERT OR IGNORE INTO user_wallets(user_id, balance_kopecks, updated_at)
             SELECT user_id, 0, ? FROM user_profiles
         """, (_stamp(),))
+
+
+
+SUPPORT_I18N = {
+    "ru": {
+        "private": "Напиши /support в личном чате с PRIZORA.",
+        "blocked": "⛔ Доступ к PRIZORA ограничен.",
+        "title": "✉️ Служба поддержки PRIZORA\\n\\nНапиши сообщение одним текстом (до 2000 символов). Оно попадёт в закрытый чат поддержки. Ответ администратора придёт сюда.",
+        "invalid": "Сообщение должно содержать от 1 до 2000 символов. Попробуй ещё раз.",
+        "sent": "✅ Сообщение отправлено в поддержку. Ответ придёт сюда в этот чат.",
+        "admin_reply": "✉️ Ответ поддержки PRIZORA:\\n\\n",
+    },
+    "en": {
+        "private": "Please send /support in your private chat with PRIZORA.",
+        "blocked": "⛔ Access to PRIZORA is restricted.",
+        "title": "✉️ PRIZORA Support\\n\\nSend your message as one text (up to 2,000 characters). It will be delivered to the private support inbox. The administrator's reply will arrive here.",
+        "invalid": "Your message must contain between 1 and 2,000 characters. Please try again.",
+        "sent": "✅ Your message has been sent to support. The reply will arrive here in this chat.",
+        "admin_reply": "✉️ PRIZORA Support reply:\\n\\n",
+    },
+    "de": {
+        "private": "Bitte sende /support im privaten Chat mit PRIZORA.",
+        "blocked": "⛔ Der Zugriff auf PRIZORA ist eingeschränkt.",
+        "title": "✉️ PRIZORA-Support\\n\\nSende deine Nachricht als einen Text (bis zu 2.000 Zeichen). Sie wird an den privaten Support-Posteingang weitergeleitet. Die Antwort des Administrators erscheint hier.",
+        "invalid": "Deine Nachricht muss zwischen 1 und 2.000 Zeichen enthalten. Bitte versuche es erneut.",
+        "sent": "✅ Deine Nachricht wurde an den Support gesendet. Die Antwort erscheint hier in diesem Chat.",
+        "admin_reply": "✉️ Antwort des PRIZORA-Supports:\\n\\n",
+    },
+}
+
+
+def _support_text(context: ContextTypes.DEFAULT_TYPE, key: str) -> str:
+    language = (context.user_data.get("language") or "en")
+    if language not in SUPPORT_I18N:
+        language = "en"
+    return SUPPORT_I18N[language][key]
 
 
 def configured_admin_id() -> Optional[int]:
@@ -169,6 +209,29 @@ def register_user(user) -> None:
             "INSERT OR IGNORE INTO user_wallets(user_id, balance_kopecks, updated_at) VALUES (?, 0, ?)",
             (int(user.id), now),
         )
+
+
+
+
+def get_user_language(user_id: int, db_path: Optional[str] = None) -> Optional[str]:
+    with _connect(db_path) as db:
+        row = db.execute("SELECT language FROM user_profiles WHERE user_id=?", (int(user_id),)).fetchone()
+    if row is None:
+        return None
+    language = row["language"]
+    return language if language in ("ru", "en", "de") else "en"
+
+
+def set_user_language(user_id: int, language: str, db_path: Optional[str] = None) -> None:
+    if language not in ("ru", "en", "de"):
+        raise ValueError("Unsupported PRIZORA language")
+    now = _stamp()
+    with _connect(db_path) as db:
+        db.execute("""
+            INSERT INTO user_profiles(user_id, username, full_name, language, first_seen, last_seen)
+            VALUES (?, NULL, ?, ?, ?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET language=excluded.language, last_seen=excluded.last_seen
+        """, (int(user_id), str(user_id), language, now, now))
 
 
 def _hash_secret(value: str, salt: Optional[str] = None) -> tuple[str, str]:
@@ -410,18 +473,14 @@ async def support_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     if not user or not message:
         return
     if update.effective_chat and update.effective_chat.type != "private":
-        await message.reply_text("Напиши /support в личном чате с PRIZORA.")
+        await message.reply_text(_support_text(context, "private"))
         return
     if is_user_blocked(user.id, scope="account"):
-        await message.reply_text("⛔ Доступ к PRIZORA ограничен.")
+        await message.reply_text(_support_text(context, "blocked"))
         return
     register_user(user)
     context.user_data["support_flow"] = True
-    await message.reply_text(
-        "✉️ Служба поддержки PRIZORA\n\n"
-        "Напиши сообщение одним текстом (до 2000 символов). "
-        "Оно попадёт в закрытый чат поддержки. Ответ администратора придёт сюда."
-    )
+    await message.reply_text(_support_text(context, "title"))
 
 
 async def handle_support_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
@@ -434,12 +493,12 @@ async def handle_support_text(update: Update, context: ContextTypes.DEFAULT_TYPE
         return False
     body = (message.text or "").strip()
     if not body or len(body) > 2000:
-        await message.reply_text("Сообщение должно содержать от 1 до 2000 символов. Попробуй ещё раз.")
+        await message.reply_text(_support_text(context, "invalid"))
         return True
     register_user(user)
     save_support_message(user.id, user.id, "user", body)
     context.user_data.pop("support_flow", None)
-    await message.reply_text("✅ Сообщение отправлено в поддержку. Ответ придёт сюда в этот чат.")
+    await message.reply_text(_support_text(context, "sent"))
     owner_id = configured_admin_id()
     if owner_id:
         preview = html.escape(body[:350])
@@ -476,9 +535,11 @@ async def handle_admin_support_text(update: Update, context: ContextTypes.DEFAUL
     save_support_message(target, user.id, "admin", body)
     context.user_data.pop("admin_support_reply_to", None)
     try:
+        recipient_language = get_user_language(target) or "en"
+        reply_prefix = SUPPORT_I18N.get(recipient_language, SUPPORT_I18N["en"])["admin_reply"]
         await context.bot.send_message(
             chat_id=target,
-            text="✉️ Ответ поддержки PRIZORA:\n\n" + body,
+            text=reply_prefix + body,
         )
     except Exception:
         await message.reply_text("Ответ сохранён в истории, но Telegram не доставил его пользователю.")

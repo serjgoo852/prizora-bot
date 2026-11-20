@@ -64,6 +64,21 @@ I18N = {
         "menu_help": "📖 Помощь",
         "menu_language": "🌐 Язык",
         "menu_my_contests": "📋 Мои конкурсы",
+        "menu_wallet": "💰 Мой баланс",
+        "menu_support": "✉️ Поддержка",
+        "menu_ads": "📢 Рекламировать канал",
+        "wallet_title": "💰 МОЙ БАЛАНС",
+        "wallet_available": "Доступно: <b>{amount} ₽</b>",
+        "wallet_info": "Здесь отображаются подтверждённые начисления и списания. Пополнение через платёжную систему пока не подключено. Не переводите деньги до появления официальной кнопки оплаты.",
+        "wallet_history": "📜 История операций",
+        "wallet_topup": "➕ Пополнить баланс",
+        "menu_home": "⌂ Главное меню",
+        "wallet_topup_title": "➕ ПОПОЛНЕНИЕ БАЛАНСА",
+        "wallet_topup_info": "Платёжный провайдер и реквизиты PRIZORA ещё не настроены. Поэтому приём денег временно закрыт. Не отправляй перевод на личные реквизиты. Когда официальный способ оплаты будет подключён, здесь появится защищённая оплата и подтверждение платежа.",
+        "wallet_back": "‹ К балансу",
+        "wallet_history_title": "📜 ИСТОРИЯ ОПЕРАЦИЙ",
+        "wallet_history_empty": "Операций пока нет.",
+        "wallet_balance_after": "Баланс после: {amount} ₽",
         "my_contests_empty": "Пока нет опубликованных конкурсов.",
         "contest_card": "🎁 {prize}\n🎡 Формат: {format}\n📍 Площадка: {destination}\n👥 Участники: {count}/{limit}\n🏆 Победителей: {winners}\n🕒 Статус: {status}",
         "contest_status_active": "регистрация открыта",
@@ -252,6 +267,21 @@ I18N = {
         "menu_help": "📖 Help",
         "menu_language": "🌐 Language",
         "menu_my_contests": "📋 My contests",
+        "menu_wallet": "💰 My balance",
+        "menu_support": "✉️ Support",
+        "menu_ads": "📢 Advertise a channel",
+        "wallet_title": "💰 MY BALANCE",
+        "wallet_available": "Available: <b>{amount} ₽</b>",
+        "wallet_info": "This page shows confirmed credits and debits. Top-ups through a payment system are not available yet. Do not send money until an official payment button appears.",
+        "wallet_history": "📜 Transaction history",
+        "wallet_topup": "➕ Add funds",
+        "menu_home": "⌂ Main menu",
+        "wallet_topup_title": "➕ BALANCE TOP-UP",
+        "wallet_topup_info": "PRIZORA's payment provider and payment details have not been configured yet. Payments are temporarily unavailable. Do not transfer money to personal accounts. Secure payment and confirmation will appear here once an official payment method is connected.",
+        "wallet_back": "‹ Back to balance",
+        "wallet_history_title": "📜 TRANSACTION HISTORY",
+        "wallet_history_empty": "There are no transactions yet.",
+        "wallet_balance_after": "Balance after: {amount} ₽",
         "my_contests_empty": "No published contests yet.",
         "contest_card": "🎁 {prize}\n🎡 Format: {format}\n📍 Destination: {destination}\n👥 Participants: {count}/{limit}\n🏆 Winners: {winners}\n🕒 Status: {status}",
         "contest_status_active": "registration open",
@@ -440,6 +470,21 @@ I18N = {
         "menu_help": "📖 Hilfe",
         "menu_language": "🌐 Sprache",
         "menu_my_contests": "📋 Meine Wettbewerbe",
+        "menu_wallet": "💰 Mein Guthaben",
+        "menu_support": "✉️ Support",
+        "menu_ads": "📢 Kanal bewerben",
+        "wallet_title": "💰 MEIN GUTHABEN",
+        "wallet_available": "Verfügbar: <b>{amount} ₽</b>",
+        "wallet_info": "Hier werden bestätigte Gutschriften und Abbuchungen angezeigt. Das Aufladen über ein Zahlungssystem ist noch nicht verfügbar. Überweise kein Geld, bevor eine offizielle Zahlungsschaltfläche angezeigt wird.",
+        "wallet_history": "📜 Transaktionsverlauf",
+        "wallet_topup": "➕ Guthaben aufladen",
+        "menu_home": "⌂ Hauptmenü",
+        "wallet_topup_title": "➕ GUTHABEN AUFLADEN",
+        "wallet_topup_info": "Der Zahlungsanbieter und die Zahlungsdaten von PRIZORA sind noch nicht eingerichtet. Zahlungen sind daher vorübergehend nicht möglich. Überweise kein Geld an private Konten. Sobald eine offizielle Zahlungsmethode verfügbar ist, findest du hier eine sichere Zahlung mit Bestätigung.",
+        "wallet_back": "‹ Zurück zum Guthaben",
+        "wallet_history_title": "📜 TRANSAKTIONSVERLAUF",
+        "wallet_history_empty": "Es gibt noch keine Transaktionen.",
+        "wallet_balance_after": "Guthaben danach: {amount} ₽",
         "my_contests_empty": "Noch keine Wettbewerbe veröffentlicht.",
         "contest_card": "🎁 {prize}\n🎡 Format: {format}\n📍 Ort: {destination}\n👥 Teilnehmer: {count}/{limit}\n🏆 Gewinner: {winners}\n🕒 Status: {status}",
         "contest_status_active": "Anmeldung geöffnet",
@@ -1347,9 +1392,9 @@ def main_menu(language: str):
             InlineKeyboardButton(t["menu_plans"], callback_data="plans"),
         ],
         [InlineKeyboardButton(t["menu_my_contests"], callback_data="mycontests")],
-        [InlineKeyboardButton("💰 Мой баланс", callback_data="wallet")],
-        [InlineKeyboardButton("✉️ Поддержка", callback_data="support")],
-        [InlineKeyboardButton("📢 Рекламировать канал", callback_data="ads:home")],
+        [InlineKeyboardButton(t["menu_wallet"], callback_data="wallet")],
+        [InlineKeyboardButton(t["menu_support"], callback_data="support")],
+        [InlineKeyboardButton(t["menu_ads"], callback_data="ads:home")],
         [
             InlineKeyboardButton(t["menu_help"], callback_data="help"),
             InlineKeyboardButton(t["menu_language"], callback_data="language"),
@@ -1701,7 +1746,10 @@ async def maybe_show_home_ad(chat_id: int, user_id: int, context: ContextTypes.D
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    saved_language = admin.get_user_language(update.effective_user.id)
     admin.register_user(update.effective_user)
+    if "language" not in context.user_data and saved_language:
+        context.user_data["language"] = saved_language
     if context.args and context.args[0].startswith("join_"):
         await handle_join_start(update, context)
         return
@@ -1730,6 +1778,8 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if admin.is_user_blocked(update.effective_user.id, scope="account"):
         await update.message.reply_text("⛔ Доступ к PRIZORA ограничен. Если считаешь это ошибкой, обратись к администратору.")
         return
+    if "language" not in context.user_data:
+        context.user_data["language"] = admin.get_user_language(update.effective_user.id)
     await update.message.reply_text(
         tr(context, "help_text"),
         reply_markup=main_menu(current_language(context)),
@@ -1748,6 +1798,8 @@ async def button_handler(
         await query.answer("⛔ Доступ к PRIZORA ограничен.", show_alert=True)
         return
     await query.answer()
+    if "language" not in context.user_data:
+        context.user_data["language"] = admin.get_user_language(query.from_user.id)
     language = current_language(context)
 
     if data == "support":
@@ -1755,49 +1807,51 @@ async def button_handler(
     elif data == "wallet":
         balance = admin.get_balance(query.from_user.id)
         amount = f"{balance / 100:,.2f}".replace(",", " ").replace(".", ",")
+        wallet_text = (
+            tr(context, "wallet_title") + "\n━━━━━━━━━━━━━━━━━━\n"
+            + tr(context, "wallet_available", amount=amount) + "\n\n"
+            + tr(context, "wallet_info")
+        )
         await query.edit_message_text(
-            "💰 МОЙ БАЛАНС\\n━━━━━━━━━━━━━━━━━━\\n"
-            f"Доступно: <b>{amount} ₽</b>\\n\\n"
-            "Здесь отображаются подтверждённые начисления и списания. "
-            "Пополнение через платёжную систему пока не подключено. "
-            "Не переводите деньги до появления официальной кнопки оплаты.",
+            wallet_text,
             parse_mode="HTML",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("📜 История операций", callback_data="wallet:history")],
-                [InlineKeyboardButton("➕ Пополнить баланс", callback_data="wallet:topup")],
-                [InlineKeyboardButton("⌂ Главное меню", callback_data="home")],
+                [InlineKeyboardButton(tr(context, "wallet_history"), callback_data="wallet:history")],
+                [InlineKeyboardButton(tr(context, "wallet_topup"), callback_data="wallet:topup")],
+                [InlineKeyboardButton(tr(context, "menu_home"), callback_data="home")],
             ]),
         )
     elif data == "wallet:topup":
         await query.edit_message_text(
-            "➕ ПОПОЛНЕНИЕ БАЛАНСА\\n\\n"
-            "Платёжный провайдер и реквизиты PRIZORA ещё не настроены. "
-            "Поэтому приём денег временно закрыт. Не отправляй перевод на личные реквизиты. "
-            "Когда официальный способ оплаты будет подключён, здесь появится защищённая оплата и подтверждение платежа.",
+            tr(context, "wallet_topup_title") + "\n\n" + tr(context, "wallet_topup_info"),
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("‹ К балансу", callback_data="wallet")],
-                [InlineKeyboardButton("⌂ Главное меню", callback_data="home")],
+                [InlineKeyboardButton(tr(context, "wallet_back"), callback_data="wallet")],
+                [InlineKeyboardButton(tr(context, "menu_home"), callback_data="home")],
             ]),
         )
     elif data == "wallet:history":
         rows = admin.get_wallet_transactions(query.from_user.id, limit=10)
         if not rows:
-            body = "📜 ИСТОРИЯ ОПЕРАЦИЙ\\n\\nОпераций пока нет."
+            body = tr(context, "wallet_history_title") + "\n\n" + tr(context, "wallet_history_empty")
         else:
-            lines = ["📜 ИСТОРИЯ ОПЕРАЦИЙ", "━━━━━━━━━━━━━━━━━━"]
+            lines = [tr(context, "wallet_history_title"), "━━━━━━━━━━━━━━━━━━"]
             for row in rows:
                 value = int(row["amount_kopecks"])
                 signed = "+" if value > 0 else "−"
                 amount = f"{abs(value) / 100:,.2f}".replace(",", " ").replace(".", ",")
                 stamp = str(row["created_at"]).replace("T", " ")[:16]
                 reason = str(row["reason"])[:100]
-                lines.append(f"\\n{stamp}\\n{signed}{amount} ₽ · {reason}\\nБаланс после: {int(row['balance_after_kopecks']) / 100:.2f} ₽")
-            body = "\\n".join(lines)
+                after_amount = f"{int(row['balance_after_kopecks']) / 100:.2f}"
+                lines.append(
+                    f"\n{stamp}\n{signed}{amount} ₽ · {reason}\n"
+                    + tr(context, "wallet_balance_after", amount=after_amount)
+                )
+            body = "\n".join(lines)
         await query.edit_message_text(
             body,
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("‹ К балансу", callback_data="wallet")],
-                [InlineKeyboardButton("⌂ Главное меню", callback_data="home")],
+                [InlineKeyboardButton(tr(context, "wallet_back"), callback_data="wallet")],
+                [InlineKeyboardButton(tr(context, "menu_home"), callback_data="home")],
             ]),
         )
     elif data == "language":
@@ -1812,6 +1866,7 @@ async def button_handler(
             return
         context.user_data["language"] = selected_language
         context.user_data["suggested_language"] = selected_language
+        admin.set_user_language(query.from_user.id, selected_language)
         language = selected_language
         await query.edit_message_text(
             tr(context, "welcome"),
