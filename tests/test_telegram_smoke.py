@@ -18,6 +18,11 @@ os.environ["ADS_DATABASE_PATH"] = os.path.join(_test_dir.name, "prizora-ads-test
 
 import main  # noqa: E402
 
+# Initialize admin tables in the same isolated test database as the bot.
+main.admin.DATABASE_PATH = main.DATABASE_PATH
+main.init_database()
+main.admin.init_admin_database(main.DATABASE_PATH)
+
 
 def callback_data(markup):
     return [
@@ -79,7 +84,7 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("PRIZORA", args[0])
         self.assertEqual(
             set(callback_data(kwargs["reply_markup"])),
-            {"create", "formats", "plans", "mycontests", "ads:home", "help", "language"},
+            {"create", "formats", "plans", "mycontests", "support", "ads:home", "help", "language"},
         )
 
     async def test_language_selection_returns_to_main_menu(self):
