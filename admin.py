@@ -143,6 +143,42 @@ def init_admin_database(db_path: Optional[str] = None) -> None:
         """, (_stamp(),))
 
 
+
+SUPPORT_I18N = {
+    "ru": {
+        "private": "Напиши /support в личном чате с PRIZORA.",
+        "blocked": "⛔ Доступ к PRIZORA ограничен.",
+        "title": "✉️ Служба поддержки PRIZORA\\n\\nНапиши сообщение одним текстом (до 2000 символов). Оно попадёт в закрытый чат поддержки. Ответ администратора придёт сюда.",
+        "invalid": "Сообщение должно содержать от 1 до 2000 символов. Попробуй ещё раз.",
+        "sent": "✅ Сообщение отправлено в поддержку. Ответ придёт сюда в этот чат.",
+        "admin_reply": "✉️ Ответ поддержки PRIZORA:\\n\\n",
+    },
+    "en": {
+        "private": "Please send /support in your private chat with PRIZORA.",
+        "blocked": "⛔ Access to PRIZORA is restricted.",
+        "title": "✉️ PRIZORA Support\\n\\nSend your message as one text (up to 2,000 characters). It will be delivered to the private support inbox. The administrator's reply will arrive here.",
+        "invalid": "Your message must contain between 1 and 2,000 characters. Please try again.",
+        "sent": "✅ Your message has been sent to support. The reply will arrive here in this chat.",
+        "admin_reply": "✉️ PRIZORA Support reply:\\n\\n",
+    },
+    "de": {
+        "private": "Bitte sende /support im privaten Chat mit PRIZORA.",
+        "blocked": "⛔ Der Zugriff auf PRIZORA ist eingeschränkt.",
+        "title": "✉️ PRIZORA-Support\\n\\nSende deine Nachricht als einen Text (bis zu 2.000 Zeichen). Sie wird an den privaten Support-Posteingang weitergeleitet. Die Antwort des Administrators erscheint hier.",
+        "invalid": "Deine Nachricht muss zwischen 1 und 2.000 Zeichen enthalten. Bitte versuche es erneut.",
+        "sent": "✅ Deine Nachricht wurde an den Support gesendet. Die Antwort erscheint hier in diesem Chat.",
+        "admin_reply": "✉️ Antwort des PRIZORA-Supports:\\n\\n",
+    },
+}
+
+
+def _support_text(context: ContextTypes.DEFAULT_TYPE, key: str) -> str:
+    language = (context.user_data.get("language") or "en")
+    if language not in SUPPORT_I18N:
+        language = "en"
+    return SUPPORT_I18N[language][key]
+
+
 def configured_admin_id() -> Optional[int]:
     raw = os.getenv("PRIZORA_ADMIN_TELEGRAM_ID", "").strip()
     try:
@@ -437,10 +473,10 @@ async def support_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     if not user or not message:
         return
     if update.effective_chat and update.effective_chat.type != "private":
-        await message.reply_text("Напиши /support в личном чате с PRIZORA.")
+        await message.reply_text(_support_text(context, "private"))
         return
     if is_user_blocked(user.id, scope="account"):
-        await message.reply_text("⛔ Доступ к PRIZORA ограничен.")
+        await message.reply_text(_support_text(context, "blocked"))
         return
     register_user(user)
     context.user_data["support_flow"] = True
@@ -461,12 +497,12 @@ async def handle_support_text(update: Update, context: ContextTypes.DEFAULT_TYPE
         return False
     body = (message.text or "").strip()
     if not body or len(body) > 2000:
-        await message.reply_text("Сообщение должно содержать от 1 до 2000 символов. Попробуй ещё раз.")
+        await message.reply_text(_support_text(context, "invalid"))
         return True
     register_user(user)
     save_support_message(user.id, user.id, "user", body)
     context.user_data.pop("support_flow", None)
-    await message.reply_text("✅ Сообщение отправлено в поддержку. Ответ придёт сюда в этот чат.")
+    await message.reply_text(_support_text(context, "sent"))
     owner_id = configured_admin_id()
     if owner_id:
         preview = html.escape(body[:350])
