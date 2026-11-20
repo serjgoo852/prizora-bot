@@ -535,9 +535,11 @@ async def handle_admin_support_text(update: Update, context: ContextTypes.DEFAUL
     save_support_message(target, user.id, "admin", body)
     context.user_data.pop("admin_support_reply_to", None)
     try:
+        recipient_language = get_user_language(target) or "en"
+        reply_prefix = SUPPORT_I18N.get(recipient_language, SUPPORT_I18N["en"])["admin_reply"]
         await context.bot.send_message(
             chat_id=target,
-            text="✉️ Ответ поддержки PRIZORA:\n\n" + body,
+            text=reply_prefix + body,
         )
     except Exception:
         await message.reply_text("Ответ сохранён в истории, но Telegram не доставил его пользователю.")
