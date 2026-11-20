@@ -1347,6 +1347,7 @@ def main_menu(language: str):
             InlineKeyboardButton(t["menu_plans"], callback_data="plans"),
         ],
         [InlineKeyboardButton(t["menu_my_contests"], callback_data="mycontests")],
+        [InlineKeyboardButton("💰 Мой баланс", callback_data="wallet")],
         [InlineKeyboardButton("✉️ Поддержка", callback_data="support")],
         [InlineKeyboardButton("📢 Рекламировать канал", callback_data="ads:home")],
         [
@@ -1751,6 +1752,54 @@ async def button_handler(
 
     if data == "support":
         await admin.support_command(update, context)
+    elif data == "wallet":
+        balance = admin.get_balance(query.from_user.id)
+        amount = f"{balance / 100:,.2f}".replace(",", " ").replace(".", ",")
+        await query.edit_message_text(
+            "💰 МОЙ БАЛАНС\\n━━━━━━━━━━━━━━━━━━\\n"
+            f"Доступно: <b>{amount} ₽</b>\\n\\n"
+            "Здесь отображаются подтверждённые начисления и списания. "
+            "Пополнение через платёжную систему пока не подключено. "
+            "Не переводите деньги до появления официальной кнопки оплаты.",
+            parse_mode="HTML",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("📜 История операций", callback_data="wallet:history")],
+                [InlineKeyboardButton("➕ Пополнить баланс", callback_data="wallet:topup")],
+                [InlineKeyboardButton("⌂ Главное меню", callback_data="home")],
+            ]),
+        )
+    elif data == "wallet:topup":
+        await query.edit_message_text(
+            "➕ ПОПОЛНЕНИЕ БАЛАНСА\\n\\n"
+            "Платёжный провайдер и реквизиты PRIZORA ещё не настроены. "
+            "Поэтому приём денег временно закрыт. Не отправляй перевод на личные реквизиты. "
+            "Когда официальный способ оплаты будет подключён, здесь появится защищённая оплата и подтверждение платежа.",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("‹ К балансу", callback_data="wallet")],
+                [InlineKeyboardButton("⌂ Главное меню", callback_data="home")],
+            ]),
+        )
+    elif data == "wallet:history":
+        rows = admin.get_wallet_transactions(query.from_user.id, limit=10)
+        if not rows:
+            body = "📜 ИСТОРИЯ ОПЕРАЦИЙ\\n\\nОпераций пока нет."
+        else:
+            lines = ["📜 ИСТОРИЯ ОПЕРАЦИЙ", "━━━━━━━━━━━━━━━━━━"]
+            for row in rows:
+                value = int(row["amount_kopecks"])
+                signed = "+" if value > 0 else "−"
+                amount = f"{abs(value) / 100:,.2f}".replace(",", " ").replace(".", ",")
+                stamp = str(row["created_at"]).replace("T", " ")[:16]
+                reason = str(row["reason"])[:100]
+                lines.append(f"\\n{stamp}\\n{signed}{amount} ₽ · {reason}\\nБаланс после: {int(row['balance_after_kopecks']) / 100:.2f} ₽")
+            body = "\\n".join(lines)
+        await query.edit_message_text(
+            body,
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("‹ К балансу", callback_data="wallet")],
+                [InlineKeyboardButton("⌂ Главное меню", callback_data="home")],
+            ]),
+        )
     elif data == "language":
         await query.edit_message_text(
             tr(context, "language_prompt"),
