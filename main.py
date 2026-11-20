@@ -1747,6 +1747,10 @@ async def maybe_show_home_ad(chat_id: int, user_id: int, context: ContextTypes.D
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     admin.register_user(update.effective_user)
+    if "language" not in context.user_data:
+        saved_language = admin.get_user_language(update.effective_user.id)
+        if saved_language != "en" or not context.user_data.get("suggested_language"):
+            context.user_data["language"] = saved_language
     if context.args and context.args[0].startswith("join_"):
         await handle_join_start(update, context)
         return
@@ -1775,6 +1779,8 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if admin.is_user_blocked(update.effective_user.id, scope="account"):
         await update.message.reply_text("⛔ Доступ к PRIZORA ограничен. Если считаешь это ошибкой, обратись к администратору.")
         return
+    if "language" not in context.user_data:
+        context.user_data["language"] = admin.get_user_language(update.effective_user.id)
     await update.message.reply_text(
         tr(context, "help_text"),
         reply_markup=main_menu(current_language(context)),
@@ -1793,6 +1799,8 @@ async def button_handler(
         await query.answer("⛔ Доступ к PRIZORA ограничен.", show_alert=True)
         return
     await query.answer()
+    if "language" not in context.user_data:
+        context.user_data["language"] = admin.get_user_language(query.from_user.id)
     language = current_language(context)
 
     if data == "support":
@@ -1859,6 +1867,7 @@ async def button_handler(
             return
         context.user_data["language"] = selected_language
         context.user_data["suggested_language"] = selected_language
+        admin.set_user_language(query.from_user.id, selected_language)
         language = selected_language
         await query.edit_message_text(
             tr(context, "welcome"),
