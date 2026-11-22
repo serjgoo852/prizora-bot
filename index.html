@@ -1176,6 +1176,18 @@
 <style id="prizora-hide-drum-pagination">
 /* Remove the distracting pagination dots beneath the prize drum. */
 .carousel #dots.dots{display:none!important;visibility:hidden!important}
+
+/* FINAL RAYS UPDATE: wide soft gold beams, no square frame */
+/* Remove the enclosing gold box and the circular rim completely. */
+.carousel{background:transparent!important;border:0!important;box-shadow:none!important;outline:0!important;overflow:visible!important;isolation:isolate!important}
+.carousel:after{content:none!important;display:none!important}
+/* A large circular ray field, masked softly at its center and outer edge.
+   Broad wedges—not thin stripes—and no rectangular/conic-canvas boundary. */
+.carousel:before{content:""!important;position:absolute!important;z-index:0!important;left:50%!important;top:49%!important;right:auto!important;bottom:auto!important;inset:auto!important;width:155%!important;height:auto!important;aspect-ratio:1/1!important;border-radius:50%!important;transform:translate(-50%,-50%)!important;pointer-events:none!important;opacity:.9!important;background:repeating-conic-gradient(from -8deg at 50% 50%,rgba(255,218,123,0) 0deg 13deg,rgba(255,193,63,.22) 13deg 23deg,rgba(255,226,151,.58) 23deg 27deg,rgba(239,164,43,.28) 27deg 37deg,rgba(255,218,123,0) 37deg 49deg)!important;mask-image:radial-gradient(circle at center,transparent 0 24%,rgba(0,0,0,.7) 32%,#000 48%,rgba(0,0,0,.72) 66%,transparent 76%)!important;-webkit-mask-image:radial-gradient(circle at center,transparent 0 24%,rgba(0,0,0,.7) 32%,#000 48%,rgba(0,0,0,.72) 66%,transparent 76%)!important;animation:prizoraWideRaySpin 28s linear infinite!important}
+.carousel-inner,.slides{z-index:2!important}
+@keyframes prizoraWideRaySpin{from{rotate:0deg}to{rotate:360deg}}
+@media(max-width:520px){.carousel:before{width:185%!important;top:48%!important;opacity:.82!important}}
+@media(prefers-reduced-motion:reduce){.carousel:before{animation:none!important}}
 </style>
 
 </head><body><main class="wrap">
