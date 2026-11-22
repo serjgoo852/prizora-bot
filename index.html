@@ -1003,82 +1003,43 @@
 
 
 <style id="prizora-restored-golden-light-effects">
-/* Restore the moving golden rim around the OUTSIDE edge of the 3D prize drum. */
+/* Corrected: a single slim golden-white highlight travels around the OUTER rounded rim. */
 .carousel{
   position:relative!important;
   isolation:isolate!important;
-  box-shadow:
-    0 12px 38px #000b,
-    0 0 18px rgba(255,181,45,.38),
-    0 0 38px rgba(255,181,45,.20)!important;
-  animation:prizoraRimPulse 3.8s ease-in-out infinite!important;
+  background:
+    radial-gradient(ellipse at 50% 52%,rgba(255,190,67,.25),transparent 56%),
+    linear-gradient(135deg,#70400d 0%,#d18a20 18%,#ffda79 34%,#754512 53%,#2b1908 72%,#bd7818 100%)!important;
+  box-shadow:0 14px 40px #000c,0 0 24px rgba(236,157,37,.38),inset 0 0 26px rgba(255,197,79,.16)!important;
+  animation:none!important;
 }
 .carousel::before{
   content:""!important;
   position:absolute!important;
   inset:0!important;
   z-index:8!important;
-  pointer-events:none!important;
+  padding:3px!important;
   border-radius:inherit!important;
-  padding:2px!important;
+  pointer-events:none!important;
   background:conic-gradient(from 0deg,
-    rgba(255,207,91,.12) 0deg,
-    rgba(255,240,174,.98) 42deg,
-    rgba(255,164,25,.95) 76deg,
-    rgba(255,207,91,.12) 118deg,
-    rgba(255,207,91,.12) 190deg,
-    rgba(255,240,174,.95) 232deg,
-    rgba(255,164,25,.9) 266deg,
-    rgba(255,207,91,.12) 310deg,
-    rgba(255,207,91,.12) 360deg)!important;
+    transparent 0deg 300deg,
+    rgba(255,184,48,.12) 310deg,
+    rgba(255,225,139,.95) 326deg,
+    #fff8d9 332deg,
+    rgba(255,179,42,.98) 339deg,
+    transparent 350deg 360deg)!important;
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0)!important;
   -webkit-mask-composite:xor!important;
   mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0)!important;
   mask-composite:exclude!important;
-  filter:drop-shadow(0 0 5px #ffd36c) drop-shadow(0 0 12px #f6a51d)!important;
-  animation:prizoraRimOrbit 5.5s linear infinite!important;
+  filter:drop-shadow(0 0 4px #ffe08a) drop-shadow(0 0 9px rgba(255,169,35,.9))!important;
+  transform-origin:50% 50%!important;
+  animation:prizoraRimOrbit 7.5s linear infinite!important;
 }
-.carousel-inner{
-  position:relative!important;
-  isolation:isolate!important;
-}
-/* A brighter, narrow beam travels THROUGH the banner, not over the prize text. */
-.carousel-inner::after{
-  content:""!important;
-  position:absolute!important;
-  z-index:7!important;
-  pointer-events:none!important;
-  top:-35%!important;
-  bottom:-35%!important;
-  left:-38%!important;
-  width:24%!important;
-  transform:skewX(-19deg)!important;
-  background:linear-gradient(90deg,
-    transparent 0%,
-    rgba(255,205,93,.08) 18%,
-    rgba(255,231,160,.38) 42%,
-    rgba(255,249,215,.82) 50%,
-    rgba(255,194,63,.34) 62%,
-    transparent 100%)!important;
-  filter:blur(5px) drop-shadow(0 0 10px rgba(255,190,55,.9))!important;
-  mix-blend-mode:screen!important;
-  animation:prizoraBannerBeam 4.8s ease-in-out infinite!important;
-}
+/* No beam or animated shape over the center of the drum. */
+.carousel-inner::after{content:none!important;display:none!important}
 @keyframes prizoraRimOrbit{to{transform:rotate(360deg)}}
-@keyframes prizoraRimPulse{
-  0%,100%{box-shadow:0 12px 38px #000b,0 0 15px rgba(255,181,45,.32),0 0 28px rgba(255,181,45,.16)}
-  50%{box-shadow:0 12px 38px #000b,0 0 25px rgba(255,211,105,.62),0 0 48px rgba(255,165,35,.30)}
-}
-@keyframes prizoraBannerBeam{
-  0%{left:-38%;opacity:0}
-  12%{opacity:.9}
-  58%{opacity:.95}
-  82%,100%{left:118%;opacity:0}
-}
-@media(prefers-reduced-motion:reduce){
-  .carousel{animation:none!important}
-  .carousel::before,.carousel-inner::after{animation:none!important}
-}
+@media(prefers-reduced-motion:reduce){.carousel::before{animation:none!important}}
 </style>
 
 </head><body><main class="wrap">
