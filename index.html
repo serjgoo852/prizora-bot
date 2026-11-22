@@ -1192,7 +1192,7 @@
 
 
 <style id="prizora-fixed-center-rays">
-/* Rays rotate independently around the visual center of the drum; no rotating transform is used. */
+/* Independent, narrow radial rays behind the prize drum. The drum markup and motion stay untouched. */
 .carousel{
   position:relative!important;
   isolation:isolate!important;
@@ -1210,69 +1210,45 @@
   z-index:0!important;
   left:50%!important;
   top:50%!important;
-  right:auto!important;
-  bottom:auto!important;
-  width:210%!important;
-  height:210%!important;
-  inset:auto!important;
-  translate:-50% -50%!important;
-  rotate:0deg;
-  transform:none!important;
+  width:245%!important;
+  height:245%!important;
+  margin:0!important;
+  transform:translate(-50%,-50%) rotate(0deg)!important;
   transform-origin:50% 50%!important;
   pointer-events:none!important;
-  opacity:.94!important;
+  opacity:.82!important;
   border:0!important;
   border-radius:0!important;
   background:
-    conic-gradient(from 0deg at 50% 50%,
-      transparent 0deg 8deg,
-      rgba(255,190,78,.72) 9deg 13deg,
-      rgba(255,232,174,.24) 14deg 18deg,
-      transparent 19deg 39deg,
-      rgba(255,205,112,.22) 40deg 44deg,
-      transparent 45deg 71deg,
-      rgba(255,184,64,.82) 72deg 78deg,
-      rgba(255,231,170,.32) 79deg 83deg,
-      transparent 84deg 116deg,
-      rgba(255,205,112,.28) 117deg 121deg,
-      transparent 122deg 151deg,
-      rgba(255,190,78,.68) 152deg 158deg,
-      transparent 159deg 203deg,
-      rgba(255,225,158,.32) 204deg 208deg,
-      transparent 209deg 247deg,
-      rgba(255,184,64,.78) 248deg 254deg,
-      transparent 255deg 301deg,
-      rgba(255,211,128,.40) 302deg 307deg,
-      transparent 308deg 337deg,
-      rgba(255,190,78,.64) 338deg 343deg,
-      transparent 344deg 360deg),
-    conic-gradient(from 19deg at 50% 50%,
-      transparent 0deg 27deg,
-      rgba(255,214,139,.30) 28deg 31deg,
-      transparent 32deg 83deg,
-      rgba(255,190,78,.32) 84deg 88deg,
-      transparent 89deg 174deg,
-      rgba(255,228,168,.28) 175deg 179deg,
-      transparent 180deg 264deg,
-      rgba(255,190,78,.30) 265deg 269deg,
-      transparent 270deg 360deg)!important;
-  -webkit-mask-image:radial-gradient(ellipse at center,transparent 0 14%,rgba(0,0,0,.9) 25%,#000 60%,transparent 86%)!important;
-  mask-image:radial-gradient(ellipse at center,transparent 0 14%,rgba(0,0,0,.9) 25%,#000 60%,transparent 86%)!important;
-  filter:blur(1.1px)!important;
-  animation:prizora-rays-rotate 18s linear infinite!important;
-  will-change:rotate!important;
+    repeating-conic-gradient(from 0deg at 50% 50%,
+      rgba(255,213,133,.0) 0deg 9deg,
+      rgba(255,190,78,.62) 9.35deg 10.25deg,
+      rgba(255,235,184,.22) 10.5deg 10.9deg,
+      rgba(255,213,133,0) 11.2deg 20deg),
+    repeating-conic-gradient(from 7deg at 50% 50%,
+      rgba(255,213,133,0) 0deg 29deg,
+      rgba(255,205,112,.26) 29.3deg 29.7deg,
+      rgba(255,213,133,0) 30deg 60deg)!important;
+  -webkit-mask-image:radial-gradient(ellipse at center,transparent 0 17%,rgba(0,0,0,.8) 27%,#000 61%,transparent 88%)!important;
+  mask-image:radial-gradient(ellipse at center,transparent 0 17%,rgba(0,0,0,.8) 27%,#000 61%,transparent 88%)!important;
+  filter:blur(.65px)!important;
+  animation:prizora-rays-spin 24s linear infinite!important;
+  will-change:transform!important;
 }
 .carousel:after{content:none!important;display:none!important}
 .carousel-inner,.slides{position:relative!important;z-index:2!important;background:transparent!important}
-@keyframes prizora-rays-rotate{
-  from{rotate:0deg}
-  to{rotate:360deg}
+@keyframes prizora-rays-spin{
+  from{transform:translate(-50%,-50%) rotate(0deg)}
+  to{transform:translate(-50%,-50%) rotate(360deg)}
 }
 @media(max-width:700px){
-  .carousel:before{top:44%!important;width:235%!important;height:235%!important;opacity:.9!important}
-}
-@media(prefers-reduced-motion:reduce){
-  .carousel:before{animation:prizora-rays-rotate 18s linear infinite!important}
+  .carousel:before{
+    left:50%!important;
+    top:50%!important;
+    width:255%!important;
+    height:255%!important;
+    opacity:.76!important;
+  }
 }
 </style>
 
