@@ -1003,66 +1003,58 @@
 
 
 <style id="prizora-restored-golden-light-effects">
-/* Premium gold frame: steady warm halo with one narrow travelling highlight on the rim. */
-@property --prizora-rim-angle{
-  syntax:"<angle>";
-  inherits:false;
-  initial-value:0deg;
-}
+/* Keep the established 3D drum geometry; only restore the premium perimeter lighting. */
 .carousel{
   position:relative!important;
   isolation:isolate!important;
-  perspective:860px!important;
-  perspective-origin:50% 46%!important;
   border:1px solid rgba(255,218,130,.98)!important;
   border-radius:24px!important;
-  background:
-    radial-gradient(ellipse at 50% 52%,rgba(255,190,67,.22),transparent 58%),
-    linear-gradient(135deg,#70400d 0%,#d18a20 18%,#ffda79 34%,#754512 53%,#2b1908 72%,#bd7818 100%)!important;
   box-shadow:
     0 14px 40px #000c,
-    0 0 12px rgba(255,197,79,.78),
-    0 0 30px rgba(236,157,37,.48),
-    inset 0 0 22px rgba(255,220,137,.24)!important;
+    0 0 18px rgba(255,197,79,.98),
+    0 0 42px rgba(236,157,37,.78),
+    inset 0 0 28px rgba(255,220,137,.38)!important;
 }
-/* A thin moving arc is clipped to the rounded perimeter; it never crosses the prizes. */
+/* A real short highlight travels along the rounded border path, not across the cards. */
 .carousel::before{
   content:""!important;
   position:absolute!important;
-  inset:-1px!important;
-  z-index:40!important;
-  padding:2px!important;
+  z-index:50!important;
+  top:0!important;
+  left:0!important;
+  width:138px!important;
+  height:5px!important;
+  padding:0!important;
   border:0!important;
-  border-radius:inherit!important;
+  border-radius:99px!important;
   pointer-events:none!important;
-  background:conic-gradient(from var(--prizora-rim-angle),
-    transparent 0deg 326deg,
-    rgba(255,169,35,.18) 332deg,
-    rgba(255,195,73,.9) 340deg,
-    #fff8d7 345deg,
-    #ffffff 348deg,
-    #ffe08a 352deg,
-    rgba(255,174,42,.82) 356deg,
-    transparent 360deg)!important;
-  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0)!important;
-  -webkit-mask-composite:xor!important;
-  mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0)!important;
-  mask-composite:exclude!important;
-  filter:drop-shadow(0 0 5px rgba(255,216,125,.95)) drop-shadow(0 0 10px rgba(255,174,42,.7))!important;
-  animation:prizoraRimOrbit 5.2s linear infinite!important;
+  background:linear-gradient(90deg,
+    transparent 0%,
+    rgba(255,184,48,.58) 18%,
+    #fff1b8 42%,
+    #ffffff 53%,
+    #fff1b8 64%,
+    rgba(255,174,42,.92) 82%,
+    transparent 100%)!important;
+  box-shadow:0 0 6px #fff0b2,0 0 14px #ffc34d,0 0 26px rgba(255,174,42,1)!important;
+  -webkit-mask:none!important;
+  mask:none!important;
+  filter:none!important;
+  offset-path:inset(2px round 22px)!important;
+  offset-distance:0%!important;
+  offset-rotate:0deg!important;
+  animation:prizoraPerimeterGlint 6.8s linear infinite!important;
 }
-/* Remove the old oval floor and the broad rotating spotlight that crossed card content. */
-.carousel::after{content:none!important;display:none!important}
+/* No rotating spotlight or overlay above the prize artwork. */
 .carousel-inner::after{content:none!important;display:none!important;animation:none!important}
-/* Strengthen the actual cylindrical depth without changing card artwork or geometry. */
-.carousel-inner{transform-style:preserve-3d!important}
-.slides#slides{transform-style:preserve-3d!important}
-.slides#slides>.slide{
-  box-shadow:0 24px 42px rgba(0,0,0,.78),inset 0 0 30px rgba(255,202,85,.22),0 0 16px rgba(232,171,62,.12)!important;
-}
-@keyframes prizoraRimOrbit{to{--prizora-rim-angle:360deg}}
+@keyframes prizoraPerimeterGlint{to{offset-distance:100%}}
 @media(max-width:700px){
-  .carousel{perspective:760px!important;border-radius:19px!important}
+  .carousel{border-radius:19px!important}
+  .carousel::before{
+    width:100px!important;
+    offset-path:inset(2px round 17px)!important;
+    animation-duration:7.8s!important;
+  }
 }
 @media(prefers-reduced-motion:reduce){
   .carousel::before{animation:none!important;opacity:.9!important}
