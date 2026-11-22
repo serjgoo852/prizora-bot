@@ -1285,6 +1285,31 @@
 <span class="pro-note">PRO · рекламные размещения</span>
 </section>
 
+<section aria-label="Реклама каналов на PRIZORA" class="homepage-ad-promo" id="homepage-ad-promo">
+  <div class="ad-promo-orbit ad-promo-orbit-one"></div><div class="ad-promo-orbit ad-promo-orbit-two"></div>
+  <div class="ad-promo-icon"><span>📢</span><i>✦</i></div>
+  <div class="ad-promo-copy"><span class="ad-promo-kicker">PRIZORA · РЕКЛАМНЫЕ ВОЗМОЖНОСТИ</span>
+    <h2>Рекламируйте свой канал <em>на PRIZORA</em></h2>
+    <p>Расскажите о своей группе или канале нашей аудитории. Сделайте свой проект заметнее!</p>
+    <a class="ad-promo-button" href="#menu" onclick="const m=document.getElementById('menu');if(m){m.hidden=false;setTimeout(()=>m.scrollIntoView({behavior:'smooth',block:'center'}),60)}">Разместить рекламу <b>→</b></a>
+  </div>
+  <div class="ad-promo-stamp">ВАШ<br>КАНАЛ<br><strong>ЗДЕСЬ</strong></div>
+</section>
+<style>
+.homepage-ad-promo{position:relative;isolation:isolate;display:grid;grid-template-columns:112px minmax(0,1fr) 86px;align-items:center;gap:18px;margin:26px 0;padding:24px 26px;min-height:190px;overflow:hidden;border:1px solid rgba(224,174,79,.58);border-radius:24px;background:radial-gradient(ellipse at 12% 50%,rgba(213,153,45,.2),transparent 38%),linear-gradient(115deg,#211708 0%,#100e0a 54%,#080807 100%);box-shadow:0 14px 38px #0009,0 0 26px rgba(211,157,54,.12)}
+.homepage-ad-promo:before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(110deg,transparent 25%,rgba(255,218,133,.09) 48%,transparent 70%);background-size:220% 100%;animation:adPromoShine 7s ease-in-out infinite}
+@keyframes adPromoShine{0%,35%{background-position:120% 0}75%,100%{background-position:-120% 0}}
+.ad-promo-icon{position:relative;display:grid;place-items:center;width:100px;height:100px;border:1px solid #d9a84c88;border-radius:28px;background:linear-gradient(145deg,#4a3415,#171108);box-shadow:inset 0 0 24px #f4c86a18,0 10px 24px #0008;transform:rotate(-5deg)}
+.ad-promo-icon span{font-size:48px;filter:drop-shadow(0 4px 8px #0009)}
+.ad-promo-icon i{position:absolute;right:8px;top:5px;color:#ffe2a0;font-style:normal;font-size:20px}
+.ad-promo-copy{position:relative;z-index:1}.ad-promo-kicker{font-size:10px;letter-spacing:2px;color:#d9b66e;font-weight:800}
+.ad-promo-copy h2{margin:8px 0;color:#fff1cf;font-size:clamp(21px,3vw,30px);line-height:1.12}.ad-promo-copy h2 em{display:block;color:#e7b957;font-style:normal}
+.ad-promo-copy p{max-width:540px;margin:9px 0 15px;color:#c9c0ae;font-size:14px;line-height:1.5}
+.ad-promo-button{display:inline-flex;align-items:center;gap:18px;padding:12px 19px;border:1px solid #f4d28b;border-radius:12px;background:linear-gradient(135deg,#f3d28a,#bd842b);color:#211606;text-decoration:none;font-size:14px;font-weight:900;box-shadow:0 5px 18px #d49b3b35;transition:transform .2s,filter .2s}
+.ad-promo-button:hover{transform:translateY(-2px);filter:brightness(1.08)}.ad-promo-button b{font-size:18px}
+.ad-promo-stamp{justify-self:end;display:grid;place-content:center;width:78px;height:78px;border:1px dashed #d7ac5d99;border-radius:50%;color:#d6b875;text-align:center;font-size:10px;line-height:1.3;letter-spacing:1px;transform:rotate(9deg);background:#d9a33b0b}.ad-promo-stamp strong{color:#ffe0a0}
+@media(max-width:600px){.homepage-ad-promo{grid-template-columns:62px minmax(0,1fr);gap:13px;margin:20px 0;padding:18px 15px;min-height:0;border-radius:19px}.ad-promo-icon{width:60px;height:60px;border-radius:18px}.ad-promo-icon span{font-size:30px}.ad-promo-icon i{right:4px;top:0;font-size:14px}.ad-promo-copy h2{font-size:21px}.ad-promo-copy p{font-size:12px;margin:8px 0 12px}.ad-promo-kicker{font-size:8px;letter-spacing:1.2px}.ad-promo-button{padding:10px 12px;font-size:12px;gap:10px}.ad-promo-stamp{display:none}}
+</style>
 <section aria-label="Личный кабинет" class="user-menu" hidden="" id="menu">
 <div class="section-head"><h2>👤 Личный кабинет</h2><span>Меню пользователя</span></div>
 <div class="quick user-menu-grid">
