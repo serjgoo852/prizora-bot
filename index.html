@@ -1054,7 +1054,31 @@
 }
 .carousel-controls{display:none!important}
 .carousel .arrow{display:none!important}
-.carousel-inner::after{content:none!important;display:none!important}
+/* Restore the moving golden beam INSIDE the banner, independently of the bright fixed rim. */
+.carousel-inner{position:relative!important}
+.carousel-inner::after{
+  content:""!important;
+  position:absolute!important;
+  inset:-150%!important;
+  z-index:20!important;
+  display:block!important;
+  pointer-events:none!important;
+  background:conic-gradient(from 0deg at 50% 50%,
+    transparent 0deg 258deg,
+    rgba(255,174,45,.025) 270deg,
+    rgba(255,191,75,.18) 281deg,
+    rgba(255,224,145,.68) 289deg,
+    rgba(255,250,218,.92) 294deg,
+    rgba(255,192,74,.42) 300deg,
+    rgba(255,165,35,.08) 309deg,
+    transparent 318deg 360deg)!important;
+  mix-blend-mode:screen!important;
+  opacity:.92!important;
+  transform-origin:50% 50%!important;
+  animation:prizoraInnerBeamOrbit 6s linear infinite!important;
+}
+@keyframes prizoraInnerBeamOrbit{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.carousel-inner::after{animation:none!important;opacity:.55!important}}
 @keyframes prizoraRimOrbit{to{--prizora-rim-angle:360deg}}
 @media(max-width:700px){
   .carousel{perspective:900px!important;border-radius:19px!important}
