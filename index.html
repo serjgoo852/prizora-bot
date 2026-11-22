@@ -1192,15 +1192,15 @@
 
 
 <style id="prizora-fixed-center-rays">
-/* New centered rotating light rays behind the drum. No visible disc, ring or boundary. */
+/* Distinct asymmetric gold beams, centered on the premium carousel and visibly rotating behind it. */
 .carousel{
   position:relative!important;
   isolation:isolate!important;
+  overflow:visible!important;
   border:0!important;
   outline:0!important;
   box-shadow:none!important;
   background:transparent!important;
-  overflow:visible!important;
 }
 .carousel:before{
   content:""!important;
@@ -1210,30 +1210,55 @@
   z-index:0!important;
   left:50%!important;
   top:50%!important;
-  width:190%!important;
-  height:190%!important;
+  right:auto!important;
+  bottom:auto!important;
+  width:210%!important;
+  height:210%!important;
   inset:auto!important;
-  transform:translate(-50%,-50%)!important;
+  transform:translate(-50%,-50%) rotate(0deg)!important;
   transform-origin:50% 50%!important;
   pointer-events:none!important;
-  opacity:.92!important;
+  opacity:.94!important;
   border:0!important;
   border-radius:0!important;
   background:
-    repeating-conic-gradient(from 0deg at 50% 50%,
-      transparent 0deg 7deg,
-      rgba(255,220,145,.10) 7.5deg 9deg,
-      rgba(255,190,83,.62) 9.5deg 11deg,
-      rgba(255,235,180,.24) 11.5deg 13deg,
-      transparent 13.5deg 21deg),
-    repeating-conic-gradient(from 4deg at 50% 50%,
-      transparent 0deg 17deg,
-      rgba(255,202,105,.20) 17.5deg 18.5deg,
-      transparent 19deg 34deg)!important;
-  -webkit-mask-image:radial-gradient(ellipse at center,transparent 0 12%,#000 24%,#000 64%,transparent 83%)!important;
-  mask-image:radial-gradient(ellipse at center,transparent 0 12%,#000 24%,#000 64%,transparent 83%)!important;
-  filter:blur(1.6px)!important;
-  animation:prizora-rays-rotate 42s linear infinite!important;
+    conic-gradient(from 0deg at 50% 50%,
+      transparent 0deg 8deg,
+      rgba(255,190,78,.66) 9deg 12deg,
+      rgba(255,232,174,.22) 13deg 17deg,
+      transparent 18deg 39deg,
+      rgba(255,205,112,.18) 40deg 43deg,
+      transparent 44deg 71deg,
+      rgba(255,184,64,.72) 72deg 77deg,
+      rgba(255,231,170,.30) 78deg 81deg,
+      transparent 82deg 116deg,
+      rgba(255,205,112,.24) 117deg 120deg,
+      transparent 121deg 151deg,
+      rgba(255,190,78,.62) 152deg 157deg,
+      transparent 158deg 203deg,
+      rgba(255,225,158,.28) 204deg 207deg,
+      transparent 208deg 247deg,
+      rgba(255,184,64,.68) 248deg 253deg,
+      transparent 254deg 301deg,
+      rgba(255,211,128,.36) 302deg 306deg,
+      transparent 307deg 337deg,
+      rgba(255,190,78,.58) 338deg 342deg,
+      transparent 343deg 360deg),
+    conic-gradient(from 19deg at 50% 50%,
+      transparent 0deg 27deg,
+      rgba(255,214,139,.25) 28deg 30deg,
+      transparent 31deg 83deg,
+      rgba(255,190,78,.28) 84deg 87deg,
+      transparent 88deg 174deg,
+      rgba(255,228,168,.22) 175deg 178deg,
+      transparent 179deg 264deg,
+      rgba(255,190,78,.25) 265deg 268deg,
+      transparent 269deg 360deg)!important;
+  -webkit-mask-image:radial-gradient(ellipse at center,transparent 0 15%,rgba(0,0,0,.85) 27%,#000 58%,transparent 84%)!important;
+  mask-image:radial-gradient(ellipse at center,transparent 0 15%,rgba(0,0,0,.85) 27%,#000 58%,transparent 84%)!important;
+  filter:blur(1.2px)!important;
+  animation:prizora-rays-rotate 18s linear infinite!important;
+  will-change:transform!important;
 }
 .carousel:after{
   content:none!important;
@@ -1242,16 +1267,13 @@
   box-shadow:none!important;
   background:none!important;
 }
-.carousel-inner{position:relative!important;z-index:2!important;background:transparent!important}
+.carousel-inner,.slides{position:relative!important;z-index:2!important;background:transparent!important}
 @keyframes prizora-rays-rotate{
-  from{transform:translate(-50%,-50%) rotate(0deg)}
-  to{transform:translate(-50%,-50%) rotate(360deg)}
+  from{transform:translate(-50%,-50%) rotate(0deg)!important}
+  to{transform:translate(-50%,-50%) rotate(360deg)!important}
 }
 @media(max-width:520px){
-  .carousel:before{width:220%!important;height:220%!important;opacity:.86!important}
-}
-@media(prefers-reduced-motion:reduce){
-  .carousel:before{animation:none!important}
+  .carousel:before{width:235%!important;height:235%!important;opacity:.88!important}
 }
 </style>
 
