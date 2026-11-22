@@ -1003,55 +1003,63 @@
 
 
 <style id="prizora-restored-golden-light-effects">
-/* Warm continuous rim glow with one bright highlight travelling along the rounded perimeter. */
+/* Strong warm gold rim plus a bright arc travelling around the complete banner outline. */
+@property --prizora-rim-angle{
+  syntax:"<angle>";
+  inherits:false;
+  initial-value:0deg;
+}
 .carousel{
   position:relative!important;
   isolation:isolate!important;
   perspective:1050px!important;
   perspective-origin:50% 48%!important;
-  border:1px solid rgba(255,211,112,.82)!important;
+  border:1px solid rgba(255,218,130,.98)!important;
   border-radius:24px!important;
   background:
-    radial-gradient(ellipse at 50% 52%,rgba(255,190,67,.22),transparent 58%),
+    radial-gradient(ellipse at 50% 52%,rgba(255,190,67,.25),transparent 58%),
     linear-gradient(135deg,#70400d 0%,#d18a20 18%,#ffda79 34%,#754512 53%,#2b1908 72%,#bd7818 100%)!important;
   box-shadow:
     0 14px 40px #000c,
-    0 0 12px rgba(255,197,79,.68),
-    0 0 30px rgba(236,157,37,.42),
-    inset 0 0 22px rgba(255,220,137,.24)!important;
+    0 0 16px rgba(255,197,79,.88),
+    0 0 38px rgba(236,157,37,.62),
+    inset 0 0 25px rgba(255,220,137,.32)!important;
 }
-.carousel-inner{
-  perspective:none!important;
-  transform-style:preserve-3d!important;
-}
-/* A short luminous dash follows the border path; it never crosses the drum. */
+.carousel-inner{transform-style:preserve-3d!important}
+/* The conic highlight rotates in place; the rim itself stays fixed, so no diagonal beam crosses the prizes. */
 .carousel::before{
   content:""!important;
   position:absolute!important;
-  z-index:12!important;
-  top:0!important;left:0!important;
-  width:112px!important;height:4px!important;
-  padding:0!important;border:0!important;border-radius:99px!important;
+  inset:-1px!important;
+  z-index:40!important;
+  padding:3px!important;
+  border:0!important;
+  border-radius:inherit!important;
   pointer-events:none!important;
-  background:linear-gradient(90deg,transparent,rgba(255,190,63,.65) 22%,#fff8d9 52%,#fff 62%,rgba(255,190,63,.72) 82%,transparent)!important;
-  box-shadow:0 0 5px #fff0b2,0 0 12px #ffc34d,0 0 22px rgba(255,174,42,.95)!important;
-  -webkit-mask:none!important;mask:none!important;
-  filter:none!important;
-  offset-path:inset(2px round 22px)!important;
-  offset-distance:0%!important;
-  offset-rotate:0deg!important;
-  animation:prizoraPerimeterGlint 6.8s linear infinite!important;
+  background:conic-gradient(from var(--prizora-rim-angle),
+    transparent 0deg 292deg,
+    rgba(255,169,35,.12) 306deg,
+    rgba(255,195,73,.82) 321deg,
+    #fff5c7 331deg,
+    #ffffff 336deg,
+    #ffe08a 342deg,
+    rgba(255,174,42,.82) 350deg,
+    transparent 360deg)!important;
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0)!important;
+  -webkit-mask-composite:xor!important;
+  mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0)!important;
+  mask-composite:exclude!important;
+  box-shadow:0 0 8px rgba(255,216,125,.9),0 0 18px rgba(255,174,42,.8)!important;
+  animation:prizoraRimOrbit 5.2s linear infinite!important;
 }
-/* Keep the 3D prize cards unobstructed and remove only the distracting arrow controls. */
 .carousel-controls{display:none!important}
 .carousel .arrow{display:none!important}
 .carousel-inner::after{content:none!important;display:none!important}
-@keyframes prizoraPerimeterGlint{to{offset-distance:100%}}
+@keyframes prizoraRimOrbit{to{--prizora-rim-angle:360deg}}
 @media(max-width:700px){
   .carousel{perspective:900px!important;border-radius:19px!important}
-  .carousel::before{width:86px!important;offset-path:inset(2px round 17px)!important;animation-duration:7.8s!important}
 }
-@media(prefers-reduced-motion:reduce){.carousel::before{animation:none!important;opacity:.75!important}}
+@media(prefers-reduced-motion:reduce){.carousel::before{animation:none!important;opacity:.9!important}}
 </style>
 
 </head><body><main class="wrap">
