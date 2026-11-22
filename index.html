@@ -1319,6 +1319,26 @@
 <a href="#user-ads"><b>📢</b>Реклама канала</a>
 <a href="#user-support"><b>🎧</b>Поддержка</a>
 </div></section>
+<div class="section-head"><h2>👑 Активные розыгрыши</h2><span class="pro-section-label">PRO · ЛЕНТА РОЗЫГРЫШЕЙ</span></div>
+<section aria-label="Активные розыгрыши тарифа PRO" class="pro-contest-slider">
+<div class="pro-contest-track" id="proContestTrack">
+<article class="pro-contest-card">
+<div class="pro-contest-art"><span>🎧</span><i>PRO</i></div>
+<div class="pro-contest-info"><span class="pro-contest-kicker">✦ PREMIUM ПРИЗ</span><h3>AirPods Pro</h3><p>Розыгрыш для участников PRIZORA PRO</p><div class="pro-contest-meta"><span>♟ 12 835 участников</span><span>◷ 2д. 14ч.</span></div><div class="pro-contest-progress"><i style="width:68%"></i></div><a class="pro-contest-join" href="#">Участвовать <b>→</b></a></div>
+</article>
+<article class="pro-contest-card">
+<div class="pro-contest-art"><span>⌚</span><i>PRO</i></div>
+<div class="pro-contest-info"><span class="pro-contest-kicker">✦ ВЫБОР PRO</span><h3>Умные часы</h3><p>Следующий шанс выиграть ценный приз</p><div class="pro-contest-meta"><span>♟ 8 420 участников</span><span>◷ 4д. 06ч.</span></div><div class="pro-contest-progress"><i style="width:46%"></i></div><a class="pro-contest-join" href="#">Участвовать <b>→</b></a></div>
+</article>
+<article class="pro-contest-card">
+<div class="pro-contest-art"><span>🎮</span><i>PRO</i></div>
+<div class="pro-contest-info"><span class="pro-contest-kicker">✦ СПЕЦИАЛЬНЫЙ РОЗЫГРЫШ</span><h3>Игровая приставка</h3><p>Участвуй в розыгрыше для PRO</p><div class="pro-contest-meta"><span>♟ 6 175 участников</span><span>◷ 6д. 02ч.</span></div><div class="pro-contest-progress"><i style="width:32%"></i></div><a class="pro-contest-join" href="#">Участвовать <b>→</b></a></div>
+</article>
+</div>
+<button aria-label="Предыдущий розыгрыш" class="pro-contest-arrow prev" id="proContestPrev" type="button">‹</button>
+<button aria-label="Следующий розыгрыш" class="pro-contest-arrow next" id="proContestNext" type="button">›</button>
+<div class="pro-contest-foot"><span>✦ PRIZORA PRO</span><span>Листай, чтобы увидеть другие призы</span></div>
+</section>
 <div class="section-head"><h2>⭐ Преимущества PRIZORA</h2></div><section class="benefits"><div><b>🛡</b>Честные розыгрыши</div><div><b>⚡</b>Против накруток</div><div><b>💎</b>Прозрачные результаты</div><div><b>🎁</b>Быстрая поддержка</div></section>
 </main><footer class="bottom"><nav><a class="active" href="#"><b>⌂</b>Главная</a><a href="#contests"><b>🏆</b>Конкурсы</a><a href="#profile"><b>♛</b>Профиль</a><a href="#menu"><b>☰</b>Меню</a></nav></footer>
 <script>
@@ -1430,10 +1450,9 @@
  const dotsBox=document.getElementById('proContestDots');
  const prev=document.getElementById('proContestPrev');
  const next=document.getElementById('proContestNext');
- if(!slider||!track||!dotsBox||!prev||!next)return;
+ if(!slider||!track||!prev||!next)return;
  const cards=[...track.children];let index=0,startX=0,timer=null,paused=false;
- cards.forEach((_,i)=>{const d=document.createElement('button');d.type='button';d.className='pro-contest-dot'+(i===0?' active':'');d.setAttribute('aria-label',`Розыгрыш ${i+1}`);d.addEventListener('click',()=>show(i,true));dotsBox.appendChild(d)});
- const dots=[...dotsBox.children];
+ const dots=[];
  function show(i,manual=false){index=(i+cards.length)%cards.length;track.style.transform=`translateX(-${index*100}%)`;dots.forEach((d,n)=>d.classList.toggle('active',n===index));if(manual)restart()}
  function stop(){if(timer)clearInterval(timer);timer=null}
  function start(){stop();if(!paused&&!matchMedia('(prefers-reduced-motion: reduce)').matches)timer=setInterval(()=>show(index+1),4700)}
