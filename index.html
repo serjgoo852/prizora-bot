@@ -757,10 +757,10 @@
    });
  }
  loadNearby(0);
- const cardWidth=window.innerWidth<=700?Math.min(330,window.innerWidth*.86):300;\n const radius=Math.max(850,Math.ceil(cardWidth/(2*Math.sin(Math.PI/count))+350));
+ const cardWidth=window.innerWidth<=700?Math.min(330,window.innerWidth*.86):300;\n const radius=Math.max(520,Math.ceil(cardWidth/(2*Math.sin(Math.PI/count))+24));
  const step=360/count;
  cards.forEach((card,i)=>{
-   card.style.transform=`translate(-50%,-50%) rotateY(${i*step}deg) translateZ(${radius}px)`;
+   card.style.setProperty('transform',`translate(-50%,-50%) rotateY(${i*step}deg) translateZ(${radius}px)`,'important');
    const dot=document.createElement('button');
    dot.type='button';dot.className='dot'+(i===0?' active':'');
    dot.setAttribute('aria-label',`Приз ${i+1}`);
