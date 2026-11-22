@@ -1505,4 +1505,25 @@ document.addEventListener('DOMContentLoaded',()=>{
 }
 .carousel-inner,.slides#slides{position:relative!important;z-index:2!important}
 </style>
+
+<style id="prizora-pro-artwork-transparent-edge">
+/* Soften the baked rectangular perimeter of the existing approved PRO artwork.
+   The original character/artwork remains unchanged; only its outer edge fades away. */
+.pro-showcase>.approved-hero{
+  background:transparent!important;
+  border:0!important;
+  outline:0!important;
+  box-shadow:none!important;
+  border-radius:0!important;
+  overflow:visible!important;
+}
+.pro-showcase>.approved-hero img{
+  display:block!important;
+  width:100%!important;
+  height:auto!important;
+  object-fit:contain!important;
+  -webkit-mask-image:radial-gradient(ellipse 76% 76% at 50% 48%,#000 55%,rgba(0,0,0,.92) 68%,rgba(0,0,0,.48) 84%,transparent 100%)!important;
+  mask-image:radial-gradient(ellipse 76% 76% at 50% 48%,#000 55%,rgba(0,0,0,.92) 68%,rgba(0,0,0,.48) 84%,transparent 100%)!important;
+}
+</style>
 </body></html>
