@@ -1388,6 +1388,25 @@
  drum.addEventListener('focusout',()=>{paused=false});
  drum.addEventListener('touchstart',e=>{startX=e.touches[0].clientX;dragging=true;paused=true},{passive:true});
  drum.addEventListener('touchend',e=>{if(!dragging)return;dragging=false;const dx=e.changedTouches[0].clientX-startX;if(Math.abs(dx)>18)go(Math.round(angle/step)+(dx<0?1:-1),true);paused=false},{passive:true});
+ /* Desktop: drag the 3D drum with the left mouse button, like a swipe on mobile. */
+ let mouseDown=false,mouseStartX=0,mouseLastX=0;
+ drum.addEventListener('mousedown',e=>{
+   if(e.button!==0)return;
+   mouseDown=true;dragging=true;paused=true;
+   mouseStartX=mouseLastX=e.clientX;
+   e.preventDefault();
+ });
+ document.addEventListener('mousemove',e=>{
+   if(!mouseDown)return;
+   mouseLastX=e.clientX;
+ });
+ document.addEventListener('mouseup',e=>{
+   if(!mouseDown)return;
+   mouseDown=false;dragging=false;
+   const dx=e.clientX-mouseStartX;
+   if(Math.abs(dx)>18)go(Math.round(angle/step)+(dx<0?1:-1),true);
+   paused=drum.matches(':hover')?true:false;
+ });
  paint();raf=requestAnimationFrame(animate);
 })();
  const menuPanel=document.getElementById('menu');
