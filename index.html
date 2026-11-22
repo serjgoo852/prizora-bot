@@ -1739,7 +1739,7 @@ section,article,header,footer,nav{min-width:0}
 </svg></div>
 <script id="prizora-runner-script">
 (()=>{const bot=document.getElementById('prizora-runner');if(!bot)return;
- const targets=[document.querySelector('.approved-hero'),document.querySelector('.carousel'),document.querySelector('.pro-contest-slider')].filter(Boolean);
+ const targets=[document.querySelector('.approved-hero'),document.querySelector('.carousel'),document.querySelector('.pro-contest-slider'),document.querySelector('.homepage-ad-promo')].filter(Boolean);
  if(!targets.length)return;
  let active=-1,raf=0,timer=0;
  const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1747,7 +1747,8 @@ section,article,header,footer,nav{min-width:0}
   raf=0;const vh=window.innerHeight;let best=0,score=Infinity;
   targets.forEach((el,i)=>{const r=el.getBoundingClientRect();const center=r.top+r.height/2;const distance=Math.abs(center-vh*.43);if(distance<score){score=distance;best=i;}});
   const rect=targets[best].getBoundingClientRect();
-  let y=rect.top+Math.min(rect.height*.34,150)-54; if(best===1){const below=rect.bottom+8;y=(below+108<vh)?below:rect.top-116;} y=Math.max(82,Math.min(vh-118,y));
+  const h=bot.offsetHeight||108; const visibleTop=Math.max(0,rect.top); const visibleBottom=Math.min(vh,rect.bottom);
+  let y=rect.top+(rect.height-h)/2; if(visibleBottom-visibleTop>=h)y=Math.max(visibleTop,Math.min(visibleBottom-h,y)); else y=Math.max(8,Math.min(vh-h-8,(visibleTop+visibleBottom-h)/2));
   bot.style.transform='translate3d(0,'+Math.round(y)+'px,0)';
   bot.classList.add('is-visible');
   if(best!==active){active=best;bot.classList.remove('is-pointing');bot.classList.add('is-running');clearTimeout(timer);timer=setTimeout(()=>{bot.classList.remove('is-running');bot.classList.add('is-pointing');},reduced?0:850);}
