@@ -1192,7 +1192,7 @@
 
 
 <style id="prizora-fixed-center-rays">
-/* Distinct asymmetric gold beams, centered on the premium carousel and visibly rotating behind it. */
+/* Rays rotate independently around the visual center of the drum; no rotating transform is used. */
 .carousel{
   position:relative!important;
   isolation:isolate!important;
@@ -1215,7 +1215,9 @@
   width:210%!important;
   height:210%!important;
   inset:auto!important;
-  transform:translate(-50%,-50%) rotate(0deg)!important;
+  translate:-50% -50%!important;
+  rotate:0deg;
+  transform:none!important;
   transform-origin:50% 50%!important;
   pointer-events:none!important;
   opacity:.94!important;
@@ -1224,56 +1226,53 @@
   background:
     conic-gradient(from 0deg at 50% 50%,
       transparent 0deg 8deg,
-      rgba(255,190,78,.66) 9deg 12deg,
-      rgba(255,232,174,.22) 13deg 17deg,
-      transparent 18deg 39deg,
-      rgba(255,205,112,.18) 40deg 43deg,
-      transparent 44deg 71deg,
-      rgba(255,184,64,.72) 72deg 77deg,
-      rgba(255,231,170,.30) 78deg 81deg,
-      transparent 82deg 116deg,
-      rgba(255,205,112,.24) 117deg 120deg,
-      transparent 121deg 151deg,
-      rgba(255,190,78,.62) 152deg 157deg,
-      transparent 158deg 203deg,
-      rgba(255,225,158,.28) 204deg 207deg,
-      transparent 208deg 247deg,
-      rgba(255,184,64,.68) 248deg 253deg,
-      transparent 254deg 301deg,
-      rgba(255,211,128,.36) 302deg 306deg,
-      transparent 307deg 337deg,
-      rgba(255,190,78,.58) 338deg 342deg,
-      transparent 343deg 360deg),
+      rgba(255,190,78,.72) 9deg 13deg,
+      rgba(255,232,174,.24) 14deg 18deg,
+      transparent 19deg 39deg,
+      rgba(255,205,112,.22) 40deg 44deg,
+      transparent 45deg 71deg,
+      rgba(255,184,64,.82) 72deg 78deg,
+      rgba(255,231,170,.32) 79deg 83deg,
+      transparent 84deg 116deg,
+      rgba(255,205,112,.28) 117deg 121deg,
+      transparent 122deg 151deg,
+      rgba(255,190,78,.68) 152deg 158deg,
+      transparent 159deg 203deg,
+      rgba(255,225,158,.32) 204deg 208deg,
+      transparent 209deg 247deg,
+      rgba(255,184,64,.78) 248deg 254deg,
+      transparent 255deg 301deg,
+      rgba(255,211,128,.40) 302deg 307deg,
+      transparent 308deg 337deg,
+      rgba(255,190,78,.64) 338deg 343deg,
+      transparent 344deg 360deg),
     conic-gradient(from 19deg at 50% 50%,
       transparent 0deg 27deg,
-      rgba(255,214,139,.25) 28deg 30deg,
-      transparent 31deg 83deg,
-      rgba(255,190,78,.28) 84deg 87deg,
-      transparent 88deg 174deg,
-      rgba(255,228,168,.22) 175deg 178deg,
-      transparent 179deg 264deg,
-      rgba(255,190,78,.25) 265deg 268deg,
-      transparent 269deg 360deg)!important;
-  -webkit-mask-image:radial-gradient(ellipse at center,transparent 0 15%,rgba(0,0,0,.85) 27%,#000 58%,transparent 84%)!important;
-  mask-image:radial-gradient(ellipse at center,transparent 0 15%,rgba(0,0,0,.85) 27%,#000 58%,transparent 84%)!important;
-  filter:blur(1.2px)!important;
+      rgba(255,214,139,.30) 28deg 31deg,
+      transparent 32deg 83deg,
+      rgba(255,190,78,.32) 84deg 88deg,
+      transparent 89deg 174deg,
+      rgba(255,228,168,.28) 175deg 179deg,
+      transparent 180deg 264deg,
+      rgba(255,190,78,.30) 265deg 269deg,
+      transparent 270deg 360deg)!important;
+  -webkit-mask-image:radial-gradient(ellipse at center,transparent 0 14%,rgba(0,0,0,.9) 25%,#000 60%,transparent 86%)!important;
+  mask-image:radial-gradient(ellipse at center,transparent 0 14%,rgba(0,0,0,.9) 25%,#000 60%,transparent 86%)!important;
+  filter:blur(1.1px)!important;
   animation:prizora-rays-rotate 18s linear infinite!important;
-  will-change:transform!important;
+  will-change:rotate!important;
 }
-.carousel:after{
-  content:none!important;
-  display:none!important;
-  border:0!important;
-  box-shadow:none!important;
-  background:none!important;
-}
+.carousel:after{content:none!important;display:none!important}
 .carousel-inner,.slides{position:relative!important;z-index:2!important;background:transparent!important}
 @keyframes prizora-rays-rotate{
-  from{transform:translate(-50%,-50%) rotate(0deg)!important}
-  to{transform:translate(-50%,-50%) rotate(360deg)!important}
+  from{rotate:0deg}
+  to{rotate:360deg}
 }
-@media(max-width:520px){
-  .carousel:before{width:235%!important;height:235%!important;opacity:.88!important}
+@media(max-width:700px){
+  .carousel:before{top:44%!important;width:235%!important;height:235%!important;opacity:.9!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .carousel:before{animation:prizora-rays-rotate 18s linear infinite!important}
 }
 </style>
 
