@@ -1192,14 +1192,15 @@
 
 
 <style id="prizora-fixed-center-rays">
-/* Final ray layer: explicitly re-enable it after the mobile polish rule hid :before. */
+/* New centered rotating light rays behind the drum. No visible disc, ring or boundary. */
 .carousel{
-  background:transparent!important;
-  border:0!important;
-  box-shadow:none!important;
-  outline:0!important;
-  overflow:visible!important;
+  position:relative!important;
   isolation:isolate!important;
+  border:0!important;
+  outline:0!important;
+  box-shadow:none!important;
+  background:transparent!important;
+  overflow:visible!important;
 }
 .carousel:before{
   content:""!important;
@@ -1207,34 +1208,47 @@
   visibility:visible!important;
   position:absolute!important;
   z-index:0!important;
-  inset:-42% -28%!important;
+  left:50%!important;
+  top:50%!important;
+  width:190%!important;
+  height:190%!important;
+  inset:auto!important;
+  transform:translate(-50%,-50%)!important;
+  transform-origin:50% 50%!important;
   pointer-events:none!important;
-  opacity:.9!important;
+  opacity:.92!important;
+  border:0!important;
+  border-radius:0!important;
   background:
     repeating-conic-gradient(from 0deg at 50% 50%,
-      transparent 0deg 11deg,
-      rgba(255,214,126,.08) 11.5deg 13deg,
-      rgba(255,190,75,.48) 13.4deg 16deg,
-      rgba(255,226,157,.18) 16.4deg 18deg,
-      transparent 18.5deg 29deg),
-    radial-gradient(ellipse at center,rgba(255,184,66,.2) 0%,rgba(180,105,28,.09) 36%,transparent 70%)!important;
-  filter:blur(1.2px)!important;
-  transform-origin:50% 50%!important;
-  animation:prizora-rays-rotate 34s linear infinite!important;
+      transparent 0deg 7deg,
+      rgba(255,220,145,.10) 7.5deg 9deg,
+      rgba(255,190,83,.62) 9.5deg 11deg,
+      rgba(255,235,180,.24) 11.5deg 13deg,
+      transparent 13.5deg 21deg),
+    repeating-conic-gradient(from 4deg at 50% 50%,
+      transparent 0deg 17deg,
+      rgba(255,202,105,.20) 17.5deg 18.5deg,
+      transparent 19deg 34deg)!important;
+  -webkit-mask-image:radial-gradient(ellipse at center,transparent 0 12%,#000 24%,#000 64%,transparent 83%)!important;
+  mask-image:radial-gradient(ellipse at center,transparent 0 12%,#000 24%,#000 64%,transparent 83%)!important;
+  filter:blur(1.6px)!important;
+  animation:prizora-rays-rotate 42s linear infinite!important;
 }
 .carousel:after{
   content:none!important;
   display:none!important;
-  box-shadow:none!important;
   border:0!important;
+  box-shadow:none!important;
+  background:none!important;
 }
 .carousel-inner{position:relative!important;z-index:2!important;background:transparent!important}
 @keyframes prizora-rays-rotate{
-  from{transform:rotate(0deg)}
-  to{transform:rotate(360deg)}
+  from{transform:translate(-50%,-50%) rotate(0deg)}
+  to{transform:translate(-50%,-50%) rotate(360deg)}
 }
 @media(max-width:520px){
-  .carousel:before{inset:-38% -42%!important;opacity:.84!important}
+  .carousel:before{width:220%!important;height:220%!important;opacity:.86!important}
 }
 @media(prefers-reduced-motion:reduce){
   .carousel:before{animation:none!important}
