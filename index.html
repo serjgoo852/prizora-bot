@@ -1543,4 +1543,45 @@ document.addEventListener('DOMContentLoaded',()=>{
     rgba(0,0,0,.24) 91%,transparent 100%)!important;
 }
 </style>
+
+<style id="prizora-real-alpha-reset">
+.approved-hero img{mask-image:none!important;-webkit-mask-image:none!important}
+</style>
+<script id="prizora-real-alpha-processing">
+(()=> {
+  function makeTransparent(img){
+    if(!img || img.dataset.prizoraAlphaDone || !img.complete || !img.naturalWidth) return;
+    img.dataset.prizoraAlphaDone='working';
+    try{
+      const c=document.createElement('canvas'),w=img.naturalWidth,h=img.naturalHeight;
+      c.width=w;c.height=h;
+      const x=c.getContext('2d',{willReadFrequently:true});
+      x.drawImage(img,0,0,w,h);
+      const frame=x.getImageData(0,0,w,h),p=frame.data;
+      const cx=(w-1)/2,cy=(h-1)/2,rx=w*.505,ry=h*.505;
+      for(let yy=0;yy<h;yy++){
+        for(let xx=0;xx<w;xx++){
+          const dx=(xx-cx)/rx,dy=(yy-cy)/ry;
+          const d=Math.sqrt(dx*dx+dy*dy);
+          let a=1;
+          if(d>.70){const t=Math.max(0,Math.min(1,(d-.70)/.30));a=1-(t*t*(3-2*t));}
+          const k=(yy*w+xx)*4+3;
+          p[k]=Math.round(p[k]*a);
+        }
+      }
+      x.putImageData(frame,0,0);
+      img.src=c.toDataURL('image/png');
+      img.dataset.prizoraAlphaDone='yes';
+    }catch(e){img.dataset.prizoraAlphaDone='error';}
+  }
+  function scan(){document.querySelectorAll('.approved-hero img').forEach(img=>{
+    if(img.complete)makeTransparent(img);
+    else img.addEventListener('load',()=>makeTransparent(img),{once:true});
+  });}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',scan);
+  else scan();
+  new MutationObserver(scan).observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
+
 </body></html>
