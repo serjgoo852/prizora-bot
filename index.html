@@ -778,17 +778,20 @@
    dot.addEventListener('click',()=>go(i,true));dots.appendChild(dot);
  });
  const dotsList=[...dots.children];
+ let paintedIndex=-1;
  function paint(){
-   /* setProperty(..., important) deliberately overrides an old legacy !important rule */
+   /* Keep the 3D rotation lightweight while prize images download. */
    track.style.setProperty('transform',`translateZ(-${radius}px) rotateY(${-angle}deg)`,'important');
    index=((Math.round(angle/step)%count)+count)%count;
-   loadNearby(index);
-   cards.forEach((card,i)=>{
-     const d=(i-index+count)%count,near=Math.min(d,count-d);
-     card.style.opacity=near>Math.ceil(count/2)?'.45':'1';
-     card.style.filter=near===0?'none':`brightness(${near===1?.88:.68})`;
-   });
-   dotsList.forEach((d,i)=>d.classList.toggle('active',i===index));
+   if(index!==paintedIndex){
+     paintedIndex=index;
+     cards.forEach((card,i)=>{
+       const d=(i-index+count)%count,near=Math.min(d,count-d);
+       card.style.opacity=near>Math.ceil(count/2)?'.45':'1';
+       card.style.filter=near===0?'none':`brightness(${near===1?.88:.68})`;
+     });
+     dotsList.forEach((d,i)=>d.classList.toggle('active',i===index));
+   }
  }
  function go(i,manual=false){angle=i*step;paint();if(manual)paused=false}
  const isSmallScreen=window.matchMedia('(max-width:700px)').matches;
