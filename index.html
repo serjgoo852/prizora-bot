@@ -1603,4 +1603,53 @@ document.addEventListener('DOMContentLoaded',()=>{
   .pro-copy{max-width:calc(100% - 145px)!important}
 }
 </style>
+
+<style id="prizora-pro-presenter-size-final">
+/* Keep the approved presenter, but give the PRO copy its own clear space. */
+.pro-showcase{position:relative!important;min-height:232px!important;height:232px!important;overflow:hidden!important}
+.pro-showcase>.pro-fade-item,
+.pro-showcase>.pro-fade-item.active{
+  box-sizing:border-box!important;
+  padding:12px 10px 42px!important;
+}
+.pro-showcase .pro-copy{
+  width:100%!important;
+  max-width:calc(100% - 112px)!important;
+  min-width:0!important;
+  position:relative!important;
+  z-index:3!important;
+}
+.pro-showcase>.approved-hero{
+  position:absolute!important;
+  right:8px!important;
+  top:50%!important;
+  transform:translateY(-50%)!important;
+  width:108px!important;
+  max-width:108px!important;
+  height:auto!important;
+  margin:0!important;
+  z-index:6!important;
+}
+.pro-showcase>.approved-hero img{
+  display:block!important;
+  width:100%!important;
+  height:auto!important;
+  max-height:142px!important;
+  object-fit:contain!important;
+}
+.pro-showcase>.pro-note{
+  left:10px!important;
+  bottom:8px!important;
+  max-width:calc(100% - 126px)!important;
+  font-size:9px!important;
+}
+@media(max-width:390px){
+  .pro-showcase{height:218px!important;min-height:218px!important}
+  .pro-showcase .pro-copy{max-width:calc(100% - 98px)!important}
+  .pro-showcase>.approved-hero{width:94px!important;max-width:94px!important;right:5px!important}
+  .pro-showcase>.approved-hero img{max-height:128px!important}
+  .pro-showcase>.pro-note{max-width:calc(100% - 108px)!important}
+}
+</style>
+
 </body></html>
