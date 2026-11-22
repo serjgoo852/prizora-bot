@@ -1003,7 +1003,7 @@
 
 
 <style id="prizora-restored-golden-light-effects">
-/* Strong warm gold rim plus a bright arc travelling around the complete banner outline. */
+/* Premium gold frame: steady warm halo with one narrow travelling highlight on the rim. */
 @property --prizora-rim-angle{
   syntax:"<angle>";
   inherits:false;
@@ -1012,78 +1012,61 @@
 .carousel{
   position:relative!important;
   isolation:isolate!important;
-  perspective:1050px!important;
-  perspective-origin:50% 48%!important;
+  perspective:860px!important;
+  perspective-origin:50% 46%!important;
   border:1px solid rgba(255,218,130,.98)!important;
   border-radius:24px!important;
   background:
-    radial-gradient(ellipse at 50% 52%,rgba(255,190,67,.25),transparent 58%),
+    radial-gradient(ellipse at 50% 52%,rgba(255,190,67,.22),transparent 58%),
     linear-gradient(135deg,#70400d 0%,#d18a20 18%,#ffda79 34%,#754512 53%,#2b1908 72%,#bd7818 100%)!important;
   box-shadow:
     0 14px 40px #000c,
-    0 0 16px rgba(255,197,79,.88),
-    0 0 38px rgba(236,157,37,.62),
-    inset 0 0 25px rgba(255,220,137,.32)!important;
+    0 0 12px rgba(255,197,79,.78),
+    0 0 30px rgba(236,157,37,.48),
+    inset 0 0 22px rgba(255,220,137,.24)!important;
 }
-.carousel-inner{transform-style:preserve-3d!important}
-/* The conic highlight rotates in place; the rim itself stays fixed, so no diagonal beam crosses the prizes. */
+/* A thin moving arc is clipped to the rounded perimeter; it never crosses the prizes. */
 .carousel::before{
   content:""!important;
   position:absolute!important;
   inset:-1px!important;
   z-index:40!important;
-  padding:3px!important;
+  padding:2px!important;
   border:0!important;
   border-radius:inherit!important;
   pointer-events:none!important;
   background:conic-gradient(from var(--prizora-rim-angle),
-    transparent 0deg 292deg,
-    rgba(255,169,35,.12) 306deg,
-    rgba(255,195,73,.82) 321deg,
-    #fff5c7 331deg,
-    #ffffff 336deg,
-    #ffe08a 342deg,
-    rgba(255,174,42,.82) 350deg,
+    transparent 0deg 326deg,
+    rgba(255,169,35,.18) 332deg,
+    rgba(255,195,73,.9) 340deg,
+    #fff8d7 345deg,
+    #ffffff 348deg,
+    #ffe08a 352deg,
+    rgba(255,174,42,.82) 356deg,
     transparent 360deg)!important;
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0)!important;
   -webkit-mask-composite:xor!important;
   mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0)!important;
   mask-composite:exclude!important;
-  box-shadow:0 0 8px rgba(255,216,125,.9),0 0 18px rgba(255,174,42,.8)!important;
+  filter:drop-shadow(0 0 5px rgba(255,216,125,.95)) drop-shadow(0 0 10px rgba(255,174,42,.7))!important;
   animation:prizoraRimOrbit 5.2s linear infinite!important;
 }
-.carousel-controls{display:none!important}
-.carousel .arrow{display:none!important}
-/* Restore the moving golden beam INSIDE the banner, independently of the bright fixed rim. */
-.carousel-inner{position:relative!important}
-.carousel-inner::after{
-  content:""!important;
-  position:absolute!important;
-  inset:-150%!important;
-  z-index:20!important;
-  display:block!important;
-  pointer-events:none!important;
-  background:conic-gradient(from 0deg at 50% 50%,
-    transparent 0deg 258deg,
-    rgba(255,174,45,.025) 270deg,
-    rgba(255,191,75,.18) 281deg,
-    rgba(255,224,145,.68) 289deg,
-    rgba(255,250,218,.92) 294deg,
-    rgba(255,192,74,.42) 300deg,
-    rgba(255,165,35,.08) 309deg,
-    transparent 318deg 360deg)!important;
-  mix-blend-mode:screen!important;
-  opacity:.92!important;
-  transform-origin:50% 50%!important;
-  animation:prizoraInnerBeamOrbit 6s linear infinite!important;
+/* Remove the old oval floor and the broad rotating spotlight that crossed card content. */
+.carousel::after{content:none!important;display:none!important}
+.carousel-inner::after{content:none!important;display:none!important;animation:none!important}
+/* Strengthen the actual cylindrical depth without changing card artwork or geometry. */
+.carousel-inner{transform-style:preserve-3d!important}
+.slides#slides{transform-style:preserve-3d!important}
+.slides#slides>.slide{
+  box-shadow:0 24px 42px rgba(0,0,0,.78),inset 0 0 30px rgba(255,202,85,.22),0 0 16px rgba(232,171,62,.12)!important;
 }
-@keyframes prizoraInnerBeamOrbit{to{transform:rotate(360deg)}}
-@media(prefers-reduced-motion:reduce){.carousel-inner::after{animation:none!important;opacity:.55!important}}
 @keyframes prizoraRimOrbit{to{--prizora-rim-angle:360deg}}
 @media(max-width:700px){
-  .carousel{perspective:900px!important;border-radius:19px!important}
+  .carousel{perspective:760px!important;border-radius:19px!important}
 }
-@media(prefers-reduced-motion:reduce){.carousel::before{animation:none!important;opacity:.9!important}}
+@media(prefers-reduced-motion:reduce){
+  .carousel::before{animation:none!important;opacity:.9!important}
+}
 </style>
 
 </head><body><main class="wrap">
