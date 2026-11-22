@@ -670,9 +670,11 @@
 .carousel-inner,.slides#slides{perspective:none!important;transform-style:preserve-3d!important}
 </style>
 <style id="prizora-pro-presenter-no-frame">
-/* Remove only the rectangular frame around the presenter in the PRO banner. */
+/* Blend the presenter into the PRO banner: soften the hard image perimeter
+   (including any edge baked into the artwork) and keep the caption unobstructed. */
 .pro-showcase>.approved-hero{
   border:0!important;
+  outline:0!important;
   box-shadow:none!important;
   background:transparent!important;
   border-radius:0!important;
@@ -680,8 +682,29 @@
 }
 .pro-showcase>.approved-hero img{
   border:0!important;
+  outline:0!important;
   box-shadow:none!important;
   border-radius:0!important;
+  -webkit-mask-image:radial-gradient(ellipse 82% 78% at 52% 48%,#000 65%,rgba(0,0,0,.96) 76%,transparent 100%)!important;
+  mask-image:radial-gradient(ellipse 82% 78% at 52% 48%,#000 65%,rgba(0,0,0,.96) 76%,transparent 100%)!important;
+}
+/* Move the label into the clear text area and lift it above every banner layer. */
+.pro-showcase>.pro-note{
+  z-index:10!important;
+  left:22px!important;
+  right:auto!important;
+  bottom:12px!important;
+  max-width:calc(68% - 30px)!important;
+  padding:5px 9px!important;
+  border:1px solid rgba(185,145,75,.38)!important;
+  border-radius:8px!important;
+  background:rgba(12,9,5,.82)!important;
+  color:#f0d49a!important;
+  font-size:10px!important;
+  line-height:1.25!important;
+  letter-spacing:.55px!important;
+  white-space:normal!important;
+  text-shadow:0 1px 3px #000!important;
 }
 </style>
 </head><body><main class="wrap">
