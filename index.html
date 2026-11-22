@@ -1131,6 +1131,48 @@
 @media(max-width:700px){.carousel #dots.dots{bottom:7px!important;gap:7px!important}}
 </style>
 
+
+<style id="prizora-drum-rays-experiment">
+/* Reversible visual experiment: remove the gold frame/glow and place animated rays BEHIND the untouched 3D drum. */
+.carousel{
+  border:0!important;
+  outline:0!important;
+  box-shadow:none!important;
+  background:transparent!important;
+  isolation:isolate!important;
+}
+.carousel:before{
+  content:""!important;
+  display:block!important;
+  position:absolute!important;
+  z-index:0!important;
+  inset:-42% -28%!important;
+  pointer-events:none!important;
+  opacity:.78!important;
+  background:
+    repeating-conic-gradient(from 0deg at 50% 50%,
+      transparent 0deg 11deg,
+      rgba(255,214,126,.04) 11.5deg 12deg,
+      rgba(255,190,75,.42) 12.4deg 13.1deg,
+      rgba(255,226,157,.12) 13.5deg 14deg,
+      transparent 14.5deg 28deg),
+    radial-gradient(ellipse at center,rgba(255,184,66,.20) 0%,rgba(180,105,28,.09) 36%,transparent 70%)!important;
+  filter:blur(1.2px)!important;
+  animation:prizora-rays-rotate 24s linear infinite!important;
+  transform-origin:50% 50%!important;
+}
+.carousel:after{content:none!important;display:none!important;box-shadow:none!important;border:0!important}
+.carousel-inner{position:relative!important;z-index:2!important}
+.carousel-controls{z-index:12!important}
+@keyframes prizora-rays-rotate{
+  from{transform:rotate(0deg) scale(1.04)}
+  to{transform:rotate(360deg) scale(1.04)}
+}
+@media(prefers-reduced-motion:reduce){
+  .carousel:before{animation:none!important}
+}
+</style>
+
 <style id="prizora-hide-drum-pagination">
 /* Remove the distracting pagination dots beneath the prize drum. */
 .carousel #dots.dots{display:none!important;visibility:hidden!important}
