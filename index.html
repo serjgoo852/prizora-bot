@@ -1108,8 +1108,9 @@
 /* Remove the moving light from the prize faces; keep the premium frame calm. */
 .carousel:before{content:none!important;display:none!important;animation:none!important;background:none!important}
 .carousel{
- border-color:rgba(255,211,112,.72)!important;
- box-shadow:0 14px 34px #000b,0 0 10px rgba(255,190,65,.28),inset 0 0 18px rgba(255,210,120,.07)!important;
+ border-color:rgba(255,218,130,.98)!important;
+ /* Restore the gold outer perimeter glow only; keep card faces free of moving glare. */
+ box-shadow:0 14px 34px #000b,0 0 18px rgba(255,197,79,.92),0 0 38px rgba(236,157,37,.68),inset 0 0 16px rgba(255,210,120,.10)!important;
 }
 @media(max-width:700px){
  .carousel{border-radius:19px!important}
