@@ -1469,4 +1469,21 @@ document.addEventListener('DOMContentLoaded',()=>{
   else startPrizoraRays();
 })();
 </script>
+
+<style id="prizora-single-moving-ray-layer">
+/* The DOM ray layer is the ONLY visible ray source; suppress every legacy pseudo-ray. */
+.carousel::before,.carousel::after{
+  content:none!important;
+  display:none!important;
+  animation:none!important;
+  background:none!important;
+  box-shadow:none!important;
+}
+.carousel .prizora-rays-layer{
+  display:block!important;
+  visibility:visible!important;
+  z-index:1!important;
+}
+.carousel-inner,.slides#slides{position:relative!important;z-index:2!important}
+</style>
 </body></html>
