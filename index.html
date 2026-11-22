@@ -1730,8 +1730,8 @@ section,article,header,footer,nav{min-width:0}
   <rect x="33" y="43" width="36" height="39" rx="10" fill="url(#prGold)"/>
   <path d="M42 55h18m-15 9h12" stroke="#7d4b0d" stroke-width="3" stroke-linecap="round"/>
   <circle cx="51" cy="73" r="3" fill="#fff0ae" stroke="none"/>
-  <path class="runner-arm" d="M66 49 Q78 42 83 29 L91 22" fill="none" stroke="url(#prGold)" stroke-width="8" stroke-linecap="round"/>
-  <path d="M88 24l8-5-1 10" fill="none" stroke="#ffc43d" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path class="runner-arm" d="M35 49 Q23 42 17 29 L9 22" fill="none" stroke="url(#prGold)" stroke-width="8" stroke-linecap="round"/>
+  <path d="M12 24L4 19l1 10" fill="none" stroke="#ffc43d" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
   <path d="M35 50L24 67" fill="none" stroke="url(#prGold)" stroke-width="7" stroke-linecap="round"/>
   <g class="runner-leg-a"><path d="M42 80L38 101L27 112" fill="none" stroke="url(#prGold)" stroke-width="9" stroke-linecap="round"/><path d="M18 114h13" stroke="#ffc43d" stroke-width="7" stroke-linecap="round"/></g>
   <g class="runner-leg-b"><path d="M60 80L67 101L78 110" fill="none" stroke="url(#prGold)" stroke-width="9" stroke-linecap="round"/><path d="M73 113h14" stroke="#ffc43d" stroke-width="7" stroke-linecap="round"/></g>
@@ -1747,7 +1747,7 @@ section,article,header,footer,nav{min-width:0}
   raf=0;const vh=window.innerHeight;let best=0,score=Infinity;
   targets.forEach((el,i)=>{const r=el.getBoundingClientRect();const center=r.top+r.height/2;const distance=Math.abs(center-vh*.43);if(distance<score){score=distance;best=i;}});
   const rect=targets[best].getBoundingClientRect();
-  const y=Math.max(82,Math.min(vh-118,rect.top+Math.min(rect.height*.34,150)-54));
+  let y=rect.top+Math.min(rect.height*.34,150)-54; if(best===1){const below=rect.bottom+8;y=(below+108<vh)?below:rect.top-116;} y=Math.max(82,Math.min(vh-118,y));
   bot.style.transform='translate3d(0,'+Math.round(y)+'px,0)';
   bot.classList.add('is-visible');
   if(best!==active){active=best;bot.classList.remove('is-pointing');bot.classList.add('is-running');clearTimeout(timer);timer=setTimeout(()=>{bot.classList.remove('is-running');bot.classList.add('is-pointing');},reduced?0:850);}
