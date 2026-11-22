@@ -1678,4 +1678,33 @@ document.addEventListener('DOMContentLoaded',()=>{
 }
 </style>
 
+
+<style id="prizora-mobile-viewport-fix">
+/* Keep the page inside the phone viewport; prevent decorative layers/cards from widening the document. */
+html,body{width:100%;max-width:100%;overflow-x:clip!important}
+body{position:relative}
+.wrap{width:100%!important;max-width:1040px!important;min-width:0!important;margin-left:auto!important;margin-right:auto!important}
+.wrap>*{min-width:0;max-width:100%}
+img,video,svg,canvas{max-width:100%}
+section,article,header,footer,nav{min-width:0}
+@media(max-width:700px){
+  .wrap{padding-left:12px!important;padding-right:12px!important}
+  .top{width:100%;min-width:0;gap:8px}
+  .brand{min-width:0;max-width:calc(100% - 88px)}
+  .brand img{max-width:100%!important}
+  .section-head{gap:8px;flex-wrap:wrap}
+  .section-head>*{min-width:0;max-width:100%}
+  .carousel,.pro-showcase,.pro-contest-slider,.homepage-ad-promo{width:100%;max-width:100%;min-width:0}
+  .pro-contest-track{max-width:100%;min-width:0}
+  .homepage-ad-promo{grid-template-columns:62px minmax(0,1fr)!important}
+  .homepage-ad-promo *{min-width:0;overflow-wrap:anywhere}
+  .bottom, .bottom nav{max-width:100%;min-width:0}
+}
+@media(max-width:380px){
+  .wrap{padding-left:9px!important;padding-right:9px!important}
+  .top .pill{font-size:10px;padding:6px 8px}
+  .homepage-ad-promo{padding-left:12px!important;padding-right:12px!important;gap:10px!important}
+}
+</style>
+
 </body></html>
