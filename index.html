@@ -1558,23 +1558,24 @@ document.addEventListener('DOMContentLoaded',()=>{
       const x=c.getContext('2d',{willReadFrequently:true});
       x.drawImage(img,0,0,w,h);
       const frame=x.getImageData(0,0,w,h),p=frame.data;
-      const cx=(w-1)/2,cy=(h-1)/2,rx=w*.505,ry=h*.505;
+      const feather=Math.max(24,Math.round(Math.min(w,h)*.13));
       for(let yy=0;yy<h;yy++){
         for(let xx=0;xx<w;xx++){
-          const dx=(xx-cx)/rx,dy=(yy-cy)/ry;
-          const d=Math.sqrt(dx*dx+dy*dy);
-          let a=1;
-          if(d>.70){const t=Math.max(0,Math.min(1,(d-.70)/.30));a=1-(t*t*(3-2*t));}
+          const edge=Math.min(xx,w-1-xx,yy,h-1-yy);
+          const t=Math.max(0,Math.min(1,edge/feather));
+          const smooth=t*t*(3-2*t);
           const k=(yy*w+xx)*4+3;
-          p[k]=Math.round(p[k]*a);
+          p[k]=Math.round(p[k]*smooth);
         }
       }
       x.putImageData(frame,0,0);
-      img.src=c.toDataURL('image/png');
-      img.dataset.prizoraAlphaDone='yes';
+      const png=c.toDataURL('image/png');
+      img.onload=()=>{img.dataset.prizoraAlphaDone='yes';};
+      img.src=png;
     }catch(e){img.dataset.prizoraAlphaDone='error';}
   }
   function scan(){document.querySelectorAll('.approved-hero img').forEach(img=>{
+    if(img.dataset.prizoraAlphaDone) return;
     if(img.complete)makeTransparent(img);
     else img.addEventListener('load',()=>makeTransparent(img),{once:true});
   });}
@@ -1584,4 +1585,22 @@ document.addEventListener('DOMContentLoaded',()=>{
 })();
 </script>
 
+
+<style id="prizora-hero-transparent-final">
+/* Blend the existing approved artwork into the PRO panel; keep the full composition visible. */
+.pro-showcase>.approved-hero{
+  background:transparent!important;border:0!important;box-shadow:none!important;
+  border-radius:0!important;overflow:visible!important;
+}
+.pro-showcase>.approved-hero img{
+  display:block!important;width:100%!important;height:auto!important;
+  object-fit:contain!important;border:0!important;border-radius:0!important;
+}
+@media(max-width:700px){
+  .pro-showcase{min-height:220px!important}
+  .pro-showcase>.approved-hero{right:8px!important;width:clamp(150px,43vw,190px)!important;max-width:43%!important}
+  .pro-fade-item{padding-right:8px!important}
+  .pro-copy{max-width:calc(100% - 145px)!important}
+}
+</style>
 </body></html>
