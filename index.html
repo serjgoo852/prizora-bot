@@ -1192,41 +1192,49 @@
 
 
 <style id="prizora-fixed-center-rays">
-/* Rays live behind the drum: one fixed center, no circular plate or traveling flashes. */
+/* Final ray layer: explicitly re-enable it after the mobile polish rule hid :before. */
 .carousel{
-  background:
-    radial-gradient(ellipse at 50% 50%,rgba(151,96,25,.16) 0%,rgba(35,23,10,.10) 36%,transparent 70%),
-    linear-gradient(180deg,#100d09 0%,#080706 100%)!important;
+  background:transparent!important;
   border:0!important;
-  box-shadow:0 14px 38px #0009!important;
+  box-shadow:none!important;
+  outline:0!important;
+  overflow:visible!important;
+  isolation:isolate!important;
 }
 .carousel:before{
   content:""!important;
+  display:block!important;
+  visibility:visible!important;
   position:absolute!important;
   z-index:0!important;
-  inset:-115%!important;
-  opacity:.52!important;
+  inset:-42% -28%!important;
   pointer-events:none!important;
-  background:repeating-conic-gradient(
-    from 0deg at 50% 50%,
-    transparent 0deg 13deg,
-    rgba(255,207,104,.04) 13.4deg 14deg,
-    rgba(255,211,119,.36) 14.2deg 15.1deg,
-    rgba(255,183,66,.12) 15.2deg 16deg,
-    transparent 16.4deg 29deg
-  )!important;
-  filter:blur(5px)!important;
+  opacity:.9!important;
+  background:
+    repeating-conic-gradient(from 0deg at 50% 50%,
+      transparent 0deg 11deg,
+      rgba(255,214,126,.08) 11.5deg 13deg,
+      rgba(255,190,75,.48) 13.4deg 16deg,
+      rgba(255,226,157,.18) 16.4deg 18deg,
+      transparent 18.5deg 29deg),
+    radial-gradient(ellipse at center,rgba(255,184,66,.2) 0%,rgba(180,105,28,.09) 36%,transparent 70%)!important;
+  filter:blur(1.2px)!important;
   transform-origin:50% 50%!important;
   animation:prizora-rays-rotate 34s linear infinite!important;
 }
 .carousel:after{
   content:none!important;
   display:none!important;
+  box-shadow:none!important;
+  border:0!important;
 }
-.carousel-inner{position:relative!important;z-index:1!important;background:transparent!important}
+.carousel-inner{position:relative!important;z-index:2!important;background:transparent!important}
 @keyframes prizora-rays-rotate{
   from{transform:rotate(0deg)}
   to{transform:rotate(360deg)}
+}
+@media(max-width:520px){
+  .carousel:before{inset:-38% -42%!important;opacity:.84!important}
 }
 @media(prefers-reduced-motion:reduce){
   .carousel:before{animation:none!important}
