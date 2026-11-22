@@ -241,6 +241,41 @@
  .slide h3{font-size:17px}
  .slide p{font-size:12px}
 }
+
+/* PRIZORA PREVIEW REPAIR — composition and readable premium drum */
+.top{position:relative!important;z-index:5;margin-bottom:10px!important}
+.brand img{width:220px!important;height:100px!important;object-fit:contain!important;object-position:left center!important}
+.approved-hero{width:min(100%,900px)!important;margin:26px auto 30px!important}
+.approved-hero img{width:100%!important;height:auto!important;object-fit:contain!important}
+.carousel{height:500px!important;min-height:500px!important;padding:20px 0 52px!important;overflow:hidden!important}
+.carousel-inner{height:410px!important;min-height:410px!important;overflow:visible!important}
+.slides#slides{height:390px!important;min-height:390px!important;transform-style:preserve-3d!important}
+.slides#slides>.slide{left:50%!important;top:14px!important;width:min(62%,520px)!important;height:360px!important;min-height:360px!important;padding:24px 22px!important;display:grid!important;grid-template-columns:minmax(0,42%) minmax(0,58%)!important;gap:18px!important;align-items:center!important;justify-content:stretch!important;overflow:hidden!important;border-radius:24px!important}
+.slides#slides>.slide .slide-art{width:100%!important;height:285px!important;min-height:285px!important;flex:initial!important;margin:0!important;overflow:visible!important}
+.slides#slides>.slide .slide-art img{width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;object-fit:contain!important;object-position:center!important}
+.slides#slides>.slide h3{display:block!important;width:100%!important;max-height:none!important;min-height:0!important;margin:0 0 12px!important;font-size:clamp(20px,2.6vw,30px)!important;line-height:1.15!important;text-align:left!important;overflow:visible!important}
+.slides#slides>.slide p{display:block!important;width:100%!important;max-height:none!important;margin:0 0 18px!important;font-size:15px!important;line-height:1.5!important;color:#e1d4bc!important;overflow:visible!important}
+.slides#slides>.slide .cta{display:inline-flex!important;align-self:flex-start!important;margin-top:0!important;padding:12px 17px!important;font-size:13px!important;white-space:nowrap!important}
+.carousel-controls{top:48%!important;transform:translateY(-50%)!important}
+.carousel .dots{bottom:9px!important}
+@media(max-width:700px){
+ .brand img{width:178px!important;height:82px!important}
+ .carousel{height:470px!important;min-height:470px!important;padding:14px 0 48px!important}
+ .carousel-inner{height:390px!important;min-height:390px!important}
+ .slides#slides{height:370px!important}
+ .slides#slides>.slide{width:min(78vw,360px)!important;height:340px!important;min-height:340px!important;top:12px!important;padding:19px 16px!important;grid-template-columns:38% minmax(0,62%)!important;gap:12px!important}
+ .slides#slides>.slide .slide-art{height:270px!important;min-height:270px!important}
+ .slides#slides>.slide h3{font-size:clamp(18px,4.4vw,23px)!important;margin-bottom:9px!important}
+ .slides#slides>.slide p{font-size:12px!important;line-height:1.4!important;margin-bottom:12px!important}
+ .slides#slides>.slide .cta{font-size:11px!important;padding:10px 11px!important}
+ .approved-hero{width:100%!important;margin:20px auto 24px!important;border-radius:18px!important}
+}
+@media(max-width:380px){
+ .slides#slides>.slide{width:82vw!important;grid-template-columns:35% minmax(0,65%)!important;padding:15px 12px!important;gap:9px!important}
+ .slides#slides>.slide .slide-art{height:245px!important;min-height:245px!important}
+ .slides#slides>.slide p{font-size:11px!important}
+}
+
 </style>
 <style id="prizora-drum-axis-rebuild">
 /* Rebuilt drum geometry: fixed central axis, cards orbit without lateral drift */
@@ -329,7 +364,7 @@
  if(!cards.length||!dots||!prev||!next)return;
  let index=0,startX=0,dragging=false,angle=0,lastTime=0,paused=false,raf=0;
  const count=cards.length;
- const radius=164;
+ const radius=window.innerWidth<=700?190:255;
  const step=360/count;
  cards.forEach((card,i)=>{
    card.style.transform=`translateX(-50%) rotateY(${i*step}deg) translateZ(${radius}px)`;
@@ -395,4 +430,13 @@
  show(0);start();
 })();
 
-</script></body></html>
+</script>
+<script>
+/* Keep the approved presenter artwork with the participation action, after the prize drum. */
+document.addEventListener('DOMContentLoaded',()=>{
+ const drum=document.querySelector('.carousel');
+ const presenter=document.querySelector('.approved-hero');
+ if(drum&&presenter) drum.insertAdjacentElement('afterend',presenter);
+});
+</script>
+</body></html>
