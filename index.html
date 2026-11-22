@@ -757,7 +757,8 @@
    });
  }
  loadNearby(0);
- const cardWidth=window.innerWidth<=700?Math.min(330,window.innerWidth*.86):300;\n const radius=Math.max(520,Math.ceil(cardWidth/(2*Math.sin(Math.PI/count))+24));
+ const cardWidth=window.innerWidth<=700?Math.min(330,window.innerWidth*.86):300;
+ const radius=Math.max(520,Math.ceil(cardWidth/(2*Math.sin(Math.PI/count))+24));
  const step=360/count;
  cards.forEach((card,i)=>{
    card.style.setProperty('transform',`translate(-50%,-50%) rotateY(${i*step}deg) translateZ(${radius}px)`,'important');
