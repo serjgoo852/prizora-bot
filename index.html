@@ -676,7 +676,7 @@
   <a class="approved-hero-hit" href="#contests" aria-label="Принять участие в розыгрыше"></a>
 </section>
 <div class="section-head"><h2>✦ PREMIUM · Барабан призов</h2><span>Прокрути пальцем →</span></div>
-<section aria-label="Популярные розыгрыши" class="carousel"><div class="carousel-inner"><div class="slides" id="slides"><article class="slide"><div class="slide-art"><img alt="Samsung Galaxy S10+" decoding="async" loading="eager" data-lazy-src="https://commons.wikimedia.org/wiki/Special:FilePath/Samsung_S10_Phone.png" loading="lazy" decoding="async"/></div><div><h3>Samsung Galaxy S10+</h3><p>Смартфон Samsung Galaxy с большим AMOLED-экраном.</p><a aria-label="Перейти к списку розыгрышей" class="cta" href="#contests">Участвовать <b aria-hidden="true">→</b></a></div></article>
+<section aria-label="Популярные розыгрыши" class="carousel"><div class="carousel-inner"><div class="slides" id="slides"><article class="slide"><div class="slide-art"><img alt="Денежный приз — российские рубли" decoding="async" loading="eager" data-lazy-src="https://commons.wikimedia.org/wiki/Special:FilePath/Current_Russian_ruble_%28banknotes%29.png"/></div><div><h3>Samsung Galaxy S10+</h3><p>Смартфон Samsung Galaxy с большим AMOLED-экраном.</p><a aria-label="Перейти к списку розыгрышей" class="cta" href="#contests">Участвовать <b aria-hidden="true">→</b></a></div></article>
 <article class="slide"><div class="slide-art"><img alt="iPhone 18 Pro Max" decoding="async" loading="eager" data-lazy-src="https://theapplewiki.com/images/applewiki/9/93/IPhone_18_Pro_Max_Silver.png" loading="lazy" decoding="async"/></div><div><h3>iPhone 18 Pro Max</h3><p>Флагманский смартфон Apple — один из призов барабана.</p><a aria-label="Перейти к списку розыгрышей" class="cta" href="#contests">Участвовать <b aria-hidden="true">→</b></a></div></article>
 <article class="slide"><div class="slide-art"><img alt="PlayStation 5" decoding="async" loading="eager" data-lazy-src="https://commons.wikimedia.org/wiki/Special:FilePath/PlayStation_5_and_DualSense_with_transparent_background.png" loading="lazy" decoding="async"/></div><div><h3>PlayStation 5</h3><p>Игровая консоль Sony с контроллером DualSense.</p><a aria-label="Перейти к списку розыгрышей" class="cta" href="#contests">Участвовать <b aria-hidden="true">→</b></a></div></article>
 <article class="slide"><div class="slide-art"><img alt="Nintendo Switch OLED" decoding="async" loading="eager" data-lazy-src="https://commons.wikimedia.org/wiki/Special:FilePath/Nintendo_Switch_OLED.png" loading="lazy" decoding="async"/></div><div><h3>Nintendo Switch OLED</h3><p>Портативная игровая консоль Nintendo с OLED-экраном.</p><a aria-label="Перейти к списку розыгрышей" class="cta" href="#contests">Участвовать <b aria-hidden="true">→</b></a></div></article>
@@ -754,12 +754,16 @@
    }
  });
  function loadNearby(center){
-   [-1,0,1].forEach(offset=>{
-     const i=(center+offset+count)%count, img=slideImages[i];
-     if(img&&img.dataset.lazySrc){
+   /* Load all prize images in parallel so cards do not appear blank as the drum turns. */
+   slideImages.forEach((img,i)=>{
+     if(!img)return;
+     img.loading='eager';
+     img.decoding='async';
+     if(img.dataset.lazySrc){
        img.src=img.dataset.lazySrc;
        delete img.dataset.lazySrc;
      }
+     if(i===center) img.fetchPriority='high';
    });
  }
  loadNearby(0);
