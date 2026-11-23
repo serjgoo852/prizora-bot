@@ -2902,4 +2902,63 @@ html body .pro-showcase>.approved-hero .approved-hero-hit::after{font-size:13px!
 }
 </style>
 
+<style id="prizora-runner-style">
+#prizora-runner{position:fixed;z-index:30;right:8px;top:0;width:82px;height:108px;pointer-events:none;opacity:0;transform:translate3d(0,30vh,0);transition:transform .85s cubic-bezier(.2,.8,.2,1),opacity .35s ease;filter:drop-shadow(0 5px 12px #000b)}
+#prizora-runner.is-visible{opacity:1}
+#prizora-runner svg{display:block;width:100%;height:100%;overflow:visible}
+#prizora-runner .runner-body{transform-origin:50% 50%}
+#prizora-runner.is-running .runner-body{animation:prizoraBodyRun .42s ease-in-out infinite alternate}
+#prizora-runner .runner-arm{transform-origin:62px 47px}
+#prizora-runner.is-running .runner-arm{animation:prizoraArmRun .22s ease-in-out infinite alternate}
+#prizora-runner .runner-leg-a,#prizora-runner .runner-leg-b{transform-box:fill-box;transform-origin:50% 0}
+#prizora-runner.is-running .runner-leg-a{animation:prizoraLegA .22s ease-in-out infinite alternate}
+#prizora-runner.is-running .runner-leg-b{animation:prizoraLegB .22s ease-in-out infinite alternate}
+#prizora-runner.is-pointing .runner-arm{transform:rotate(-13deg)}
+@keyframes prizoraBodyRun{to{transform:translateY(-3px) rotate(-2deg)}}
+@keyframes prizoraArmRun{to{transform:rotate(18deg)}}
+@keyframes prizoraLegA{to{transform:rotate(25deg)}}
+@keyframes prizoraLegB{to{transform:rotate(-25deg)}}
+@media(max-width:600px){#prizora-runner{right:2px;width:57px;height:78px;filter:drop-shadow(0 3px 7px #000b)}}
+@media(prefers-reduced-motion:reduce){#prizora-runner{transition:none}#prizora-runner.is-running *{animation:none!important}}
+</style>
+<div id="prizora-runner" aria-hidden="true">
+<svg viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg">
+<defs><linearGradient id="prGold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff4c7"/><stop offset=".42" stop-color="#ffd15c"/><stop offset="1" stop-color="#d58a19"/></linearGradient><linearGradient id="prShade" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#ffe9a0"/><stop offset="1" stop-color="#b96c0d"/></linearGradient></defs>
+<g class="runner-body">
+<path d="M49 14V7" stroke="#e9a52b" stroke-width="4" stroke-linecap="round"/><circle cx="49" cy="5" r="4" fill="#fff0ae" stroke="#bd7816" stroke-width="1.5"/>
+<rect x="23" y="12" width="54" height="39" rx="17" fill="url(#prGold)" stroke="#8c5610" stroke-width="2.4"/><rect x="29" y="18" width="42" height="27" rx="12" fill="#21180d" stroke="#f6c65d" stroke-width="1.5"/>
+<ellipse cx="42" cy="29" rx="3.5" ry="5" fill="#fff0b0"/><ellipse cx="59" cy="29" rx="3.5" ry="5" fill="#fff0b0"/><path d="M43 37Q50 43 58 37" fill="none" stroke="#ffcf59" stroke-width="2.5" stroke-linecap="round"/><circle cx="32" cy="39" r="3" fill="#e99b38" opacity=".65"/><circle cx="68" cy="39" r="3" fill="#e99b38" opacity=".65"/>
+<rect x="29" y="53" width="43" height="42" rx="15" fill="url(#prShade)" stroke="#8c5610" stroke-width="2.5"/><rect x="38" y="61" width="25" height="17" rx="7" fill="#3b260e" stroke="#ffdf83" stroke-width="1.5"/><path d="M44 69h13" stroke="#ffe8a2" stroke-width="2.5" stroke-linecap="round"/><circle cx="50.5" cy="86" r="3.2" fill="#fff0ae" stroke="#a66a16" stroke-width="1"/>
+<g class="runner-arm"><path d="M34 63Q25 60 20 52" fill="none" stroke="#9a5d12" stroke-width="14" stroke-linecap="round"/><path d="M34 62Q25 59 20 51" fill="none" stroke="url(#prGold)" stroke-width="10" stroke-linecap="round"/><path d="M20 51Q14 46 10 42" fill="none" stroke="#9a5d12" stroke-width="13" stroke-linecap="round"/><path d="M20 51Q14 46 10 42" fill="none" stroke="url(#prGold)" stroke-width="9" stroke-linecap="round"/><path d="M10 42Q5 38 2 34Q0 31 3 29Q6 28 8 32L13 37Q15 32 18 33Q21 34 19 38L16 44Q14 48 10 42Z" fill="url(#prGold)" stroke="#8c5610" stroke-width="1.8" stroke-linejoin="round"/></g>
+<path d="M68 64Q79 69 77 79" fill="none" stroke="#8c5610" stroke-width="14" stroke-linecap="round"/><path d="M68 64Q79 69 77 79" fill="none" stroke="url(#prGold)" stroke-width="10" stroke-linecap="round"/><ellipse cx="77" cy="82" rx="7" ry="8" fill="url(#prGold)" stroke="#8c5610" stroke-width="1.8"/>
+<g class="runner-leg-a"><path d="M41 91Q38 101 35 108" fill="none" stroke="#8c5610" stroke-width="14" stroke-linecap="round"/><path d="M41 91Q38 101 35 108" fill="none" stroke="url(#prGold)" stroke-width="10" stroke-linecap="round"/><path d="M34 107Q23 105 20 112Q18 118 27 119H41Q46 117 42 111Z" fill="#d58a19" stroke="#7b4a0c" stroke-width="2"/><path d="M24 114h15" stroke="#fff0ae" stroke-width="2" stroke-linecap="round"/></g>
+<g class="runner-leg-b"><path d="M60 91Q64 101 68 108" fill="none" stroke="#8c5610" stroke-width="14" stroke-linecap="round"/><path d="M60 91Q64 101 68 108" fill="none" stroke="url(#prGold)" stroke-width="10" stroke-linecap="round"/><path d="M67 107Q77 105 82 112Q85 118 76 119H63Q59 117 62 111Z" fill="#d58a19" stroke="#7b4a0c" stroke-width="2"/><path d="M65 114h15" stroke="#fff0ae" stroke-width="2" stroke-linecap="round"/></g>
+</g></svg></div>
+<script id="prizora-runner-script">
+(()=>{const bot=document.getElementById('prizora-runner');if(!bot)return;
+ const selector='.approved-hero,.carousel,.pro-showcase,#homepage-ad-promo,.pro-contest-slider';
+ let targets=[],active=null,raf=0,timer=0;
+ const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+ function collect(){
+  targets=Array.from(document.querySelectorAll(selector)).filter(el=>!(el.classList.contains('approved-hero')&&el.closest('.pro-showcase')));
+ }
+ function update(){
+  raf=0;collect();const vh=window.innerHeight;
+  const visible=targets.map(el=>({el,r:el.getBoundingClientRect()})).filter(x=>x.r.width>0&&x.r.height>0&&x.r.bottom>0&&x.r.top<vh);
+  if(!visible.length)return;
+  let chosen=visible[0],score=Infinity;
+  visible.forEach(x=>{const overlap=Math.max(0,Math.min(vh,x.r.bottom)-Math.max(0,x.r.top));const center=Math.max(0,Math.min(vh,(x.r.top+x.r.bottom)/2));const distance=Math.abs(center-vh*.43)-Math.min(overlap,vh)*.18;if(distance<score){score=distance;chosen=x;}});
+  const r=chosen.r,h=bot.offsetHeight||108,top=Math.max(0,r.top),bottom=Math.min(vh,r.bottom);
+  let y=r.top+(r.height-h)/2;if(bottom-top>=h)y=Math.max(top,Math.min(bottom-h,y));else y=Math.max(8,Math.min(vh-h-8,(top+bottom-h)/2));
+  bot.style.transform='translate3d(0,'+Math.round(y)+'px,0)';bot.classList.add('is-visible');
+  if(chosen.el!==active){active=chosen.el;bot.classList.remove('is-pointing');bot.classList.add('is-running');clearTimeout(timer);timer=setTimeout(()=>{bot.classList.remove('is-running');bot.classList.add('is-pointing');},reduced?0:850);}
+ }
+ function schedule(){if(!raf)raf=requestAnimationFrame(update);}
+ window.addEventListener('scroll',schedule,{passive:true});window.addEventListener('resize',schedule);
+ if(window.visualViewport){visualViewport.addEventListener('scroll',schedule);visualViewport.addEventListener('resize',schedule);}
+ if('IntersectionObserver'in window){const io=new IntersectionObserver(schedule,{threshold:[0,.1,.25,.5,.75]});collect();targets.forEach(el=>io.observe(el));}
+ collect();schedule();
+ if(window.matchMedia('(min-width:701px)').matches)setInterval(schedule,300);
+})();
+</script>
 </body></html>
