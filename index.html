@@ -2470,6 +2470,15 @@ html body .pro-showcase>.approved-hero .approved-hero-hit::after{font-size:13px!
   .bottom a{font-size:14px!important;padding:10px 7px!important}
   .bottom b{font-size:23px!important}
   #prizora-runner{width:112px!important;height:148px!important;right:8px!important}
+  /* Extra vertical travel only in Android Chrome desktop-site mode. */
+  html,body{min-height:100%!important;height:auto!important;overflow-y:auto!important;overscroll-behavior-y:auto!important}
+  body{touch-action:pan-y!important}
+  .wrap{padding-bottom:190px!important}
+  .carousel{margin-bottom:58px!important}
+  .pro-showcase{height:410px!important;min-height:410px!important;margin-top:42px!important;margin-bottom:48px!important}
+  #homepage-ad-promo.homepage-ad-promo{min-height:230px!important;margin-top:48px!important;margin-bottom:54px!important}
+  .pro-contest-slider{min-height:390px!important;margin-top:18px!important;margin-bottom:58px!important}
+  .benefits{margin-bottom:44px!important}
 }
 </style>
 </body></html>
