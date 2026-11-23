@@ -2089,7 +2089,7 @@
   <a class="approved-hero-hit" href="#contests" aria-label="Принять участие в розыгрыше"></a>
 </section>
 <div class="section-head"><h2>✦ PREMIUM · Барабан призов</h2><span>Прокрути пальцем →</span></div>
-<section id="contests" aria-label="Популярные розыгрыши" class="carousel"><div class="carousel-inner"><div class="slides" id="slides"><article class="slide"><div class="slide-art"><img alt="Денежный приз — купюры разных стран: доллары, евро, юани и иены" decoding="async" loading="eager" data-lazy-src="assets/prizes/money.webp"/></div><div><h3>Денежный приз — мировые валюты</h3><p>Денежные вознаграждения в разных валютах — доллары, евро и другие валюты мира.</p><a aria-label="Перейти к списку розыгрышей" class="cta" href="#contests">Участвовать <b aria-hidden="true">→</b></a></div></article>
+<section id="contests" aria-label="Популярные розыгрыши" class="carousel"><div class="carousel-inner"><div class="slides" id="slides"><article class="slide"><div class="slide-art"><img alt="Денежный приз — купюры разных стран: доллары, евро, юани и иены" decoding="async" loading="eager" data-lazy-src="assets/prizes/money.webp"/></div><div><h3>Денежный приз</h3><p>Вознаграждения в долларах, евро и других валютах мира.</p><a aria-label="Перейти к списку розыгрышей" class="cta" href="#contests">Участвовать <b aria-hidden="true">→</b></a></div></article>
 <article class="slide"><div class="slide-art"><img alt="iPhone 18 Pro Max" decoding="async" loading="eager" data-lazy-src="assets/prizes/iphone.webp" loading="lazy" decoding="async"/></div><div><h3>iPhone 18 Pro Max</h3><p>Флагманский смартфон Apple — один из призов барабана.</p><a aria-label="Перейти к списку розыгрышей" class="cta" href="#contests">Участвовать <b aria-hidden="true">→</b></a></div></article>
 <article class="slide"><div class="slide-art"><img alt="PlayStation 5" decoding="async" loading="eager" data-lazy-src="assets/prizes/playstation-5.webp" loading="lazy" decoding="async"/></div><div><h3>PlayStation 5</h3><p>Игровая консоль Sony с контроллером DualSense.</p><a aria-label="Перейти к списку розыгрышей" class="cta" href="#contests">Участвовать <b aria-hidden="true">→</b></a></div></article>
 <article class="slide"><div class="slide-art"><img alt="Nintendo Switch OLED" decoding="async" loading="eager" data-lazy-src="assets/prizes/switch-oled.webp" loading="lazy" decoding="async"/></div><div><h3>Nintendo Switch OLED</h3><p>Портативная игровая консоль Nintendo с OLED-экраном.</p><a aria-label="Перейти к списку розыгрышей" class="cta" href="#contests">Участвовать <b aria-hidden="true">→</b></a></div></article>
@@ -2932,9 +2932,9 @@ html body .pro-showcase>.approved-hero .approved-hero-hit::after{font-size:13px!
 /* Improve only prize names and descriptions; preserve the drum, card frames, images and buttons. */
 @media (min-width:701px) {
   #contests.carousel #slides > .slide > div:not(.slide-art):not(.slide-back) {
-    backface-visibility:visible !important;
-    -webkit-backface-visibility:visible !important;
-    transform:translateZ(1px) !important;
+    backface-visibility:hidden !important;
+    -webkit-backface-visibility:hidden !important;
+    transform:none !important;
   }
   #contests.carousel #slides > .slide h3 {
     color:#ffe7b5 !important;
@@ -2955,8 +2955,8 @@ html body .pro-showcase>.approved-hero .approved-hero-hit::after{font-size:13px!
     text-shadow:0 1px 2px rgba(0,0,0,.9) !important;
     -webkit-font-smoothing:antialiased !important;
     text-rendering:geometricPrecision !important;
-    overflow:visible !important;
-    max-height:none !important;
+    overflow:hidden !important;
+    max-height:3.8em !important;
   }
 }
 </style>
