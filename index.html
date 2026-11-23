@@ -2111,8 +2111,7 @@ section,article,header,footer,nav{min-width:0}
  if(!bot||!document.body)return;
  if(bot.parentElement!==document.body)document.body.appendChild(bot);
  let active=null,raf=0,lastY=-1;
- const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
- const selectors=['.hero','.carousel','.pro-showcase','.pro-contest-slider','#proContestTrack','#homepage-ad-promo','.participation-guide','.quick','.benefits'];
+ const selectors=['.carousel','.pro-showcase','.pro-contest-slider','#homepage-ad-promo','.participation-guide','.quick','.benefits'];
  function targets(){
   const found=new Set();
   selectors.forEach(sel=>document.querySelectorAll(sel).forEach(el=>found.add(el)));
@@ -2123,34 +2122,31 @@ section,article,header,footer,nav{min-width:0}
   });
  }
  function update(){
-  const vh=(window.visualViewport&&window.visualViewport.height)||window.innerHeight;
+  const vh=window.innerHeight||document.documentElement.clientHeight;
   const focus=vh*.48;
   let chosen=null,best=Infinity,chosenRect=null;
-  const list=targets();
-  if(active&&active.isConnected){
-   const ar=active.getBoundingClientRect();
-   if(ar.bottom>0&&ar.top<vh&&Math.min(vh,ar.bottom)-Math.max(0,ar.top)>Math.min(90,vh*.12)){
-    chosen=active;chosenRect=ar;best=Math.abs((Math.max(0,ar.top)+Math.min(vh,ar.bottom))/2-focus);
-   }
-  }
-  for(const el of list){
-   const r=el.getBoundingClientRect(),top=Math.max(0,r.top),bottom=Math.min(vh,r.bottom);
+  for(const el of targets()){
+   const r=el.getBoundingClientRect();
+   const top=Math.max(0,r.top),bottom=Math.min(vh,r.bottom);
    if(bottom<=top)continue;
-   const center=(top+bottom)/2,score=Math.abs(center-focus);
-   if(score<best-(active===el?0:vh*.08)){best=score;chosen=el;chosenRect=r;}
+   const center=(top+bottom)/2;
+   const score=Math.abs(center-focus);
+   if(score<best){best=score;chosen=el;chosenRect=r;}
   }
   if(!chosen||!chosenRect)return;
+  /* Move only when the active section changes. This avoids chasing every scroll pixel. */
+  if(chosen===active)return;
   const h=bot.getBoundingClientRect().height||108;
   const maxTop=Math.max(8,vh-h-8);
-  const center=(Math.max(0,chosenRect.top)+Math.min(vh,chosenRect.bottom))/2;
-  const y=Math.round(Math.max(8,Math.min(maxTop,center-h/2)));
+  const visibleCenter=(Math.max(0,chosenRect.top)+Math.min(vh,chosenRect.bottom))/2;
+  const y=Math.round(Math.max(8,Math.min(maxTop,visibleCenter-h/2)));
   bot.style.setProperty('position','fixed','important');
   bot.style.setProperty('bottom','auto','important');
   bot.style.setProperty('transform','none','important');
   bot.style.setProperty('right','8px','important');
   bot.style.setProperty('left','auto','important');
   bot.style.setProperty('z-index','999','important');
-  if(Math.abs(y-lastY)>2){bot.style.setProperty('top',y+'px','important');lastY=y;}
+  if(Math.abs(y-lastY)>4){bot.style.setProperty('top',y+'px','important');lastY=y;}
   bot.classList.add('is-visible','is-pointing');
   bot.classList.remove('is-running');
   active=chosen;
@@ -2161,10 +2157,6 @@ section,article,header,footer,nav{min-width:0}
  window.addEventListener('resize',schedule,{passive:true});
  if(window.visualViewport){window.visualViewport.addEventListener('scroll',schedule,{passive:true});window.visualViewport.addEventListener('resize',schedule,{passive:true});}
  schedule();
- if(!reduced&&'IntersectionObserver'in window){
-  const observer=new IntersectionObserver(schedule,{threshold:[0,.15,.35,.6,.85,1]});
-  targets().forEach(el=>observer.observe(el));
- }
 })();
 </script>
 
