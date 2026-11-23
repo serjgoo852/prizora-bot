@@ -1541,18 +1541,22 @@
 }
 </style>
 
-<style id="prizora-presenter-button-layout-v5">
-/* Make the presenter artwork dramatically larger; keep the participation button compact. */
-.pro-showcase{height:1500px!important;min-height:1500px!important;overflow:visible!important}
+<style id="prizora-presenter-button-layout-v6">
+/* Tenfold visual scale on the presenter artwork itself; CTA remains compact. */
+.pro-showcase{height:1900px!important;min-height:1900px!important;overflow:visible!important}
 .pro-showcase>.approved-hero{
-  width:1600px!important;max-width:none!important;
-  right:-80px!important;top:48%!important;
+  position:absolute!important;
+  width:10000px!important;max-width:none!important;
+  right:-5000px!important;top:48%!important;
   transform:translateY(-50%)!important;
-  height:auto!important;overflow:visible!important;
+  height:auto!important;margin:0!important;padding:0!important;
+  overflow:visible!important;background:transparent!important;
+  border:0!important;box-shadow:none!important;
 }
 .pro-showcase>.approved-hero img{
   display:block!important;width:100%!important;height:auto!important;
-  max-height:none!important;object-fit:contain!important;
+  max-width:none!important;max-height:none!important;
+  object-fit:contain!important;
 }
 .pro-showcase>.approved-hero .approved-hero-hit{
   left:5%!important;right:auto!important;top:auto!important;
@@ -1561,10 +1565,9 @@
   height:30px!important;min-height:30px!important;padding:0 7px!important;
 }
 @media(max-width:700px){
-  .pro-showcase{height:1440px!important;min-height:1440px!important;overflow:visible!important}
+  .pro-showcase{height:1800px!important;min-height:1800px!important;overflow:visible!important}
   .pro-showcase>.approved-hero{
-    width:1440px!important;max-width:none!important;
-    right:-720px!important;top:48%!important;
+    width:9000px!important;right:-4500px!important;top:48%!important;
   }
   .pro-showcase>.approved-hero .approved-hero-hit{
     width:122px!important;max-width:122px!important;
@@ -1573,7 +1576,7 @@
   }
 }
 @media(max-width:390px){
-  .pro-showcase>.approved-hero{width:1320px!important;right:-660px!important}
+  .pro-showcase>.approved-hero{width:8000px!important;right:-4000px!important}
 }
 </style>
 </head><body><main class="wrap">
