@@ -2107,23 +2107,31 @@ section,article,header,footer,nav{min-width:0}
 </g></svg></div>
 <script id="prizora-runner-script">
 (()=>{const bot=document.getElementById('prizora-runner');if(!bot)return;
- const targets=[document.querySelector('.approved-hero'),document.querySelector('.carousel'),document.querySelector('.pro-contest-slider'),document.querySelector('.homepage-ad-promo')].filter(Boolean);
+ const selectors=['.approved-hero','.carousel','.pro-showcase','.pro-contest-slider','.homepage-ad-promo'];
+ const targets=selectors.map(sel=>document.querySelector(sel)).filter(Boolean);
  if(!targets.length)return;
  let active=-1,raf=0,timer=0;
  const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
  function update(){
-  raf=0;const vh=window.innerHeight;let best=0,score=Infinity;
-  targets.forEach((el,i)=>{const r=el.getBoundingClientRect();const center=r.top+r.height/2;const distance=Math.abs(center-vh*.43);if(distance<score){score=distance;best=i;}});
-  const rect=targets[best].getBoundingClientRect();
-  const h=bot.offsetHeight||108; const visibleTop=Math.max(0,rect.top); const visibleBottom=Math.min(vh,rect.bottom);
-  let y=rect.top+(rect.height-h)/2; if(visibleBottom-visibleTop>=h)y=Math.max(visibleTop,Math.min(visibleBottom-h,y)); else y=Math.max(8,Math.min(vh-h-8,(visibleTop+visibleBottom-h)/2));
+  raf=0;const vh=window.innerHeight;const anchor=vh*.43;let best=0,score=Infinity;
+  targets.forEach((el,i)=>{const r=el.getBoundingClientRect();if(!r.width||!r.height)return;
+   const center=r.top+r.height/2;const distance=Math.abs(center-anchor);
+   if(distance<score){score=distance;best=i;}
+  });
+  const rect=targets[best].getBoundingClientRect();const h=bot.offsetHeight||108;
+  const targetCenter=rect.top+rect.height/2;
+  let y=targetCenter-h/2;
+  y=Math.max(8,Math.min(vh-h-8,y));
   bot.style.transform='translate3d(0,'+Math.round(y)+'px,0)';
   bot.classList.add('is-visible');
-  if(best!==active){active=best;bot.classList.remove('is-pointing');bot.classList.add('is-running');clearTimeout(timer);timer=setTimeout(()=>{bot.classList.remove('is-running');bot.classList.add('is-pointing');},reduced?0:850);}
+  if(best!==active){active=best;bot.classList.remove('is-pointing');bot.classList.add('is-running');clearTimeout(timer);
+   timer=setTimeout(()=>{bot.classList.remove('is-running');bot.classList.add('is-pointing');},reduced?0:850);
+  }
  }
  function schedule(){if(!raf)raf=requestAnimationFrame(update);}
  window.addEventListener('scroll',schedule,{passive:true});window.addEventListener('resize',schedule);
- if('IntersectionObserver' in window){const io=new IntersectionObserver(schedule,{threshold:[0,.15,.35,.6]});targets.forEach(t=>io.observe(t));}
+ window.addEventListener('load',schedule,{once:true});
+ if('IntersectionObserver' in window){const io=new IntersectionObserver(schedule,{threshold:[0,.1,.25,.5,.75]});targets.forEach(t=>io.observe(t));}
  schedule();
 })();
 </script>
@@ -2366,6 +2374,46 @@ html body .pro-showcase>.approved-hero .approved-hero-hit::after{font-size:13px!
 @media(max-width:390px){
  html body .pro-showcase>.approved-hero{width:190px!important;max-width:190px!important;right:1px!important}
  html body .pro-showcase>.approved-hero .approved-hero-hit{width:138px!important;height:34px!important;min-height:34px!important}
+}
+</style>
+
+
+
+<style id="prizora-desktop-phone-mode-scale-v1">
+/* Desktop mode on phones/tablets (Chrome reports a 701–999px layout viewport).
+   Enlarge the desktop composition in that range without changing the true mobile layout. */
+@media (min-width:701px) and (max-width:999px){
+  .wrap{width:calc(100% - 24px)!important;max-width:960px!important;padding:24px 24px 132px!important}
+  .top{gap:20px!important;padding:12px 4px 20px!important}
+  .brand img{width:235px!important;height:108px!important}
+  .top .pill{font-size:14px!important;padding:9px 15px!important}
+  .hero h1{font-size:clamp(38px,5vw,50px)!important}
+  .hero p{font-size:16px!important}
+  .section-head{margin:34px 5px 17px!important;gap:14px!important}
+  .section-head h2{font-size:25px!important}
+  .section-head span{font-size:15px!important}
+  .approved-hero{max-width:920px!important}
+  .carousel{height:440px!important;min-height:440px!important;padding:16px 0 44px!important}
+  .carousel-inner,.slides#slides{height:365px!important;min-height:365px!important}
+  .slides#slides>.slide{width:min(72%,650px)!important;height:320px!important;min-height:320px!important;top:18px!important;padding:24px!important;grid-template-columns:40% minmax(0,1fr)!important;gap:20px!important}
+  .slides#slides>.slide .slide-art{height:235px!important}
+  .slides#slides>.slide h3{font-size:clamp(22px,2.8vw,29px)!important}
+  .slides#slides>.slide p{font-size:15px!important;line-height:1.5!important}
+  .slides#slides>.slide .cta{font-size:14px!important;padding:11px 16px!important}
+  .carousel .arrow{width:46px!important;height:46px!important;font-size:28px!important}
+  .pro-showcase .pro-copy h3{font-size:25px!important}
+  .pro-showcase .pro-copy p{font-size:15px!important;line-height:1.45!important}
+  .pro-showcase .pro-tag{font-size:11px!important}
+  .pro-showcase .pro-action{font-size:14px!important;padding:11px 17px!important}
+  .pro-contest-card{min-height:260px!important}
+  .pro-contest-info h3,.pro-contest-card h3{font-size:22px!important}
+  .pro-contest-info p{font-size:14px!important}
+  .pro-contest-join{font-size:14px!important;padding:11px 14px!important}
+  .benefits div{font-size:14px!important;padding:15px 9px!important}
+  .benefits b{font-size:27px!important}
+  .bottom nav{width:min(900px,100%)!important;gap:10px!important}
+  .bottom a{font-size:13px!important;padding:9px 7px!important}
+  .bottom b{font-size:23px!important}
 }
 </style>
 
