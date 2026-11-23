@@ -1852,10 +1852,10 @@
 </style>
 
 <style id="prizora-drum-one-axis-premium-final-20261123">
-/* Desktop only: one consistent 3D coordinate system for the ten prize cards. */
+/* Desktop 3D drum: give adjacent cards real breathing room around the cylinder. */
 @media (min-width:701px) {
   #contests.carousel {
-    perspective:1350px !important;
+    perspective:1450px !important;
     perspective-origin:50% 48% !important;
     transform-style:preserve-3d !important;
     overflow:visible !important;
@@ -1879,14 +1879,32 @@
     overflow:visible !important;
     transform-origin:50% 50% !important;
     transform-style:preserve-3d !important;
-    will-change:transform !important;
+    will-change:transform;
   }
   #contests.carousel > .carousel-inner > #slides.slides > .slide {
+    position:absolute !important;
     left:0 !important;
     top:0 !important;
+    width:clamp(220px,16vw,250px) !important;
+    height:360px !important;
+    min-height:360px !important;
+    box-sizing:border-box !important;
     transform-style:preserve-3d !important;
-    backface-visibility:visible !important;
-    -webkit-backface-visibility:visible !important;
+    backface-visibility:hidden !important;
+    -webkit-backface-visibility:hidden !important;
+    overflow:hidden !important;
+  }
+}
+@media (min-width:701px) and (max-width:999px) {
+  #contests.carousel > .carousel-inner > #slides.slides > .slide {
+    width:220px !important;
+    height:340px !important;
+    min-height:340px !important;
+    padding:15px !important;
+    gap:10px !important;
+  }
+  #contests.carousel > .carousel-inner > #slides.slides > .slide .slide-art {
+    height:220px !important;
   }
 }
 </style>
@@ -2017,7 +2035,7 @@
  const hint=document.getElementById('drum-hint');
  if(hint) hint.textContent=mobile?'Прокрути пальцем →':'Перетаскивай мышью →';
  const cardWidth=mobile?Math.min(148,window.innerWidth*.42):(window.innerWidth<1000?280:300);
- const radius=mobile?Math.max(175,Math.ceil(cardWidth/(2*Math.sin(Math.PI/count))+10)):(window.innerWidth<1000?350:380);
+ const radius=mobile?Math.max(175,Math.ceil(cardWidth/(2*Math.sin(Math.PI/count))+10)):(window.innerWidth<1000?440:500);
  const step=360/count;
  cards.forEach((card,i)=>{
    card.style.setProperty('transform',`translate(-50%,-50%) rotateY(${i*step}deg) translateZ(${radius}px)`,'important');
