@@ -2328,13 +2328,13 @@ document.addEventListener('DOMContentLoaded',()=>{
     rays.className='prizora-rays-layer';
     rays.setAttribute('aria-hidden','true');
     Object.assign(rays.style,{
-      position:'absolute',left:'50%',top:'50%',width:'245%',height:'245%',
+      position:'absolute',left:'50%',top:'50%',width:'340%',height:'340%',maxWidth:'none',
       zIndex:'1',pointerEvents:'none',border:'0',borderRadius:'50%',
-      opacity:'.82',transform:'translate(-50%,-50%) rotate(0deg)',
-      background:'repeating-conic-gradient(from 0deg at 50% 50%, transparent 0deg 12deg, rgba(255,190,78,0) 12deg 15deg, rgba(255,190,78,.64) 15.4deg 16.4deg, rgba(255,232,174,.25) 16.7deg 17deg, transparent 17.4deg 30deg), repeating-conic-gradient(from 9deg at 50% 50%, transparent 0deg 43deg, rgba(255,215,140,.28) 43.4deg 44deg, transparent 44.5deg 90deg)',
-      maskImage:'radial-gradient(ellipse at center, transparent 0 16%, #000 28%, #000 62%, transparent 88%)',
-      webkitMaskImage:'radial-gradient(ellipse at center, transparent 0 16%, #000 28%, #000 62%, transparent 88%)',
-      filter:'blur(.7px)'
+      opacity:'.58',transform:'translate(-50%,-50%) rotate(0deg)',
+      background:'repeating-conic-gradient(from 0deg at 50% 50%, transparent 0deg 12deg, rgba(255,190,78,0) 12deg 15deg, rgba(255,190,78,.48) 15.4deg 16.4deg, rgba(255,232,174,.18) 16.7deg 17deg, transparent 17.4deg 30deg), repeating-conic-gradient(from 9deg at 50% 50%, transparent 0deg 43deg, rgba(255,215,140,.19) 43.4deg 44deg, transparent 44.5deg 90deg)',
+      maskImage:'radial-gradient(ellipse at center, transparent 0 18%, rgba(0,0,0,.55) 30%, #000 52%, rgba(0,0,0,.72) 70%, transparent 100%)',
+      webkitMaskImage:'radial-gradient(ellipse at center, transparent 0 18%, rgba(0,0,0,.55) 30%, #000 52%, rgba(0,0,0,.72) 70%, transparent 100%)',
+      filter:'blur(1.8px)'
     });
     drum.insertBefore(rays,drum.firstChild);
     if(rays.animate){
