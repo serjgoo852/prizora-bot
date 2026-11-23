@@ -2351,10 +2351,29 @@ document.addEventListener('DOMContentLoaded',()=>{
       webkitMaskImage:'radial-gradient(ellipse at center, transparent 0 16%, #000 28%, #000 62%, transparent 88%)',
       filter:'blur(.7px)'
     });
-    /* Use the same centered in-drum ray layer on desktop and mobile.
-       The carousel is the positioning context; its content stays above the rays. */
-    rays.style.zIndex='0';
-    drum.insertBefore(rays,drum.firstChild);
+    /* On desktop, keep the ray field OUTSIDE the clipped drum frame.
+       The drum itself remains clipped, so only the rays can extend beyond it. */
+    if(window.matchMedia('(min-width:701px)').matches && drum.parentElement){
+      const host=drum.parentElement;
+      if(getComputedStyle(host).position==='static') host.style.position='relative';
+      host.insertBefore(rays,drum);
+      rays.style.position='absolute';
+      rays.style.zIndex='0';
+      drum.style.position='relative';
+      drum.style.zIndex='1';
+      const placeRays=()=>{
+        const drumRect=drum.getBoundingClientRect();
+        const hostRect=host.getBoundingClientRect();
+        rays.style.left=(drumRect.left-hostRect.left+host.scrollLeft+drumRect.width/2)+'px';
+        rays.style.top=(drumRect.top-hostRect.top+host.scrollTop+drumRect.height/2)+'px';
+        rays.style.width=(drumRect.width*2.45)+'px';
+        rays.style.height=(drumRect.height*2.45)+'px';
+      };
+      placeRays();
+      window.addEventListener('resize',placeRays,{passive:true});
+    }else{
+      drum.insertBefore(rays,drum.firstChild);
+    }
     if(rays.animate){
       rays.animate(
         [{transform:'translate(-50%,-50%) rotate(0deg)'},{transform:'translate(-50%,-50%) rotate(360deg)'}],
