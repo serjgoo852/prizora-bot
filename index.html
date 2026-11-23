@@ -2109,52 +2109,50 @@ section,article,header,footer,nav{min-width:0}
 (()=>{
  const bot=document.getElementById('prizora-runner');
  if(!bot)return;
- let active=null,raf=0,timer=0;
+ let active=null,timer=0,lastY=-999;
  const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
- const selectors=['.hero','.approved-hero','.carousel','.pro-showcase','.pro-contest-slider','#homepage-ad-promo','.participation-guide','.benefits'];
- function getTargets(){
-   const all=selectors.flatMap(sel=>[...document.querySelectorAll(sel)]);
-   const unique=[...new Set(all)];
-   return unique.filter(el=>{
+ const selectors=['.hero','.approved-hero','.carousel','.pro-showcase','.pro-contest-slider','#homepage-ad-promo','.participation-guide','.quick','.benefits'];
+ function targetsNow(){
+   const list=selectors.flatMap(sel=>Array.from(document.querySelectorAll(sel)));
+   return [...new Set(list)].filter(el=>{
      if(!el.isConnected)return false;
-     /* The guide robot is positioned beside the PRO showcase; don't count its
-        moved presenter twice as a separate destination. */
      if(el.classList.contains('approved-hero')&&el.closest('.pro-showcase'))return false;
-     const cs=getComputedStyle(el);
-     return cs.display!=='none'&&cs.visibility!=='hidden'&&el.getBoundingClientRect().height>8;
+     const st=getComputedStyle(el),r=el.getBoundingClientRect();
+     return st.display!=='none'&&st.visibility!=='hidden'&&r.height>8&&r.width>8;
    });
  }
  function update(){
-   raf=0;
-   const vh=window.visualViewport?.height||window.innerHeight;
+   const vh=(window.visualViewport&&window.visualViewport.height)||window.innerHeight;
    const focus=vh*.46;
-   const targets=getTargets();
-   if(!targets.length)return;
-   let chosen=null,bestScore=Infinity,bestRect=null;
-   targets.forEach(el=>{
+   const list=targetsNow();
+   let chosen=null,chosenRect=null,best=Infinity;
+   for(const el of list){
      const r=el.getBoundingClientRect();
-     const top=Math.max(0,r.top),bottom=Math.min(vh,r.bottom);
-     const visible=Math.max(0,bottom-top);
-     if(visible<=0)return;
-     const center=(top+bottom)/2;
-     const score=Math.abs(center-focus)-Math.min(visible,vh)*.12;
-     if(score<bestScore){bestScore=score;chosen=el;bestRect={top,bottom,visible};}
-   });
-   /* If the user is between sections, smoothly travel toward the nearest one. */
-   if(!chosen){
-     targets.forEach(el=>{
-       const r=el.getBoundingClientRect();
-       const center=r.top+r.height/2;
-       const score=Math.abs(center-focus);
-       if(score<bestScore){bestScore=score;chosen=el;bestRect={top:r.top,bottom:r.bottom,visible:0};}
-     });
+     const visibleTop=Math.max(0,r.top),visibleBottom=Math.min(vh,r.bottom);
+     if(visibleBottom<=visibleTop)continue;
+     const center=(visibleTop+visibleBottom)/2;
+     const score=Math.abs(center-focus)-Math.min(vh,visibleBottom-visibleTop)*.08;
+     if(score<best){best=score;chosen=el;chosenRect={r,visibleTop,visibleBottom};}
    }
-   if(!chosen||!bestRect)return;
-   const h=bot.offsetHeight||108;
-   let y=chosen.getBoundingClientRect().top+(chosen.getBoundingClientRect().height-h)/2;
-   if(bestRect.visible>=h)y=Math.max(bestRect.top,Math.min(bestRect.bottom-h,y));
-   else y=Math.max(8,Math.min(vh-h-8,y));
-   bot.style.transform='translate3d(0,'+Math.round(y)+'px,0)';
+   if(!chosen){
+     for(const el of list){
+       const r=el.getBoundingClientRect(),score=Math.abs((r.top+r.bottom)/2-focus);
+       if(score<best){best=score;chosen=el;chosenRect={r,visibleTop:r.top,visibleBottom:r.bottom};}
+     }
+   }
+   if(!chosen||!chosenRect)return;
+   const h=bot.offsetHeight||108,r=chosenRect.r;
+   let y=r.top+(r.height-h)/2;
+   if(chosenRect.visibleBottom-chosenRect.visibleTop>=h){
+     y=Math.max(chosenRect.visibleTop,Math.min(chosenRect.visibleBottom-h,y));
+   }else{
+     y=Math.max(8,Math.min(vh-h-8,y));
+   }
+   y=Math.round(y);
+   if(Math.abs(y-lastY)>2){
+     bot.style.transform='translate3d(0,'+y+'px,0)';
+     lastY=y;
+   }
    bot.classList.add('is-visible');
    if(chosen!==active){
      active=chosen;
@@ -2164,10 +2162,11 @@ section,article,header,footer,nav{min-width:0}
      timer=setTimeout(()=>{
        bot.classList.remove('is-running');
        bot.classList.add('is-pointing');
-     },reduced?0:720);
+     },reduced?0:650);
    }
  }
- function schedule(){if(!raf)raf=requestAnimationFrame(update);}
+ let raf=0;
+ function schedule(){if(!raf)raf=requestAnimationFrame(()=>{raf=0;update();});}
  window.addEventListener('scroll',schedule,{passive:true});
  document.addEventListener('scroll',schedule,{passive:true,capture:true});
  window.addEventListener('resize',schedule,{passive:true});
@@ -2175,14 +2174,9 @@ section,article,header,footer,nav{min-width:0}
    window.visualViewport.addEventListener('scroll',schedule,{passive:true});
    window.visualViewport.addEventListener('resize',schedule,{passive:true});
  }
- if('IntersectionObserver' in window){
-   const io=new IntersectionObserver(schedule,{threshold:[0,.05,.15,.3,.5,.75]});
-   getTargets().forEach(el=>io.observe(el));
- }
- if('MutationObserver' in window){
-   const mo=new MutationObserver(schedule);
-   mo.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style','hidden']});
- }
+ /* Polling is intentional: Android Chrome desktop-site mode can scroll its
+    visual viewport without consistently firing the ordinary window event. */
+ setInterval(update,180);
  schedule();
 })();
 </script>
