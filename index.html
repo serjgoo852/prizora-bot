@@ -2114,11 +2114,8 @@ section,article,header,footer,nav{min-width:0}
  let active=null,runTimer=0,raf=0;
  const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
  const selectors=['.hero','.carousel','.pro-showcase','.pro-contest-slider','#homepage-ad-promo','.participation-guide','.quick','.benefits'];
- const seen=new Set();
  function targets(){
   return selectors.flatMap(sel=>Array.from(document.querySelectorAll(sel))).filter(el=>{
-   if(seen.has(el))return false;
-   seen.add(el);
    if(!el.isConnected)return false;
    const st=getComputedStyle(el),r=el.getBoundingClientRect();
    return st.display!=='none'&&st.visibility!=='hidden'&&r.width>8&&r.height>8;
