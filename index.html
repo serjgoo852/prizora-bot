@@ -2961,4 +2961,10 @@ html body .pro-showcase>.approved-hero .approved-hero-hit::after{font-size:13px!
  if(window.matchMedia('(min-width:701px)').matches)setInterval(schedule,300);
 })();
 </script>
+
+<style id="prizora-prevent-pro-presenter-load-flash">
+/* The PRO presenter starts in the page flow and is moved into its banner
+   after DOMContentLoaded. Keep only that temporary source position hidden. */
+.wrap > section.approved-hero{visibility:hidden!important}
+</style>
 </body></html>
