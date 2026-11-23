@@ -2074,7 +2074,7 @@ section,article,header,footer,nav{min-width:0}
 
 
 <style id="prizora-runner-style">
-#prizora-runner{position:fixed;z-index:30;right:8px;top:0;width:82px;height:108px;pointer-events:none;opacity:0;transform:none;transition:top .55s cubic-bezier(.22,.7,.25,1),opacity .35s ease;will-change:top;filter:drop-shadow(0 5px 12px #000b)}
+#prizora-runner{position:fixed;z-index:30;right:8px;top:0;width:82px;height:108px;pointer-events:none;opacity:0;transform:translate3d(0,30vh,0);transition:transform .85s cubic-bezier(.2,.8,.2,1),opacity .35s ease;filter:drop-shadow(0 5px 12px #000b)}
 #prizora-runner.is-visible{opacity:1}
 #prizora-runner svg{display:block;width:100%;height:100%;overflow:visible}
 #prizora-runner .runner-body{transform-origin:50% 50%}
@@ -2106,56 +2106,24 @@ section,article,header,footer,nav{min-width:0}
 <g class="runner-leg-b"><path d="M60 91Q64 101 68 108" fill="none" stroke="#8c5610" stroke-width="14" stroke-linecap="round"/><path d="M60 91Q64 101 68 108" fill="none" stroke="url(#prGold)" stroke-width="10" stroke-linecap="round"/><path d="M67 107Q77 105 82 112Q85 118 76 119H63Q59 117 62 111Z" fill="#d58a19" stroke="#7b4a0c" stroke-width="2"/><path d="M65 114h15" stroke="#fff0ae" stroke-width="2" stroke-linecap="round"/></g>
 </g></svg></div>
 <script id="prizora-runner-script">
-(()=>{
- const bot=document.getElementById('prizora-runner');
- if(!bot||!document.body)return;
- if(bot.parentElement!==document.body)document.body.appendChild(bot);
- let active=null,raf=0,lastY=-1;
- const selectors=['.carousel','.pro-showcase','.pro-contest-slider','#homepage-ad-promo','.participation-guide','.quick','.benefits'];
- function targets(){
-  const found=new Set();
-  selectors.forEach(sel=>document.querySelectorAll(sel).forEach(el=>found.add(el)));
-  return Array.from(found).filter(el=>{
-   if(!el.isConnected)return false;
-   const st=getComputedStyle(el),r=el.getBoundingClientRect();
-   return st.display!=='none'&&st.visibility!=='hidden'&&r.width>8&&r.height>8;
-  });
- }
+(()=>{const bot=document.getElementById('prizora-runner');if(!bot)return;
+ const targets=[document.querySelector('.approved-hero'),document.querySelector('.carousel'),document.querySelector('.pro-contest-slider'),document.querySelector('.homepage-ad-promo')].filter(Boolean);
+ if(!targets.length)return;
+ let active=-1,raf=0,timer=0;
+ const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
  function update(){
-  const vh=window.innerHeight||document.documentElement.clientHeight;
-  const focus=vh*.48;
-  let chosen=null,best=Infinity,chosenRect=null;
-  for(const el of targets()){
-   const r=el.getBoundingClientRect();
-   const top=Math.max(0,r.top),bottom=Math.min(vh,r.bottom);
-   if(bottom<=top)continue;
-   const center=(top+bottom)/2;
-   const score=Math.abs(center-focus);
-   if(score<best){best=score;chosen=el;chosenRect=r;}
-  }
-  if(!chosen||!chosenRect)return;
-  /* Move only when the active section changes. This avoids chasing every scroll pixel. */
-  if(chosen===active)return;
-  const h=bot.getBoundingClientRect().height||108;
-  const maxTop=Math.max(8,vh-h-8);
-  const visibleCenter=(Math.max(0,chosenRect.top)+Math.min(vh,chosenRect.bottom))/2;
-  const y=Math.round(Math.max(8,Math.min(maxTop,visibleCenter-h/2)));
-  bot.style.setProperty('position','fixed','important');
-  bot.style.setProperty('bottom','auto','important');
-  bot.style.setProperty('transform','none','important');
-  bot.style.setProperty('right','8px','important');
-  bot.style.setProperty('left','auto','important');
-  bot.style.setProperty('z-index','999','important');
-  if(Math.abs(y-lastY)>4){bot.style.setProperty('top',y+'px','important');lastY=y;}
-  bot.classList.add('is-visible','is-pointing');
-  bot.classList.remove('is-running');
-  active=chosen;
+  raf=0;const vh=window.innerHeight;let best=0,score=Infinity;
+  targets.forEach((el,i)=>{const r=el.getBoundingClientRect();const center=r.top+r.height/2;const distance=Math.abs(center-vh*.43);if(distance<score){score=distance;best=i;}});
+  const rect=targets[best].getBoundingClientRect();
+  const h=bot.offsetHeight||108; const visibleTop=Math.max(0,rect.top); const visibleBottom=Math.min(vh,rect.bottom);
+  let y=rect.top+(rect.height-h)/2; if(visibleBottom-visibleTop>=h)y=Math.max(visibleTop,Math.min(visibleBottom-h,y)); else y=Math.max(8,Math.min(vh-h-8,(visibleTop+visibleBottom-h)/2));
+  bot.style.transform='translate3d(0,'+Math.round(y)+'px,0)';
+  bot.classList.add('is-visible');
+  if(best!==active){active=best;bot.classList.remove('is-pointing');bot.classList.add('is-running');clearTimeout(timer);timer=setTimeout(()=>{bot.classList.remove('is-running');bot.classList.add('is-pointing');},reduced?0:850);}
  }
- function schedule(){if(!raf)raf=requestAnimationFrame(()=>{raf=0;update();});}
- window.addEventListener('scroll',schedule,{passive:true});
- document.addEventListener('scroll',schedule,{passive:true,capture:true});
- window.addEventListener('resize',schedule,{passive:true});
- if(window.visualViewport){window.visualViewport.addEventListener('scroll',schedule,{passive:true});window.visualViewport.addEventListener('resize',schedule,{passive:true});}
+ function schedule(){if(!raf)raf=requestAnimationFrame(update);}
+ window.addEventListener('scroll',schedule,{passive:true});window.addEventListener('resize',schedule);
+ if('IntersectionObserver' in window){const io=new IntersectionObserver(schedule,{threshold:[0,.15,.35,.6]});targets.forEach(t=>io.observe(t));}
  schedule();
 })();
 </script>
