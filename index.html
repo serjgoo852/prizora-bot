@@ -2252,11 +2252,26 @@
  prev.addEventListener('click',()=>go(Math.round(angle/step)-1,true));
  next.addEventListener('click',()=>go(Math.round(angle/step)+1,true));
  const drum=document.querySelector('.carousel');
- drum.addEventListener('mouseenter',()=>{paused=true});
+ /* Pause only over the visible oval footprint of the physical prize drum.
+   The carousel section is intentionally larger than the drum itself. */
+ function isInsideDrumSurface(e){
+   const r=drum.getBoundingClientRect();
+   if(!r.width||!r.height)return false;
+   const desktop=window.matchMedia('(min-width:701px)').matches;
+   const rx=r.width*(desktop?.445:.46);
+   const ry=r.height*(desktop?.36:.42);
+   const nx=(e.clientX-(r.left+r.width/2))/rx;
+   const ny=(e.clientY-(r.top+r.height/2))/ry;
+   return nx*nx+ny*ny<=1;
+ }
+ drum.addEventListener('mousemove',e=>{
+   if(!mouseDown)paused=isInsideDrumSurface(e);
+ });
  /* Desktop wheel: rotate one or more prize positions without scrolling the page. */
  let wheelDelta=0;
  drum.addEventListener('wheel',e=>{
    if(window.matchMedia('(max-width:700px)').matches)return;
+   if(!isInsideDrumSurface(e))return;
    e.preventDefault();
    wheelDelta+=e.deltaY;
    const threshold=45;
@@ -2276,7 +2291,7 @@
  /* Desktop: drag the 3D drum with the left mouse button, like a swipe on mobile. */
  let mouseDown=false,mouseStartX=0,mouseLastX=0;
  drum.addEventListener('mousedown',e=>{
-   if(e.button!==0)return;
+   if(e.button!==0||!isInsideDrumSurface(e))return;
    mouseDown=true;dragging=true;paused=true;
    mouseStartX=mouseLastX=e.clientX;
    e.preventDefault();
@@ -2290,7 +2305,7 @@
    mouseDown=false;dragging=false;
    const dx=e.clientX-mouseStartX;
    if(Math.abs(dx)>18)go(Math.round(angle/step)+(dx<0?1:-1),true);
-   paused=drum.matches(':hover')?true:false;
+   paused=isInsideDrumSurface(e);
  });
  paint();raf=requestAnimationFrame(animate);
 })();
@@ -2999,5 +3014,56 @@ html body .pro-showcase>.approved-hero .approved-hero-hit::after{font-size:13px!
 })();
 </script>
 
+
+
+<style id="prizora-drum-rear-wall-rays-hitarea-20261123">
+/* Desktop drum depth: a dark, softly illuminated rear wall sits behind the rotating prize cards. */
+@media (min-width:701px) {
+  #contests.carousel {
+    position:relative!important;
+    z-index:1!important;
+    isolation:isolate!important;
+  }
+  #contests.carousel > .carousel-inner {
+    transform-style:preserve-3d!important;
+  }
+  #contests.carousel > .carousel-inner::before {
+    content:""!important;
+    display:block!important;
+    position:absolute!important;
+    left:5%!important;
+    right:5%!important;
+    top:8%!important;
+    bottom:13%!important;
+    z-index:0!important;
+    border:1px solid rgba(225,177,83,.34)!important;
+    border-radius:50%!important;
+    background:
+      radial-gradient(ellipse at 50% 43%,rgba(66,47,22,.98) 0%,rgba(30,23,14,.99) 55%,rgba(8,8,9,.995) 100%)!important;
+    box-shadow:
+      inset 0 0 48px rgba(235,178,79,.14),
+      inset 0 0 100px rgba(0,0,0,.58),
+      0 0 24px rgba(0,0,0,.34)!important;
+    transform:translateZ(-280px)!important;
+    transform-style:preserve-3d!important;
+    backface-visibility:hidden!important;
+    pointer-events:none!important;
+  }
+  /* Keep the ray field behind the complete drum, never over its prize artwork. */
+  #contests.carousel #slides.slides {
+    position:absolute!important;
+    z-index:2!important;
+    transform-style:preserve-3d!important;
+  }
+  #contests.carousel #slides > .slide > .slide-art {
+    background:
+      radial-gradient(ellipse at 50% 42%,rgba(70,49,21,.98) 0%,rgba(16,12,8,.995) 78%)!important;
+  }
+  #contests.carousel #slides > .slide > .slide-back {
+    background:
+      radial-gradient(ellipse at 50% 42%,rgba(47,37,22,.99),rgba(9,9,10,1) 74%)!important;
+  }
+}
+</style>
 
 </body></html>
