@@ -1852,43 +1852,42 @@
 </style>
 
 <style id="prizora-drum-one-axis-premium-final-20261123">
-/* One consistent 3D coordinate system for the ten prize cards. */
-#contests.carousel {
-  perspective:1350px !important;
-  perspective-origin:50% 48% !important;
-  transform-style:preserve-3d !important;
-  overflow:visible !important;
-}
-#contests.carousel > .carousel-inner {
-  position:absolute !important;
-  inset:0 !important;
-  width:100% !important;
-  height:100% !important;
-  overflow:visible !important;
-  perspective:none !important;
-  transform-style:preserve-3d !important;
-}
-#contests.carousel > .carousel-inner > #slides.slides {
-  position:absolute !important;
-  left:50% !important;
-  top:50% !important;
-  width:0 !important;
-  height:0 !important;
-  min-height:0 !important;
-  overflow:visible !important;
-  transform-origin:50% 50% !important;
-  transform-style:preserve-3d !important;
-  will-change:transform !important;
-}
-#contests.carousel > .carousel-inner > #slides.slides > .slide {
-  left:0 !important;
-  top:0 !important;
-  transform-style:preserve-3d !important;
-  backface-visibility:visible !important;
-  -webkit-backface-visibility:visible !important;
-}
+/* Desktop only: one consistent 3D coordinate system for the ten prize cards. */
 @media (min-width:701px) {
-  #contests.carousel { min-height:540px !important; }
+  #contests.carousel {
+    perspective:1350px !important;
+    perspective-origin:50% 48% !important;
+    transform-style:preserve-3d !important;
+    overflow:visible !important;
+  }
+  #contests.carousel > .carousel-inner {
+    position:absolute !important;
+    inset:0 !important;
+    width:100% !important;
+    height:100% !important;
+    overflow:visible !important;
+    perspective:none !important;
+    transform-style:preserve-3d !important;
+  }
+  #contests.carousel > .carousel-inner > #slides.slides {
+    position:absolute !important;
+    left:50% !important;
+    top:50% !important;
+    width:0 !important;
+    height:0 !important;
+    min-height:0 !important;
+    overflow:visible !important;
+    transform-origin:50% 50% !important;
+    transform-style:preserve-3d !important;
+    will-change:transform !important;
+  }
+  #contests.carousel > .carousel-inner > #slides.slides > .slide {
+    left:0 !important;
+    top:0 !important;
+    transform-style:preserve-3d !important;
+    backface-visibility:visible !important;
+    -webkit-backface-visibility:visible !important;
+  }
 }
 </style>
 
