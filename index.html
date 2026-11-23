@@ -1950,7 +1950,7 @@
     box-sizing:border-box !important;
     border:1px solid rgba(244,195,83,.9) !important;
     border-radius:24px !important;
-    background:radial-gradient(ellipse at center,rgba(129,82,24,.96),rgba(19,13,6,.98) 76%) !important;
+    background:radial-gradient(ellipse at 50% 42%,rgba(48,38,22,.94),rgba(10,10,12,.99) 72%) !important;
     transform:rotateY(180deg) translateZ(1px) !important;
     backface-visibility:hidden !important;
     -webkit-backface-visibility:hidden !important;
@@ -2207,21 +2207,12 @@
    });
  }
  loadNearby(0);
- /* Give every prize card a proper image-backed reverse face so the rear half
-    of the cylinder shows prize artwork instead of mirrored text. */
+ /* Keep a clean, dark reverse face inside the 3D drum.
+    Prize artwork stays only on the visitor-facing side; no duplicate images. */
  cards.forEach(card=>{
-   const front=card.querySelector('.slide-art img');
    const back=document.createElement('div');
    back.className='slide-back';
-   const image=document.createElement('img');
-   image.alt='';
-   image.setAttribute('aria-hidden','true');
-   image.decoding='async';
-   image.loading='eager';
-   if(front) image.src=front.currentSrc||front.src;
-   const title=document.createElement('span');
-   title.textContent=card.querySelector('h3')?.textContent||'PRIZORA PREMIUM';
-   back.append(image,title);
+   back.setAttribute('aria-hidden','true');
    card.append(back);
  });
  const mobile=window.matchMedia('(max-width:700px)').matches;
