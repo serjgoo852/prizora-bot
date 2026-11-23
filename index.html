@@ -1644,7 +1644,9 @@
     height: 500px !important;
     min-height: 500px !important;
     padding: 18px 0 48px !important;
-    overflow: hidden !important;
+    /* Let the oversized animated gold rays escape the desktop drum frame,
+       matching the mobile presentation; the drum geometry stays unchanged. */
+    overflow: visible !important;
     border-radius: 26px !important;
   }
   .carousel-inner {
