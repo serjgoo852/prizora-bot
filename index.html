@@ -2107,7 +2107,8 @@ section,article,header,footer,nav{min-width:0}
 </g></svg></div>
 <script id="prizora-runner-script">
 (()=>{const bot=document.getElementById('prizora-runner');if(!bot)return;
- const targets=[document.querySelector('.approved-hero'),document.querySelector('.carousel'),document.querySelector('.pro-contest-slider'),document.querySelector('.homepage-ad-promo')].filter(Boolean);
+ const targetSelector='.approved-hero,.carousel,.pro-showcase,.homepage-ad-promo,.pro-contest-slider';
+ const targets=Array.from(document.querySelectorAll(targetSelector));
  if(!targets.length)return;
  let active=-1,raf=0,timer=0;
  const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
