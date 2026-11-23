@@ -2108,75 +2108,61 @@ section,article,header,footer,nav{min-width:0}
 <script id="prizora-runner-script">
 (()=>{
  const bot=document.getElementById('prizora-runner');
- if(!bot)return;
- let active=null,timer=0,lastY=-999;
+ if(!bot||!document.body)return;
+ /* Keep the runner outside every content/banner container. */
+ if(bot.parentElement!==document.body)document.body.appendChild(bot);
+ let active=null,runTimer=0,raf=0;
  const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
- const selectors=['.hero','.approved-hero','.carousel','.pro-showcase','.pro-contest-slider','#homepage-ad-promo','.participation-guide','.quick','.benefits'];
- function targetsNow(){
-   const list=selectors.flatMap(sel=>Array.from(document.querySelectorAll(sel)));
-   return [...new Set(list)].filter(el=>{
-     if(!el.isConnected)return false;
-     if(el.classList.contains('approved-hero')&&el.closest('.pro-showcase'))return false;
-     const st=getComputedStyle(el),r=el.getBoundingClientRect();
-     return st.display!=='none'&&st.visibility!=='hidden'&&r.height>8&&r.width>8;
-   });
+ const selectors=['.hero','.carousel','.pro-showcase','.pro-contest-slider','#homepage-ad-promo','.participation-guide','.quick','.benefits'];
+ const seen=new Set();
+ function targets(){
+  return selectors.flatMap(sel=>Array.from(document.querySelectorAll(sel))).filter(el=>{
+   if(seen.has(el))return false;
+   seen.add(el);
+   if(!el.isConnected)return false;
+   const st=getComputedStyle(el),r=el.getBoundingClientRect();
+   return st.display!=='none'&&st.visibility!=='hidden'&&r.width>8&&r.height>8;
+  });
  }
  function update(){
-   const vh=(window.visualViewport&&window.visualViewport.height)||window.innerHeight;
-   const focus=vh*.46;
-   const list=targetsNow();
-   let chosen=null,chosenRect=null,best=Infinity;
-   for(const el of list){
-     const r=el.getBoundingClientRect();
-     const visibleTop=Math.max(0,r.top),visibleBottom=Math.min(vh,r.bottom);
-     if(visibleBottom<=visibleTop)continue;
-     const center=(visibleTop+visibleBottom)/2;
-     const score=Math.abs(center-focus)-Math.min(vh,visibleBottom-visibleTop)*.08;
-     if(score<best){best=score;chosen=el;chosenRect={r,visibleTop,visibleBottom};}
-   }
-   if(!chosen){
-     for(const el of list){
-       const r=el.getBoundingClientRect(),score=Math.abs((r.top+r.bottom)/2-focus);
-       if(score<best){best=score;chosen=el;chosenRect={r,visibleTop:r.top,visibleBottom:r.bottom};}
-     }
-   }
-   if(!chosen||!chosenRect)return;
-   const h=bot.offsetHeight||108,r=chosenRect.r;
-   let y=r.top+(r.height-h)/2;
-   if(chosenRect.visibleBottom-chosenRect.visibleTop>=h){
-     y=Math.max(chosenRect.visibleTop,Math.min(chosenRect.visibleBottom-h,y));
-   }else{
-     y=Math.max(8,Math.min(vh-h-8,y));
-   }
-   y=Math.round(y);
-   if(Math.abs(y-lastY)>2){
-     bot.style.transform='translate3d(0,'+y+'px,0)';
-     lastY=y;
-   }
-   bot.classList.add('is-visible');
-   if(chosen!==active){
-     active=chosen;
-     bot.classList.remove('is-pointing');
-     bot.classList.add('is-running');
-     clearTimeout(timer);
-     timer=setTimeout(()=>{
-       bot.classList.remove('is-running');
-       bot.classList.add('is-pointing');
-     },reduced?0:650);
-   }
+  const vh=(window.visualViewport&&window.visualViewport.height)||window.innerHeight;
+  const focus=vh*.48;
+  let chosen=null,best=Infinity,chosenRect=null;
+  for(const el of targets()){
+   const r=el.getBoundingClientRect();
+   const top=Math.max(0,r.top),bottom=Math.min(vh,r.bottom);
+   if(bottom<=top)continue;
+   const center=(top+bottom)/2;
+   const score=Math.abs(center-focus);
+   if(score<best){best=score;chosen=el;chosenRect=r;}
+  }
+  if(!chosen||!chosenRect)return;
+  const h=bot.getBoundingClientRect().height||108;
+  const maxTop=Math.max(8,vh-h-8);
+  const center=Math.max(8,Math.min(vh-8,(Math.max(0,chosenRect.top)+Math.min(vh,chosenRect.bottom))/2));
+  const y=Math.round(Math.max(8,Math.min(maxTop,center-h/2)));
+  bot.style.setProperty('position','fixed','important');
+  bot.style.setProperty('top',y+'px','important');
+  bot.style.setProperty('bottom','auto','important');
+  bot.style.setProperty('transform','none','important');
+  bot.style.setProperty('right','8px','important');
+  bot.style.setProperty('left','auto','important');
+  bot.style.setProperty('z-index','999','important');
+  bot.classList.add('is-visible');
+  if(chosen!==active){
+   active=chosen;
+   bot.classList.remove('is-pointing');
+   bot.classList.add('is-running');
+   clearTimeout(runTimer);
+   runTimer=setTimeout(()=>{bot.classList.remove('is-running');bot.classList.add('is-pointing');},reduced?0:650);
+  }
  }
- let raf=0;
  function schedule(){if(!raf)raf=requestAnimationFrame(()=>{raf=0;update();});}
  window.addEventListener('scroll',schedule,{passive:true});
  document.addEventListener('scroll',schedule,{passive:true,capture:true});
  window.addEventListener('resize',schedule,{passive:true});
- if(window.visualViewport){
-   window.visualViewport.addEventListener('scroll',schedule,{passive:true});
-   window.visualViewport.addEventListener('resize',schedule,{passive:true});
- }
- /* Polling is intentional: Android Chrome desktop-site mode can scroll its
-    visual viewport without consistently firing the ordinary window event. */
- setInterval(update,180);
+ if(window.visualViewport){window.visualViewport.addEventListener('scroll',schedule,{passive:true});window.visualViewport.addEventListener('resize',schedule,{passive:true});}
+ setInterval(update,160);
  schedule();
 })();
 </script>
