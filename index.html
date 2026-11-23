@@ -2241,8 +2241,11 @@
      paintedIndex=index;
      cards.forEach((card,i)=>{
        const d=(i-index+count)%count,near=Math.min(d,count-d);
-       card.style.opacity=near>Math.ceil(count/2)?'.45':'1';
-       card.style.filter=near===0?'none':`brightness(${near===1?.88:.68})`;
+       /* Fade cards smoothly as their fronts turn away from the viewer. */
+       const relativeAngle=((i*step-angle)%360+540)%360-180;
+       const facing=Math.max(0,Math.cos(relativeAngle*Math.PI/180));
+       card.style.opacity=String(Math.pow(facing,1.35));
+       card.style.filter=near===0?'none':`brightness(${near===1?.82:.58})`;
      });
      dotsList.forEach((d,i)=>d.classList.toggle('active',i===index));
    }
@@ -2347,8 +2350,8 @@ document.addEventListener('DOMContentLoaded',()=>{
       zIndex:'1',pointerEvents:'none',border:'0',borderRadius:'50%',
       opacity:'.82',transform:'translate(-50%,-50%) rotate(0deg)',
       background:'repeating-conic-gradient(from 0deg at 50% 50%, transparent 0deg 12deg, rgba(255,190,78,0) 12deg 15deg, rgba(255,190,78,.64) 15.4deg 16.4deg, rgba(255,232,174,.25) 16.7deg 17deg, transparent 17.4deg 30deg), repeating-conic-gradient(from 9deg at 50% 50%, transparent 0deg 43deg, rgba(255,215,140,.28) 43.4deg 44deg, transparent 44.5deg 90deg)',
-      maskImage:'radial-gradient(ellipse at center, transparent 0 16%, #000 28%, #000 62%, transparent 88%)',
-      webkitMaskImage:'radial-gradient(ellipse at center, transparent 0 16%, #000 28%, #000 62%, transparent 88%)',
+      maskImage:'radial-gradient(ellipse at center, transparent 0 18%, rgba(0,0,0,.35) 30%, #000 43%, #000 54%, rgba(0,0,0,.72) 64%, transparent 78%)',
+      webkitMaskImage:'radial-gradient(ellipse at center, transparent 0 18%, rgba(0,0,0,.35) 30%, #000 43%, #000 54%, rgba(0,0,0,.72) 64%, transparent 78%)',
       filter:'blur(.7px)'
     });
     /* On desktop, keep the ray field OUTSIDE the clipped drum frame.
