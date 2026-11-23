@@ -2107,26 +2107,31 @@ section,article,header,footer,nav{min-width:0}
 </g></svg></div>
 <script id="prizora-runner-script">
 (()=>{const bot=document.getElementById('prizora-runner');if(!bot)return;
- const targetSelector='.approved-hero,.carousel,.pro-showcase,.homepage-ad-promo,.pro-contest-slider';
- const targets=Array.from(document.querySelectorAll(targetSelector));
- if(!targets.length)return;
- let active=-1,raf=0,timer=0;
+ const selector='.approved-hero,.carousel,.pro-showcase,#homepage-ad-promo,.pro-contest-slider';
+ let targets=[],active=null,raf=0,timer=0;
  const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+ function collect(){
+  targets=Array.from(document.querySelectorAll(selector)).filter(el=>!(el.classList.contains('approved-hero')&&el.closest('.pro-showcase')));
+ }
  function update(){
-  raf=0;const vh=window.innerHeight;let best=0,score=Infinity;
-  targets.forEach((el,i)=>{const r=el.getBoundingClientRect();const center=r.top+r.height/2;const distance=Math.abs(center-vh*.43);if(distance<score){score=distance;best=i;}});
-  const rect=targets[best].getBoundingClientRect();
-  const h=bot.offsetHeight||108; const visibleTop=Math.max(0,rect.top); const visibleBottom=Math.min(vh,rect.bottom);
-  let y=rect.top+(rect.height-h)/2; if(visibleBottom-visibleTop>=h)y=Math.max(visibleTop,Math.min(visibleBottom-h,y)); else y=Math.max(8,Math.min(vh-h-8,(visibleTop+visibleBottom-h)/2));
-  bot.style.transform='translate3d(0,'+Math.round(y)+'px,0)';
-  bot.classList.add('is-visible');
-  if(best!==active){active=best;bot.classList.remove('is-pointing');bot.classList.add('is-running');clearTimeout(timer);timer=setTimeout(()=>{bot.classList.remove('is-running');bot.classList.add('is-pointing');},reduced?0:850);}
+  raf=0;collect();const vh=window.innerHeight;
+  const visible=targets.map(el=>({el,r:el.getBoundingClientRect()})).filter(x=>x.r.width>0&&x.r.height>0&&x.r.bottom>0&&x.r.top<vh);
+  if(!visible.length)return;
+  let chosen=visible[0],score=Infinity;
+  visible.forEach(x=>{const overlap=Math.max(0,Math.min(vh,x.r.bottom)-Math.max(0,x.r.top));const center=Math.max(0,Math.min(vh,(x.r.top+x.r.bottom)/2));const distance=Math.abs(center-vh*.43)-Math.min(overlap,vh)*.18;if(distance<score){score=distance;chosen=x;}});
+  const r=chosen.r,h=bot.offsetHeight||108,top=Math.max(0,r.top),bottom=Math.min(vh,r.bottom);
+  let y=r.top+(r.height-h)/2;if(bottom-top>=h)y=Math.max(top,Math.min(bottom-h,y));else y=Math.max(8,Math.min(vh-h-8,(top+bottom-h)/2));
+  bot.style.transform='translate3d(0,'+Math.round(y)+'px,0)';bot.classList.add('is-visible');
+  if(chosen.el!==active){active=chosen.el;bot.classList.remove('is-pointing');bot.classList.add('is-running');clearTimeout(timer);timer=setTimeout(()=>{bot.classList.remove('is-running');bot.classList.add('is-pointing');},reduced?0:850);}
  }
  function schedule(){if(!raf)raf=requestAnimationFrame(update);}
  window.addEventListener('scroll',schedule,{passive:true});window.addEventListener('resize',schedule);
- if('IntersectionObserver' in window){const io=new IntersectionObserver(schedule,{threshold:[0,.15,.35,.6]});targets.forEach(t=>io.observe(t));}
- schedule();
-})();
+ if(window.visualViewport){visualViewport.addEventListener('scroll',schedule,{passive:true});visualViewport.addEventListener('resize',schedule);}
+ if('IntersectionObserver'in window){const io=new IntersectionObserver(schedule,{threshold:[0,.1,.25,.5,.75]});collect();targets.forEach(el=>io.observe(el));}
+ collect();schedule();
+ // Android Chrome desktop-site mode can miss some scroll notifications.
+ if(window.matchMedia('(min-width:701px)').matches)setInterval(schedule,300);
+})(); 
 </script>
 
 
@@ -2439,13 +2444,13 @@ html body .pro-showcase>.approved-hero .approved-hero-hit::after{font-size:13px!
   .bottom a{font-size:14px!important;padding:10px 7px!important}
   .bottom b{font-size:23px!important}
   #prizora-runner{width:112px!important;height:148px!important;right:8px!important}
-  /* Slightly enlarge the desktop-site layout on phones without touching mobile CSS. */
+  /* Use the full desktop-mode width; do not zoom the whole page or shrink its contents. */
   .wrap{
-    zoom:1.12!important;
-    width:calc((100% - 24px)/1.12)!important;
-    max-width:857px!important;
+    zoom:1!important;
+    width:calc(100% - 24px)!important;
+    max-width:960px!important;
   }
-  /* prizora-desktop-phone-scale-v2-restored */
+  /* prizora-desktop-phone-layout-v1 */
 
 }
 </style>
