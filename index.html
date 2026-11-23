@@ -1748,7 +1748,7 @@
  }
  loadNearby(0);
  const mobile=window.matchMedia('(max-width:700px)').matches;
- const cardWidth=mobile?Math.min(148,window.innerWidth*.42):220;
+ const cardWidth=mobile?Math.min(148,window.innerWidth*.42):(window.innerWidth<1000?280:220);
  const radius=Math.max(mobile?175:285,Math.ceil(cardWidth/(2*Math.sin(Math.PI/count))+18));
  const step=360/count;
  cards.forEach((card,i)=>{
@@ -2369,4 +2369,75 @@ html body .pro-showcase>.approved-hero .approved-hero-hit::after{font-size:13px!
 }
 </style>
 
+
+<style id="prizora-phone-desktop-mode-readable-v1">
+/* Android Chrome: desktop-site viewport (typically ~980 CSS px).
+   Keep the real phone layout untouched; only enlarge the 701–999px desktop-mode composition. */
+@media (min-width:701px) and (max-width:999px){
+  .wrap{width:calc(100% - 24px)!important;max-width:960px!important;padding:18px 12px 112px!important}
+  .top{gap:18px!important;padding:10px 4px 18px!important}
+  .brand img{width:238px!important;height:112px!important;max-width:100%!important}
+  .top .pill{font-size:17px!important;padding:12px 18px!important}
+  .hero{margin:8px 0 24px!important}
+  .hero h1{font-size:clamp(38px,5vw,48px)!important;letter-spacing:2px!important}
+  .hero p{font-size:18px!important;letter-spacing:.6px!important}
+  .approved-hero{width:100%!important;max-width:936px!important;margin:12px auto 28px!important;border-radius:24px!important}
+  .section-head{margin:30px 5px 16px!important;gap:14px!important}
+  .section-head h2{font-size:31px!important;line-height:1.2!important}
+  .section-head span{font-size:18px!important}
+  /* Larger 3D prize drum cards; the existing rotation and movement remain intact. */
+  .carousel{height:456px!important;min-height:456px!important;padding:14px 0 42px!important;border-radius:26px!important}
+  .carousel-inner{height:378px!important;min-height:378px!important}
+  .slides{height:378px!important}
+  .slide{left:-135px!important;top:18px!important;width:270px!important;height:326px!important;min-height:326px!important;padding:17px 15px!important;gap:10px!important;border-radius:20px!important}
+  .slide-art{width:218px!important;height:190px!important;min-height:190px!important;flex:0 0 190px!important;margin-top:13px!important;border-radius:15px!important}
+  .slide h3{font-size:19px!important;line-height:1.18!important;margin-top:5px!important}
+  .slide:before{font-size:8px!important;top:8px!important}
+  .carousel-controls{top:43%!important;padding:0 12px!important}
+  .arrow{width:42px!important;height:42px!important;font-size:27px!important}
+  .dots{bottom:4px!important;gap:8px!important}
+  .dot{width:9px!important;height:9px!important;flex-basis:9px!important}
+  .dot.active{width:24px!important}
+  /* PRO and lower content use readable desktop proportions, not phone-sized text. */
+  .pro-showcase{height:360px!important;min-height:360px!important;margin:24px 0 30px!important}
+  .pro-showcase .pro-copy{width:calc(100% - 280px)!important;max-width:600px!important}
+  .pro-showcase .pro-copy h3{font-size:30px!important;line-height:1.14!important}
+  .pro-showcase .pro-copy p{font-size:17px!important;line-height:1.5!important}
+  .pro-showcase .pro-tag{font-size:13px!important;padding:7px 12px!important}
+  .pro-showcase .pro-action{font-size:15px!important;padding:12px 18px!important}
+  .pro-showcase>.approved-hero{width:250px!important;max-width:250px!important;right:12px!important}
+  .pro-showcase>.approved-hero img{max-height:none!important}
+  .pro-showcase>.approved-hero .approved-hero-hit{width:170px!important;height:42px!important;min-height:42px!important}
+  .pro-showcase>.approved-hero .approved-hero-hit::after{font-size:14px!important}
+  #homepage-ad-promo.homepage-ad-promo{
+    width:100%!important;max-width:936px!important;
+    grid-template-columns:104px minmax(0,1fr) 78px!important;
+    gap:20px!important;padding:22px 24px!important;min-height:190px!important;
+    margin:26px auto!important;
+  }
+  #homepage-ad-promo .ad-promo-icon{width:96px!important;height:96px!important}
+  #homepage-ad-promo .ad-promo-icon span{font-size:52px!important}
+  #homepage-ad-promo .ad-promo-kicker{font-size:13px!important}
+  #homepage-ad-promo .ad-promo-copy h2{font-size:32px!important;line-height:1.12!important}
+  #homepage-ad-promo .ad-promo-copy p{font-size:17px!important;line-height:1.45!important}
+  #homepage-ad-promo .ad-promo-button{font-size:15px!important;padding:12px 18px!important}
+  #homepage-ad-promo .ad-promo-stamp{width:72px!important;height:72px!important;font-size:10px!important}
+  .participation-guide{grid-template-columns:minmax(0,1fr) 260px!important;gap:22px!important;padding:26px 28px!important;min-height:250px!important}
+  .guide-mascot{width:100%!important;max-width:260px!important;min-width:0!important;transform:none!important}
+  .guide-copy h3{font-size:30px!important;line-height:1.15!important}
+  .guide-copy p{font-size:17px!important;line-height:1.5!important}
+  .guide-kicker{font-size:13px!important}
+  .guide-button{font-size:16px!important;min-height:50px!important;padding:0 22px!important}
+  .quick{gap:12px!important}
+  .quick a{font-size:15px!important;padding:16px 10px!important}
+  .quick b{font-size:30px!important}
+  .benefits{gap:14px!important}
+  .benefits div{font-size:15px!important;padding:16px 10px!important}
+  .benefits b{font-size:28px!important}
+  .bottom nav{width:min(936px,100%)!important;gap:10px!important}
+  .bottom a{font-size:14px!important;padding:10px 7px!important}
+  .bottom b{font-size:23px!important}
+  #prizora-runner{width:112px!important;height:148px!important;right:8px!important}
+}
+</style>
 </body></html>
