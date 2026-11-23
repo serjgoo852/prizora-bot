@@ -1941,7 +1941,7 @@
  }
  loadNearby(0);
  const mobile=window.matchMedia('(max-width:700px)').matches;
- const cardWidth=mobile?Math.min(148,window.innerWidth*.42):(window.innerWidth<1000?280:220);
+ const cardWidth=mobile?Math.min(148,window.innerWidth*.42):(window.innerWidth<1000?280:300);
  const radius=Math.max(mobile?175:285,Math.ceil(cardWidth/(2*Math.sin(Math.PI/count))+18));
  const step=360/count;
  cards.forEach((card,i)=>{
