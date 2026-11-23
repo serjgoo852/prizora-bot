@@ -2279,37 +2279,93 @@ section,article,header,footer,nav{min-width:0}
 </style>
 
 
-<style id="prizora-ad-promo-narrow-v2">
-/* Highest-priority final sizing: this block is deliberately placed after every other page style. */
+<style id="prizora-ad-promo-layout-final">
+/* Repair the ad panel grid: decorative orbit nodes must not become grid columns. */
 html body #homepage-ad-promo.homepage-ad-promo{
- box-sizing:border-box!important;
- width: min(900px, calc(100% - 64px))!important;
- max-width:900px!important; min-width:0!important;
- margin:20px auto!important; padding:16px 20px!important;
- min-height:0!important; height:auto!important;
- grid-template-columns:64px minmax(0,1fr) 54px!important;
- gap:14px!important; border-radius:18px!important;
+ box-sizing:border-box!important;display:grid!important;
+ width:min(1120px,calc(100% - 40px))!important;max-width:1120px!important;
+ min-width:0!important;height:auto!important;min-height:0!important;
+ margin:22px auto!important;padding:22px 26px!important;
+ grid-template-columns:82px minmax(0,1fr) 66px!important;
+ grid-template-rows:auto!important;align-items:center!important;
+ gap:18px!important;border-radius:22px!important;
 }
-html body #homepage-ad-promo .ad-promo-icon{width:60px!important;height:60px!important;border-radius:16px!important}
-html body #homepage-ad-promo .ad-promo-icon span{font-size:32px!important}
-html body #homepage-ad-promo .ad-promo-copy h2{font-size:clamp(20px,2vw,27px)!important;line-height:1.12!important;margin:5px 0 6px!important}
-html body #homepage-ad-promo .ad-promo-copy p{font-size:13px!important;line-height:1.35!important;margin:0 0 8px!important}
-html body #homepage-ad-promo .ad-promo-button{font-size:12px!important;padding:8px 12px!important}
-html body #homepage-ad-promo .ad-promo-stamp{width:50px!important;height:50px!important;font-size:7px!important}
+html body #homepage-ad-promo .ad-promo-orbit{
+ position:absolute!important;inset:0!important;display:block!important;
+ width:auto!important;height:auto!important;pointer-events:none!important;
+ z-index:-1!important;
+}
+html body #homepage-ad-promo .ad-promo-icon{
+ grid-column:1!important;grid-row:1!important;
+ width:76px!important;height:76px!important;border-radius:20px!important;
+}
+html body #homepage-ad-promo .ad-promo-icon span{font-size:42px!important}
+html body #homepage-ad-promo .ad-promo-copy{
+ grid-column:2!important;grid-row:1!important;
+ display:flex!important;flex-direction:column!important;
+ align-items:flex-start!important;width:100%!important;min-width:0!important;
+}
+html body #homepage-ad-promo .ad-promo-kicker{font-size:10px!important;letter-spacing:1.3px!important;line-height:1.3!important}
+html body #homepage-ad-promo .ad-promo-copy h2{
+ font-size:clamp(23px,2.4vw,32px)!important;line-height:1.12!important;
+ margin:6px 0 7px!important;max-width:100%!important;
+}
+html body #homepage-ad-promo .ad-promo-copy h2 em{display:inline!important}
+html body #homepage-ad-promo .ad-promo-copy p{
+ max-width:760px!important;font-size:15px!important;line-height:1.4!important;
+ margin:0 0 10px!important;
+}
+html body #homepage-ad-promo .ad-promo-button{font-size:13px!important;padding:9px 15px!important;gap:12px!important}
+html body #homepage-ad-promo .ad-promo-stamp{
+ grid-column:3!important;grid-row:1!important;justify-self:center!important;
+ width:62px!important;height:62px!important;font-size:8px!important;
+}
 @media(max-width:700px){
  html body #homepage-ad-promo.homepage-ad-promo{
-  width:calc(100% - 28px)!important;max-width:480px!important;
-  margin:16px auto!important;padding:12px 11px!important;
-  grid-template-columns:44px minmax(0,1fr)!important;gap:10px!important;
+  width:calc(100% - 28px)!important;max-width:520px!important;
+  margin:16px auto!important;padding:14px 13px!important;
+  grid-template-columns:46px minmax(0,1fr)!important;
+  gap:11px!important;
  }
- html body #homepage-ad-promo .ad-promo-icon{width:42px!important;height:42px!important;border-radius:12px!important}
- html body #homepage-ad-promo .ad-promo-icon span{font-size:23px!important}
- html body #homepage-ad-promo .ad-promo-icon i{font-size:10px!important;right:2px!important;top:0!important}
- html body #homepage-ad-promo .ad-promo-kicker{font-size:7px!important;letter-spacing:.7px!important}
- html body #homepage-ad-promo .ad-promo-copy h2{font-size:16px!important;line-height:1.12!important;margin:4px 0 5px!important}
- html body #homepage-ad-promo .ad-promo-copy p{font-size:10px!important;line-height:1.3!important;margin:0 0 7px!important}
- html body #homepage-ad-promo .ad-promo-button{font-size:10px!important;padding:7px 9px!important;gap:6px!important}
+ html body #homepage-ad-promo .ad-promo-icon{
+  grid-column:1!important;grid-row:1!important;
+  width:44px!important;height:44px!important;border-radius:12px!important;
+ }
+ html body #homepage-ad-promo .ad-promo-icon span{font-size:25px!important}
+ html body #homepage-ad-promo .ad-promo-icon i{font-size:11px!important;right:2px!important;top:0!important}
+ html body #homepage-ad-promo .ad-promo-copy{grid-column:2!important;grid-row:1!important}
+ html body #homepage-ad-promo .ad-promo-kicker{font-size:8px!important;letter-spacing:.8px!important}
+ html body #homepage-ad-promo .ad-promo-copy h2{font-size:clamp(17px,4.2vw,21px)!important;line-height:1.15!important;margin:5px 0!important}
+ html body #homepage-ad-promo .ad-promo-copy h2 em{display:inline!important}
+ html body #homepage-ad-promo .ad-promo-copy p{font-size:12px!important;line-height:1.35!important;margin:0 0 8px!important}
+ html body #homepage-ad-promo .ad-promo-button{font-size:11px!important;padding:8px 11px!important;gap:8px!important}
  html body #homepage-ad-promo .ad-promo-stamp{display:none!important}
+}
+/* Slightly reduce the PRO presenter and its CTA without changing the artwork. */
+html body .pro-showcase{min-height:320px!important;height:320px!important}
+html body .pro-showcase>.approved-hero{
+ width:258px!important;max-width:258px!important;
+ right:14px!important;top:44%!important;
+}
+html body .pro-showcase>.approved-hero .approved-hero-hit{
+ width:158px!important;max-width:90%!important;
+ height:38px!important;min-height:38px!important;bottom:-13px!important;
+}
+html body .pro-showcase>.approved-hero .approved-hero-hit::after{font-size:13px!important}
+@media(max-width:700px){
+ html body .pro-showcase{height:310px!important;min-height:310px!important}
+ html body .pro-showcase>.approved-hero{
+  width:204px!important;max-width:204px!important;right:4px!important;top:44%!important;
+ }
+ html body .pro-showcase>.approved-hero .approved-hero-hit{
+  width:146px!important;max-width:90%!important;
+  height:36px!important;min-height:36px!important;bottom:-12px!important;
+ }
+ html body .pro-showcase>.approved-hero .approved-hero-hit::after{font-size:12px!important}
+}
+@media(max-width:390px){
+ html body .pro-showcase>.approved-hero{width:190px!important;max-width:190px!important;right:1px!important}
+ html body .pro-showcase>.approved-hero .approved-hero-hit{width:138px!important;height:34px!important;min-height:34px!important}
 }
 </style>
 
