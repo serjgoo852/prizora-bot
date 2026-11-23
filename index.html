@@ -2110,72 +2110,6 @@ section,article,header,footer,nav{min-width:0}
  const bot=document.getElementById('prizora-runner');
  if(!bot||!document.body)return;
  if(bot.parentElement!==document.body)document.body.appendChild(bot);
-
- /* Desktop-site mode on phones: follow exactly the three main showcase banners.
-    Mobile mode below keeps the previous runner behavior unchanged. */
- const desktopMode=window.matchMedia('(min-width:701px)').matches;
- if(desktopMode){
-  const selectors=['.carousel','.pro-showcase','.pro-contest-slider'];
-  let active=null,raf=0,lastY=-1;
-  function getViewport(){
-   const vv=window.visualViewport;
-   return {top:vv?vv.offsetTop:0,height:vv?vv.height:(window.innerHeight||document.documentElement.clientHeight),
-           scroll:window.scrollY||document.documentElement.scrollTop||0};
-  }
-  function getTargets(){
-   return selectors.map(sel=>document.querySelector(sel)).filter(el=>{
-    if(!el||!el.isConnected)return false;
-    const st=getComputedStyle(el),r=el.getBoundingClientRect();
-    return st.display!=='none'&&st.visibility!=='hidden'&&r.width>8&&r.height>8;
-   });
-  }
-  function update(){
-   const v=getViewport(),focusDoc=v.scroll+v.top+v.height*.48;
-   const targets=getTargets();
-   if(!targets.length)return;
-   let chosen=null,best=Infinity,chosenRect=null;
-   for(const el of targets){
-    const r=el.getBoundingClientRect();
-    const centerDoc=v.scroll+r.top+r.height/2;
-    const score=Math.abs(centerDoc-focusDoc);
-    if(score<best){best=score;chosen=el;chosenRect=r;}
-   }
-   if(!chosen||!chosenRect)return;
-   const h=bot.getBoundingClientRect().height||108;
-   const maxTop=Math.max(v.top+8,v.top+v.height-h-8);
-   const centerVisible=v.top+Math.max(0,Math.min(v.height,chosenRect.top-v.top+chosenRect.height/2));
-   const y=Math.round(Math.max(v.top+8,Math.min(maxTop,centerVisible-h/2)));
-   bot.style.setProperty('position','fixed','important');
-   bot.style.setProperty('bottom','auto','important');
-   bot.style.setProperty('transform','none','important');
-   bot.style.setProperty('right','8px','important');
-   bot.style.setProperty('left','auto','important');
-   bot.style.setProperty('z-index','999','important');
-   if(chosen!==active||Math.abs(y-lastY)>12){
-    bot.style.setProperty('top',y+'px','important');
-    lastY=y;
-   }
-   bot.classList.add('is-visible','is-pointing');
-   bot.classList.remove('is-running');
-   active=chosen;
-  }
-  function schedule(){if(!raf)raf=requestAnimationFrame(()=>{raf=0;update();});}
-  window.addEventListener('scroll',schedule,{passive:true});
-  document.addEventListener('scroll',schedule,{passive:true,capture:true});
-  window.addEventListener('resize',schedule,{passive:true});
-  if(window.visualViewport){
-   window.visualViewport.addEventListener('scroll',schedule,{passive:true});
-   window.visualViewport.addEventListener('resize',schedule,{passive:true});
-  }
-  /* Android Chrome desktop-site mode can occasionally omit scroll events.
-     A low-frequency safety check only moves the mascot when its target changes. */
-  const poll=setInterval(update,320);
-  window.addEventListener('pagehide',()=>clearInterval(poll),{once:true});
-  schedule();
-  return;
- }
-
- /* Original mobile behavior — intentionally unchanged. */
  let active=null,raf=0,lastY=-1;
  const selectors=['.carousel','.pro-showcase','.pro-contest-slider','#homepage-ad-promo','.participation-guide','.quick','.benefits'];
  function targets(){
@@ -2200,6 +2134,7 @@ section,article,header,footer,nav{min-width:0}
    if(score<best){best=score;chosen=el;chosenRect=r;}
   }
   if(!chosen||!chosenRect)return;
+  /* Move only when the active section changes. This avoids chasing every scroll pixel. */
   if(chosen===active)return;
   const h=bot.getBoundingClientRect().height||108;
   const maxTop=Math.max(8,vh-h-8);
