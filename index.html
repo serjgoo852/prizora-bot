@@ -3053,3 +3053,11 @@ html body .pro-showcase>.approved-hero .approved-hero-hit::after{font-size:13px!
 (()=>{const splash=document.getElementById('prizora-splash');if(!splash)return;let done=false;const close=()=>{if(done)return;done=true;splash.classList.add('ps-away');setTimeout(()=>splash.remove(),550)};splash.addEventListener('click',close,{once:true});setTimeout(close,4500);})();
 </script>
 </body></html>
+
+<style id="prizora-remove-duplicate-hero-caption-final">
+/* Final override: remove only the extra CSS caption; keep the artwork and click area. */
+html body .pro-showcase>.approved-hero .approved-hero-hit::after{
+  content:none!important;
+  display:none!important;
+}
+</style>
