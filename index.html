@@ -2103,12 +2103,12 @@
 #prizora-splash{position:fixed;inset:0;z-index:999999;display:grid;place-items:center;overflow:hidden;background:radial-gradient(ellipse at 50% 48%,#21180b 0%,#0b0906 43%,#030303 100%);opacity:1;visibility:visible;transition:opacity .48s ease,visibility .48s ease;cursor:pointer}
 #prizora-splash:before{content:"";position:absolute;width:2px;height:2px;border-radius:50%;background:#fff2c4;box-shadow:0 0 14px 7px rgba(255,214,132,.85),0 0 55px 22px rgba(222,164,68,.35);animation:ps-core .72s ease-out both}
 .ps-aura{position:absolute;width:min(78vw,420px);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,rgba(255,211,125,.24),rgba(177,121,35,.08) 38%,transparent 70%);filter:blur(8px);animation:ps-breathe 1.8s ease-in-out infinite alternate}
-.ps-ring{position:absolute;width:min(30vw,150px);aspect-ratio:1;border:1px solid rgba(244,202,119,.85);border-radius:50%;box-shadow:0 0 18px rgba(235,183,90,.55),inset 0 0 18px rgba(235,183,90,.2);opacity:0;animation:ps-ring-open 1.15s cubic-bezier(.12,.7,.18,1) both}
+.ps-ring{position:absolute;width:min(30vw,150px);aspect-ratio:1;border:1px solid rgba(244,202,119,.85);border-radius:50%;box-shadow:0 0 18px rgba(235,183,90,.55),inset 0 0 18px rgba(235,183,90,.2);opacity:0;animation:ps-ring-open 1.55s cubic-bezier(.12,.7,.18,1) both}
 .ps-ring-two{animation-delay:.16s;border-color:rgba(255,230,174,.48)}
-.ps-burst{position:absolute;width:4px;height:4px;border-radius:50%;background:#ffe6aa;box-shadow:0 0 12px 5px rgba(255,213,130,.9);animation:ps-burst .8s .35s ease-out both}
-.ps-wordmark{position:relative;z-index:2;font:700 clamp(38px,11vw,72px)/1 Georgia,serif;letter-spacing:.19em;padding-left:.19em;background:linear-gradient(180deg,#fff8dc 0%,#f6d98e 38%,#bd8430 75%,#fff0bd 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 18px rgba(226,177,82,.35));animation:ps-arrive .85s .28s cubic-bezier(.2,.8,.2,1) both}
-.ps-rule{position:absolute;top:calc(50% + 48px);width:min(230px,48vw);height:1px;background:linear-gradient(90deg,transparent,#e9c77b,transparent);box-shadow:0 0 12px rgba(230,186,102,.7);animation:ps-line .8s .65s both}
-.ps-tagline{position:absolute;top:calc(50% + 68px);width:100%;text-align:center;padding:0 16px;box-sizing:border-box;color:#d9b875;font:500 9px/1.4 system-ui,sans-serif;letter-spacing:.27em;opacity:0;animation:ps-tag .7s .75s ease forwards}
+.ps-burst{position:absolute;width:4px;height:4px;border-radius:50%;background:#ffe6aa;box-shadow:0 0 12px 5px rgba(255,213,130,.9);animation:ps-burst 1.05s .45s ease-out both}
+.ps-wordmark{position:relative;z-index:2;font:700 clamp(38px,11vw,72px)/1 Georgia,serif;letter-spacing:.19em;padding-left:.19em;background:linear-gradient(180deg,#fff8dc 0%,#f6d98e 38%,#bd8430 75%,#fff0bd 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 18px rgba(226,177,82,.35));animation:ps-arrive 1.15s .42s cubic-bezier(.2,.8,.2,1) both}
+.ps-rule{position:absolute;top:calc(50% + 48px);width:min(230px,48vw);height:1px;background:linear-gradient(90deg,transparent,#e9c77b,transparent);box-shadow:0 0 12px rgba(230,186,102,.7);animation:ps-line 1s .9s both}
+.ps-tagline{position:absolute;top:calc(50% + 68px);width:100%;text-align:center;padding:0 16px;box-sizing:border-box;color:#d9b875;font:500 9px/1.4 system-ui,sans-serif;letter-spacing:.27em;opacity:0;animation:ps-tag .9s 1.05s ease forwards}
 .ps-spark{position:absolute;width:4px;height:4px;border-radius:50%;background:#ffe2a0;box-shadow:0 0 12px 3px rgba(255,203,104,.7);animation:ps-twinkle 1s ease-in-out infinite alternate}
 .ps-one{top:31%;left:28%}.ps-two{top:66%;right:25%;animation-delay:.3s}.ps-three{top:39%;right:31%;width:3px;height:3px;animation-delay:.6s}
 #prizora-splash.ps-away{opacity:0;visibility:hidden;pointer-events:none}
@@ -3052,6 +3052,6 @@ html body .pro-showcase>.approved-hero .approved-hero-hit::after{font-size:13px!
 </style>
 
 <script id="prizora-golden-splash-script">
-(()=>{const splash=document.getElementById('prizora-splash');if(!splash)return;let done=false;const close=()=>{if(done)return;done=true;splash.classList.add('ps-away');setTimeout(()=>splash.remove(),550)};splash.addEventListener('click',close,{once:true});setTimeout(close,1900);})();
+(()=>{const splash=document.getElementById('prizora-splash');if(!splash)return;let done=false;const close=()=>{if(done)return;done=true;splash.classList.add('ps-away');setTimeout(()=>splash.remove(),550)};splash.addEventListener('click',close,{once:true});setTimeout(close,2600);})();
 </script>
 </body></html>
