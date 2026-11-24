@@ -2111,11 +2111,13 @@
 #prizora-theatre .pt-title{position:absolute;z-index:3;top:42%;left:0;width:100%;text-align:center;color:#f5d58a;font:600 clamp(27px,7vw,58px)/1.1 Georgia,serif;letter-spacing:.22em;text-shadow:0 2px 16px #000;opacity:0;animation:ptTitle 1.25s .25s ease forwards}
 #prizora-theatre .pt-sub{display:block;margin-top:14px;font:500 10px/1.5 system-ui,sans-serif;letter-spacing:.42em;color:#d7b66f}
 #prizora-theatre canvas{position:absolute;inset:0;width:100%;height:100%;z-index:4;pointer-events:none}
-#prizora-theatre.pt-open .pt-left,#prizora-theatre.pt-open .pt-right{animation:ptGather 3.6s cubic-bezier(.2,.68,.18,1) forwards}
+#prizora-theatre.pt-open .pt-left{animation:ptOpenLeft 3.6s cubic-bezier(.65,0,.25,1) forwards}
+#prizora-theatre.pt-open .pt-right{animation:ptOpenRight 3.6s cubic-bezier(.65,0,.25,1) forwards}
 #prizora-theatre.pt-open .pt-valance{animation:ptValance 2.8s cubic-bezier(.2,.7,.2,1) .2s forwards}
 #prizora-theatre.pt-open .pt-title{animation:ptTitleOut .65s ease forwards}
 #prizora-theatre.pt-done{opacity:0;visibility:hidden;transition:opacity .9s ease,visibility .9s}
-@keyframes ptGather{0%{transform:scaleY(1);filter:brightness(1)}30%{transform:scaleY(.9);filter:brightness(1.04)}62%{transform:scaleY(.55);filter:brightness(1.08)}85%{transform:scaleY(.2);filter:brightness(1.05)}100%{transform:scaleY(0);filter:brightness(1)}}
+@keyframes ptOpenLeft{0%{transform:translateX(0) scaleX(1);filter:brightness(1)}18%{transform:translateX(-2%) scaleX(.98);filter:brightness(1.06)}100%{transform:translateX(-105%) scaleX(.82);filter:brightness(.92)}}
+@keyframes ptOpenRight{0%{transform:translateX(0) scaleX(1);filter:brightness(1)}18%{transform:translateX(2%) scaleX(.98);filter:brightness(1.06)}100%{transform:translateX(105%) scaleX(.82);filter:brightness(.92)}}
 @keyframes ptValance{to{transform:translateY(-115%)}}
 @keyframes ptTitle{to{opacity:1}}@keyframes ptTitleOut{to{opacity:0;transform:translateY(-12px)}}
 @media(prefers-reduced-motion:reduce){#prizora-theatre.pt-open .pt-left,#prizora-theatre.pt-open .pt-right,#prizora-theatre.pt-open .pt-valance{animation-duration:.01ms}}
