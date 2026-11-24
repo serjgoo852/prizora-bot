@@ -2366,8 +2366,9 @@ document.addEventListener('DOMContentLoaded',()=>{
         const hostRect=host.getBoundingClientRect();
         rays.style.left=(drumRect.left-hostRect.left+host.scrollLeft+drumRect.width/2)+'px';
         rays.style.top=(drumRect.top-hostRect.top+host.scrollTop+drumRect.height/2)+'px';
-        rays.style.width=(drumRect.width*2.45)+'px';
-        rays.style.height=(drumRect.height*2.45)+'px';
+        const raySize=Math.max(drumRect.width,drumRect.height)*2.45;
+        rays.style.width=raySize+'px';
+        rays.style.height=raySize+'px';
       };
       placeRays();
       window.addEventListener('resize',placeRays,{passive:true});
