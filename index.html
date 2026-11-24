@@ -2097,7 +2097,32 @@
 .pro-showcase>.approved-hero .approved-hero-hit{left:4%!important;right:auto!important;bottom:3%!important;top:auto!important;transform:none!important;width:92%!important;height:23%!important;min-height:0!important;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important;color:transparent!important;}
 .pro-showcase>.approved-hero .approved-hero-hit::after{content:none!important;display:none!important;}
 </style>
-</head><body><main class="wrap">
+
+<style id="prizora-golden-theatre-v1">
+#prizora-theatre{position:fixed;inset:0;z-index:99999;overflow:hidden;background:radial-gradient(ellipse at 50% 48%,#30200c 0%,#090806 62%,#030303 100%);display:grid;place-items:center;opacity:1;visibility:visible}
+#prizora-theatre .pt-glow{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 55%,rgba(255,190,65,.22),transparent 48%);opacity:.75;animation:ptPulse 2.8s ease-in-out infinite}
+#prizora-theatre .pt-curtain{position:absolute;top:-3%;height:106%;width:52%;overflow:hidden;will-change:transform; background:repeating-linear-gradient(90deg,rgba(0,0,0,.48) 0 5%,rgba(255,255,255,.035) 7%,rgba(0,0,0,.14) 12%,rgba(0,0,0,.5) 17%),linear-gradient(90deg,#080807 0%,#17130d 18%,#050505 38%,#21190d 54%,#080807 78%,#020202 100%);box-shadow:inset 0 0 55px #000, inset 0 0 0 2px rgba(208,157,55,.28)}
+#prizora-theatre .pt-left{left:0;border-right:2px solid #b98a36;transform-origin:left center}
+#prizora-theatre .pt-right{right:0;border-left:2px solid #b98a36;transform-origin:right center}
+#prizora-theatre .pt-curtain:before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 8%,rgba(230,184,92,.10) 9%,transparent 12%,rgba(0,0,0,.28) 16%);filter:blur(1px)}
+#prizora-theatre .pt-curtain:after{content:"";position:absolute;top:0;bottom:0;width:9px;background:linear-gradient(90deg,transparent,#d5a54b, #fff0bd,#8b5b18,transparent);opacity:.7}
+#prizora-theatre .pt-left:after{right:0}#prizora-theatre .pt-right:after{left:0}
+#prizora-theatre .pt-valance{position:absolute;z-index:2;top:-2px;left:0;width:100%;height:15vh;min-height:70px;background:repeating-linear-gradient(90deg,#090807 0 5%,#21190e 7%,#080706 13%);border-bottom:2px solid #b88a39;box-shadow:0 12px 35px #000}
+#prizora-theatre .pt-valance:after{content:"";position:absolute;left:0;right:0;bottom:-13px;height:24px;background:radial-gradient(ellipse at 50% 0,#d4a44c 0 3px,transparent 4px) 0 0/34px 24px repeat-x}
+#prizora-theatre .pt-title{position:absolute;z-index:3;top:42%;left:0;width:100%;text-align:center;color:#f7d98d;font:600 clamp(27px,7vw,58px)/1.1 Georgia,serif;letter-spacing:.22em;text-shadow:0 0 16px #e5a936,0 3px 16px #000;opacity:0;animation:ptTitle 1.2s .25s ease forwards}
+#prizora-theatre .pt-sub{display:block;margin-top:14px;font:500 10px/1.5 system-ui,sans-serif;letter-spacing:.42em;color:#d7b66f}
+#prizora-theatre canvas{position:absolute;inset:0;width:100%;height:100%;z-index:4;pointer-events:none}
+#prizora-theatre.pt-open .pt-left{animation:ptLeft 2.2s cubic-bezier(.72,0,.22,1) .15s forwards}
+#prizora-theatre.pt-open .pt-right{animation:ptRight 2.2s cubic-bezier(.72,0,.22,1) .15s forwards}
+#prizora-theatre.pt-open .pt-valance{animation:ptValance 1.9s ease-in .2s forwards}
+#prizora-theatre.pt-open .pt-title{animation:ptTitleOut .55s ease forwards}
+#prizora-theatre.pt-done{opacity:0;visibility:hidden;transition:opacity .65s ease,visibility .65s}
+@keyframes ptLeft{to{transform:translateX(-105%)}}@keyframes ptRight{to{transform:translateX(105%)}}
+@keyframes ptValance{to{transform:translateY(-110%)}}@keyframes ptTitle{to{opacity:1}}@keyframes ptTitleOut{to{opacity:0;transform:translateY(-12px)}}
+@keyframes ptPulse{50%{opacity:1;filter:brightness(1.35)}}
+@media(prefers-reduced-motion:reduce){#prizora-theatre.pt-open .pt-left,#prizora-theatre.pt-open .pt-right,#prizora-theatre.pt-open .pt-valance{animation-duration:.01ms}}
+</style>
+</head><body><div id="prizora-theatre" aria-hidden="true"><div class="pt-glow"></div><div class="pt-valance"></div><div class="pt-curtain pt-left"></div><div class="pt-curtain pt-right"></div><div class="pt-title">PRIZORA<span class="pt-sub">ЗОЛОТОЕ ОТКРЫТИЕ</span></div><canvas id="prizora-gold-dust"></canvas></div><main class="wrap">
 <header class="top"><div class="brand"><img alt="PRIZORA" src="./screenshots/prizora-logo-transparent%281%29.png"/><div><strong>PRIZORA</strong><small>розыгрыши · доверие · победа</small></div></div><span class="pill">✦ ПРЕМИУМ</span></header>
 <section class="approved-hero" aria-label="PRIZORA — реальные призы и честные розыгрыши">
   <img src="./a_clean_high_resolution_promotional_cutout_on_a_t%281%29.png" alt="PRIZORA: улыбающийся ведущий в чёрно-золотом костюме указывает на кнопку «Принять участие»" loading="lazy" decoding="async" fetchpriority="low">
@@ -3027,4 +3052,7 @@ html body .pro-showcase>.approved-hero .approved-hero-hit::after{font-size:13px!
 }
 </style>
 
+<script id="prizora-golden-theatre-script">
+(()=>{const stage=document.getElementById('prizora-theatre');if(!stage)return;let seen=false;try{seen=sessionStorage.getItem('prizoraTheatreSeen')==='1'}catch(e){}if(seen){stage.remove();return}try{sessionStorage.setItem('prizoraTheatreSeen','1')}catch(e){}const canvas=document.getElementById('prizora-gold-dust'),ctx=canvas&&canvas.getContext('2d');let w=0,h=0,raf=0,particles=[],started=performance.now();function resize(){if(!canvas||!ctx)return;const d=Math.min(devicePixelRatio||1,2);w=innerWidth;h=innerHeight;canvas.width=w*d;canvas.height=h*d;ctx.setTransform(d,0,0,d,0,0)}function seed(){particles=Array.from({length:Math.min(150,Math.round(innerWidth/5))},()=>({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-.5)*.65,vy:-.25-Math.random()*.9,r:.5+Math.random()*2.1,a:.15+Math.random()*.7,tw:Math.random()*6.28}))}function draw(t){if(!ctx)return;ctx.clearRect(0,0,w,h);const age=t-started;for(const p of particles){p.x+=p.vx+Math.sin(age*.001+p.tw)*.18;p.y+=p.vy;if(p.y<-5){p.y=h+5;p.x=Math.random()*w}const alpha=p.a*(.55+.45*Math.sin(age*.004+p.tw));ctx.beginPath();ctx.fillStyle='rgba(255,207,105,'+alpha+')';ctx.shadowColor='rgba(255,190,65,.8)';ctx.shadowBlur=8;ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill()}ctx.shadowBlur=0;if(age<3900)raf=requestAnimationFrame(draw)}resize();seed();addEventListener('resize',()=>{resize();seed()},{passive:true});raf=requestAnimationFrame(draw);setTimeout(()=>stage.classList.add('pt-open'),1250);setTimeout(()=>{stage.classList.add('pt-done');cancelAnimationFrame(raf);setTimeout(()=>stage.remove(),750)},3900)})();
+</script>
 </body></html>
