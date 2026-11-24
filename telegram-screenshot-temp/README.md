@@ -1,1 +1,0 @@
-Temporary folder for one Telegram group structure screenshot. Delete this folder after review.
