@@ -1725,6 +1725,14 @@ async def button_handler(
     if data.startswith("admin:"):
         await admin.handle_admin_callback(update, context)
         return
+    # Presentation mode: stale keyboards from the former bot UI must not
+    # reopen contest, wallet, advertising or other unfinished workflows.
+    if data not in ("language", "home") and not data.startswith("lang:"):
+        await query.answer(
+            "PRIZORA готовится к запуску. Функции пока временно недоступны.",
+            show_alert=True,
+        )
+        return
     if admin.is_user_blocked(query.from_user.id, scope="account"):
         await query.answer("⛔ Доступ к PRIZORA ограничен.", show_alert=True)
         return
@@ -1816,10 +1824,9 @@ async def button_handler(
             context.user_data[state_key] = False
         context.user_data["contest_publish_pending"] = False
         await query.edit_message_text(
-            tr(context, "home_title"),
+            tr(context, "welcome"),
             reply_markup=main_menu(language),
         )
-        await maybe_show_home_ad(query.message.chat_id, query.from_user.id, context)
 
     elif data.startswith("ads:click:"):
         campaign_id = data.split(":", 2)[2]
