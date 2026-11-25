@@ -67,7 +67,7 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(kwargs["reply_markup"].inline_keyboard[0][0].callback_data, "lang:ru")
         self.assertEqual(context.user_data["suggested_language"], "ru")
 
-    async def test_start_returning_user_shows_welcome_and_main_menu(self):
+    async def test_start_returning_user_shows_presentation_only(self):
         reply_text = AsyncMock()
         update = SimpleNamespace(
             message=SimpleNamespace(reply_text=reply_text),
@@ -85,7 +85,7 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("PRIZORA", args[0])
         self.assertEqual(
             set(callback_data(kwargs["reply_markup"])),
-            {"language", "legacy:home"},
+            {"language"},
         )
         self.assertEqual(
             kwargs["reply_markup"].inline_keyboard[0][0].url,
@@ -110,7 +110,7 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
         edit_message_text.assert_awaited_once()
         self.assertEqual(context.user_data["language"], "ru")
         self.assertIn("language", callback_data(edit_message_text.await_args.kwargs["reply_markup"]))
-        self.assertIn("legacy:home", callback_data(edit_message_text.await_args.kwargs["reply_markup"]))
+        self.assertNotIn("legacy:home", callback_data(edit_message_text.await_args.kwargs["reply_markup"]))
         self.assertEqual(main.admin.get_user_language(103), "ru")
 
     async def test_main_menu_callbacks_open_their_screens(self):
