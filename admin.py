@@ -133,7 +133,7 @@ def init_admin_database(db_path: Optional[str] = None) -> None:
         }
         if "language" not in profile_columns:
             db.execute(
-                "ALTER TABLE user_profiles ADD COLUMN language TEXT NOT NULL DEFAULT 'en'"
+                "ALTER TABLE user_profiles ADD COLUMN language TEXT NOT NULL DEFAULT ''"
             )
         # Bring users already present in the contest database into the directory.
         db.execute("""
