@@ -682,13 +682,14 @@ def init_database():
         ):
             if column not in contest_columns:
                 connection.execute(f"ALTER TABLE contests ADD COLUMN {column} {definition}")
-        # Existing future contests continue under the new automatic lifecycle;
-        # expired historical/test contests are deliberately left untouched.
-        connection.execute(
-            """UPDATE contests SET automation_enabled = 1
-               WHERE julianday(ends_at) > julianday(?) AND drawn_at IS NULL""",
-            (datetime.now(timezone.utc).isoformat(),),
-        )
+        # Presentation mode must not reactivate legacy contest automation.
+        # The migration is only applied when the live contest lifecycle is enabled.
+        if not PRESENTATION_MODE:
+            connection.execute(
+                """UPDATE contests SET automation_enabled = 1
+                   WHERE julianday(ends_at) > julianday(?) AND drawn_at IS NULL""",
+                (datetime.now(timezone.utc).isoformat(),),
+            )
         connection.execute("""
             CREATE TABLE IF NOT EXISTS participants (
                 contest_id TEXT NOT NULL,
