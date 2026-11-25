@@ -1,0 +1,22 @@
+name: PRIZORA presentation branch checks
+
+on:
+  push:
+    branches:
+      - feature/prizora-presentation-mode-20261125
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile Python files
+        run: python -m compileall -q .
