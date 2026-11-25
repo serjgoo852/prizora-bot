@@ -144,6 +144,27 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
                 self.assertTrue(answer.await_args.kwargs.get("show_alert"))
                 edit_message_text.assert_not_awaited()
 
+
+    async def test_legacy_callback_warning_uses_selected_language(self):
+        expected = {
+            "ru": "готовится к запуску",
+            "en": "preparing for launch",
+            "de": "bereitet den Start vor",
+        }
+        for language, phrase in expected.items():
+            with self.subTest(language=language):
+                answer = AsyncMock()
+                query = SimpleNamespace(
+                    data="wallet",
+                    answer=answer,
+                    from_user=SimpleNamespace(id=105),
+                    message=SimpleNamespace(chat_id=105),
+                )
+                context = SimpleNamespace(user_data={"language": language})
+                await main.button_handler(SimpleNamespace(callback_query=query), context)
+                self.assertTrue(answer.await_args.kwargs.get("show_alert"))
+                self.assertIn(phrase, answer.await_args.args[0])
+
     async def test_help_command_explains_launch_status_and_payment_safety(self):
         reply_text = AsyncMock()
         update = SimpleNamespace(
