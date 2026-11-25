@@ -26,6 +26,7 @@ import admin
 from security import install_secret_redaction
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
+PRIZORA_SITE_URL = os.getenv("PRIZORA_SITE_URL", "https://prizora-mini-960242.apps.dada-tuda.ru").strip()
 
 MOSCOW_TZ = timezone(timedelta(hours=3), "MSK")
 
@@ -50,13 +51,10 @@ I18N = {
         "welcome": (
             "👑 PRIZORA\n"
             "━━━━━━━━━━━━━━━━━━\n"
-            "✨ ТВОЯ ПРЕМИАЛЬНАЯ ПЛОЩАДКА КОНКУРСОВ\n"
-            "━━━━━━━━━━━━━━━━━━\n\n"
-            "🎁 Создавай яркие конкурсы и розыгрыши.\n"
-            "🎡 Выбирай формат под свою аудиторию.\n"
-            "🏆 Собирай участников и определяй победителей.\n\n"
-            "💎 Новым пользователям доступен пробный период PRO — 7 дней.\n\n"
-            "👇 Выбери, с чего начнём:"
+            "ПЛАТФОРМА КОНКУРСОВ И РОЗЫГРЫШЕЙ\n\n"
+            "Мы готовим запуск PRIZORA. Сейчас платформа находится в разработке.\n"
+            "Здесь скоро появятся розыгрыши, призы и новые возможности для участников.\n\n"
+            "Нажми кнопку ниже, чтобы познакомиться с проектом и следить за запуском."
         ),
         "menu_create": "👑 Создать конкурс",
         "menu_formats": "✨ Форматы конкурсов",
@@ -224,11 +222,10 @@ I18N = {
         "announcement_cancelled": "Публикация отменена. Объявление не отправлялось.",
         "announcement_already_published": "Это объявление уже было отправлено. Повторно публиковать его не буду.",
         "help_text": (
-            "📖 PRIZORA — международный конструктор конкурсов и розыгрышей.\n\n"
-            "1. Выбери язык интерфейса.\n"
-            "2. Выбери формат и место проведения конкурса.\n"
-            "3. Укажи приз, лимит участников и количество победителей.\n\n"
-            "Регистрация доступна до окончания игры или заполнения мест. В назначенное время PRIZORA автоматически выберет победителей и опубликует результат."
+            "ℹ️ PRIZORA готовится к запуску.\n\n"
+            "Платформа пока находится в разработке: регистрация в розыгрышах, создание конкурсов и платежи ещё не открыты.\n\n"
+            "Не переводите деньги и не отправляйте платежи по личным реквизитам. Официальные функции появятся после завершения разработки.\n\n"
+            "Следите за обновлениями на сайте PRIZORA."
         ),
     },
     "en": {
@@ -238,13 +235,10 @@ I18N = {
         "welcome": (
             "👑 PRIZORA\n"
             "━━━━━━━━━━━━━━━━━━\n"
-            "✨ YOUR PREMIUM GIVEAWAY STUDIO\n"
-            "━━━━━━━━━━━━━━━━━━\n\n"
-            "🎁 Create engaging contests and giveaways.\n"
-            "🎡 Choose a format for your audience.\n"
-            "🏆 Bring participants together and pick winners.\n\n"
-            "💎 New users get a 7-day PRO trial.\n\n"
-            "👇 Choose where to begin:"
+            "GIVEAWAY AND CONTEST PLATFORM\n\n"
+            "We are preparing the PRIZORA launch. The platform is currently under development.\n"
+            "Giveaways, prizes and new participant features will be available here soon.\n\n"
+            "Use the button below to visit the project website and follow launch updates."
         ),
         "menu_create": "👑 Create a contest",
         "menu_formats": "✨ Contest formats",
@@ -412,11 +406,10 @@ I18N = {
         "announcement_cancelled": "Publication cancelled. The announcement was not sent.",
         "announcement_already_published": "This announcement has already been sent. I won't publish it again.",
         "help_text": (
-            "📖 PRIZORA is an international contest and giveaway builder.\n\n"
-            "1. Choose your interface language.\n"
-            "2. Select a contest format and where it will run.\n"
-            "3. Enter the prize, participant limit, and number of winners.\n\n"
-            "Registration stays open until the game ends or the participant limit is reached. PRIZORA randomly selects winners and publishes the result automatically."
+            "ℹ️ PRIZORA is preparing for launch.\n\n"
+            "The platform is still under development. Contest creation, giveaway registration and payments are not available yet.\n\n"
+            "Do not send money or pay through personal details. Official features will be announced when development is complete.\n\n"
+            "Follow updates on the PRIZORA website."
         ),
     },
     "de": {
@@ -426,13 +419,10 @@ I18N = {
         "welcome": (
             "👑 PRIZORA\n"
             "━━━━━━━━━━━━━━━━━━\n"
-            "✨ DEIN PREMIUM-GEWINNSPIELSTUDIO\n"
-            "━━━━━━━━━━━━━━━━━━\n\n"
-            "🎁 Erstelle besondere Wettbewerbe und Verlosungen.\n"
-            "🎡 Wähle das passende Format für deine Community.\n"
-            "🏆 Ermittle die Gewinner deiner Aktionen.\n\n"
-            "💎 Neue Nutzer erhalten 7 Tage PRO zum Testen.\n\n"
-            "👇 Wähle, womit du beginnen möchtest:"
+            "PLATTFORM FÜR GEWINNSPIELE UND WETTBEWERBE\n\n"
+            "Wir bereiten den Start von PRIZORA vor. Die Plattform befindet sich derzeit in Entwicklung.\n"
+            "Gewinnspiele, Preise und neue Funktionen werden hier bald verfügbar sein.\n\n"
+            "Über die Schaltfläche unten kannst du die Website besuchen und Neuigkeiten verfolgen."
         ),
         "menu_create": "🏆 Wettbewerb erstellen",
         "menu_formats": "🎮 Wettbewerbsformate",
@@ -600,11 +590,10 @@ I18N = {
         "announcement_cancelled": "Veröffentlichung abgebrochen. Die Ankündigung wurde nicht gesendet.",
         "announcement_already_published": "Diese Ankündigung wurde bereits gesendet. Ich veröffentliche sie nicht erneut.",
         "help_text": (
-            "📖 PRIZORA ist ein internationaler Baukasten für Wettbewerbe und Verlosungen.\n\n"
-            "1. Wähle die Sprache der Oberfläche.\n"
-            "2. Wähle ein Format und den Veranstaltungsort.\n"
-            "3. Gib den Preis, die Teilnehmergrenze und die Anzahl der Gewinner ein.\n\n"
-            "Die Anmeldung bleibt bis zum Spielende oder bis zum Erreichen des Teilnehmerlimits geöffnet. PRIZORA wählt die Gewinner zufällig aus und veröffentlicht das Ergebnis automatisch."
+            "ℹ️ PRIZORA bereitet den Start vor.\n\n"
+            "Die Plattform befindet sich noch in Entwicklung. Wettbewerbe, Gewinnspiel-Anmeldungen und Zahlungen sind derzeit nicht verfügbar.\n\n"
+            "Bitte überweise kein Geld und nutze keine privaten Zahlungsdaten. Offizielle Funktionen werden nach Abschluss der Entwicklung angekündigt.\n\n"
+            "Neuigkeiten findest du auf der PRIZORA-Website."
         ),
     },
 }
@@ -1339,21 +1328,19 @@ def subscription_choice_menu(language: str):
 
 
 def main_menu(language: str):
-    t = I18N[language]
+    labels = {
+        "ru": "🌐 Перейти на сайт PRIZORA",
+        "en": "🌐 Visit PRIZORA website",
+        "de": "🌐 PRIZORA-Website öffnen",
+    }
+    language_labels = {
+        "ru": "🌐 Язык",
+        "en": "🌐 Language",
+        "de": "🌐 Sprache",
+    }
     keyboard = [
-        [InlineKeyboardButton(t["menu_create"], callback_data="create")],
-        [
-            InlineKeyboardButton(t["menu_formats"], callback_data="formats"),
-            InlineKeyboardButton(t["menu_plans"], callback_data="plans"),
-        ],
-        [InlineKeyboardButton(t["menu_my_contests"], callback_data="mycontests")],
-        [InlineKeyboardButton("💰 Мой баланс", callback_data="wallet")],
-        [InlineKeyboardButton("✉️ Поддержка", callback_data="support")],
-        [InlineKeyboardButton("📢 Рекламировать канал", callback_data="ads:home")],
-        [
-            InlineKeyboardButton(t["menu_help"], callback_data="help"),
-            InlineKeyboardButton(t["menu_language"], callback_data="language"),
-        ],
+        [InlineKeyboardButton(labels.get(language, labels["en"]), url=PRIZORA_SITE_URL)],
+        [InlineKeyboardButton(language_labels.get(language, language_labels["en"]), callback_data="language")],
     ]
     return InlineKeyboardMarkup(keyboard)
 
@@ -1702,6 +1689,7 @@ async def maybe_show_home_ad(chat_id: int, user_id: int, context: ContextTypes.D
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     admin.register_user(update.effective_user)
+    # Keep existing published-contest deep links working during the transition.
     if context.args and context.args[0].startswith("join_"):
         await handle_join_start(update, context)
         return
@@ -1709,22 +1697,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("⛔ Доступ к PRIZORA ограничен. Если считаешь это ошибкой, обратись к администратору.")
         return
 
-    if "language" not in context.user_data:
-        language = detected_language(update)
-        context.user_data["suggested_language"] = language
-        await update.message.reply_text(
-            tr(context, "language_detected", language=SUPPORTED_LANGUAGES[language])
-            + "\n\n"
-            + tr(context, "language_prompt"),
-            reply_markup=language_menu(),
-        )
-        return
+    if "language" not in context.user_data and "suggested_language" not in context.user_data:
+        context.user_data["suggested_language"] = detected_language(update)
 
     await update.message.reply_text(
         tr(context, "welcome"),
         reply_markup=main_menu(current_language(context)),
     )
-    await maybe_show_home_ad(update.effective_chat.id, update.effective_user.id, context)
+
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if admin.is_user_blocked(update.effective_user.id, scope="account"):
@@ -1734,6 +1714,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         tr(context, "help_text"),
         reply_markup=main_menu(current_language(context)),
     )
+
 
 async def button_handler(
     update: Update,
