@@ -34,6 +34,13 @@ def callback_data(markup):
 
 
 class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
+    async def test_premium_wheel_animation_is_six_second_loop(self):
+        animation = main.build_prizora_wheel_animation()
+        with main.Image.open(animation) as gif:
+            self.assertEqual(gif.n_frames, 24)
+            self.assertEqual(gif.info.get("duration"), 250)
+            self.assertEqual(gif.size, (480, 480))
+
     async def test_background_tasks_are_tracked_and_cancelled_on_shutdown(self):
         async def blocked_scheduler(*args, **kwargs):
             await asyncio.Event().wait()
