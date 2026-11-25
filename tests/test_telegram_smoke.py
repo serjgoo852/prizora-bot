@@ -62,6 +62,56 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(all(task.cancelled() for task in tasks))
         self.assertNotIn("prizora_background_tasks", application.bot_data)
 
+
+    async def test_admin_text_flow_is_dispatched_before_public_presentation_guard(self):
+        reply_text = AsyncMock()
+        update = SimpleNamespace(
+            message=SimpleNamespace(text="250", reply_text=reply_text),
+            effective_user=SimpleNamespace(id=900001),
+            effective_chat=SimpleNamespace(type="private"),
+        )
+        context = SimpleNamespace(user_data={"language": "ru", "admin_flow": "wallet_add_amount"})
+        with patch.object(main, "restore_user_language"), \
+             patch.object(main.admin, "handle_admin_text", new=AsyncMock(return_value=True)) as admin_text, \
+             patch.object(main.admin, "handle_admin_support_text", new=AsyncMock()) as support_text:
+            await main.prize_text_handler(update, context)
+        admin_text.assert_awaited_once_with(update, context)
+        support_text.assert_not_awaited()
+        reply_text.assert_not_awaited()
+
+    async def test_admin_support_reply_is_dispatched_during_presentation_mode(self):
+        reply_text = AsyncMock()
+        update = SimpleNamespace(
+            message=SimpleNamespace(text="Проверка ответа", reply_text=reply_text),
+            effective_user=SimpleNamespace(id=900001),
+            effective_chat=SimpleNamespace(type="private"),
+        )
+        context = SimpleNamespace(user_data={"language": "ru", "admin_support_reply_to": 700001})
+        with patch.object(main, "restore_user_language"), \
+             patch.object(main.admin, "handle_admin_text", new=AsyncMock(return_value=False)), \
+             patch.object(main.admin, "handle_admin_support_text", new=AsyncMock(return_value=True)) as support_text:
+            await main.prize_text_handler(update, context)
+        support_text.assert_awaited_once_with(update, context)
+        reply_text.assert_not_awaited()
+
+    async def test_admin_photo_does_not_cancel_pending_admin_text_flow(self):
+        reply_text = AsyncMock()
+        update = SimpleNamespace(
+            message=SimpleNamespace(
+                reply_text=reply_text,
+                photo=[SimpleNamespace(file_id="fake-photo")],
+                chat=SimpleNamespace(type="private"),
+            ),
+            effective_user=SimpleNamespace(id=900001),
+        )
+        context = SimpleNamespace(user_data={"language": "ru", "admin_flow": "wallet_add_amount"})
+        with patch.object(main, "restore_user_language"), \
+             patch.object(main.admin, "is_owner", return_value=True):
+            await main.artwork_photo_handler(update, context)
+        reply_text.assert_awaited_once()
+        self.assertIn("принимаются текстом", reply_text.await_args.args[0])
+        self.assertEqual(context.user_data["admin_flow"], "wallet_add_amount")
+
     async def test_first_visit_shows_presentation_and_detects_language(self):
         reply_text = AsyncMock()
         update = SimpleNamespace(
