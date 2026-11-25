@@ -50,7 +50,7 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(all(task.cancelled() for task in tasks))
         self.assertNotIn("prizora_background_tasks", application.bot_data)
 
-    async def test_start_first_visit_shows_language_picker(self):
+    async def test_start_first_visit_shows_launch_button(self):
         reply_text = AsyncMock()
         update = SimpleNamespace(
             message=SimpleNamespace(reply_text=reply_text),
@@ -64,10 +64,12 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
         reply_text.assert_awaited_once()
         args, kwargs = reply_text.await_args
         self.assertIn("PRIZORA", args[0])
-        self.assertEqual(kwargs["reply_markup"].inline_keyboard[0][0].callback_data, "lang:ru")
+        button = kwargs["reply_markup"].inline_keyboard[0][0]
+        self.assertEqual(button.callback_data, "start:launch")
+        self.assertIn("Запустить бота", button.text)
         self.assertEqual(context.user_data["suggested_language"], "ru")
 
-    async def test_start_returning_user_shows_presentation_only(self):
+    async def test_start_returning_user_shows_launch_button_before_presentation(self):
         reply_text = AsyncMock()
         update = SimpleNamespace(
             message=SimpleNamespace(reply_text=reply_text),
@@ -77,19 +79,53 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
         context = SimpleNamespace(args=[], user_data={"language": "ru"})
         main.admin.set_user_language(102, "ru")
 
-        with patch.object(main, "maybe_show_home_ad", new=AsyncMock()):
-            await main.start(update, context)
+        await main.start(update, context)
 
         reply_text.assert_awaited_once()
         args, kwargs = reply_text.await_args
         self.assertIn("PRIZORA", args[0])
         self.assertEqual(
-            set(callback_data(kwargs["reply_markup"])),
-            {"language"},
+            callback_data(kwargs["reply_markup"]),
+            ["start:launch"],
         )
+
+    async def test_launch_button_opens_presentation_for_saved_language(self):
+        edit_message_text = AsyncMock()
+        query = SimpleNamespace(
+            data="start:launch",
+            answer=AsyncMock(),
+            edit_message_text=edit_message_text,
+            from_user=SimpleNamespace(id=107),
+            message=SimpleNamespace(chat_id=107),
+        )
+        main.admin.register_user(query.from_user)
+        main.admin.set_user_language(107, "ru")
+        context = SimpleNamespace(user_data={})
+
+        await main.button_handler(SimpleNamespace(callback_query=query), context)
+
+        self.assertIn("PRIZORA", edit_message_text.await_args.args[0])
+        markup = edit_message_text.await_args.kwargs["reply_markup"]
+        self.assertEqual(markup.inline_keyboard[0][0].url, main.PRIZORA_SITE_URL)
+        self.assertIn("language", callback_data(markup))
+
+    async def test_launch_button_shows_language_picker_for_new_user(self):
+        edit_message_text = AsyncMock()
+        query = SimpleNamespace(
+            data="start:launch",
+            answer=AsyncMock(),
+            edit_message_text=edit_message_text,
+            from_user=SimpleNamespace(id=108, language_code="ru"),
+            message=SimpleNamespace(chat_id=108),
+        )
+        context = SimpleNamespace(user_data={"suggested_language": "ru"})
+
+        await main.button_handler(SimpleNamespace(callback_query=query), context)
+
+        self.assertIn("language_prompt", edit_message_text.await_args.args[0])
         self.assertEqual(
-            kwargs["reply_markup"].inline_keyboard[0][0].url,
-            main.PRIZORA_SITE_URL,
+            callback_data(edit_message_text.await_args.kwargs["reply_markup"]),
+            ["lang:ru", "lang:en", "lang:de"],
         )
 
     async def test_language_selection_returns_to_main_menu(self):
