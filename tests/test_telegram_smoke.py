@@ -50,7 +50,7 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(all(task.cancelled() for task in tasks))
         self.assertNotIn("prizora_background_tasks", application.bot_data)
 
-    async def test_start_first_visit_shows_language_picker(self):
+    async def test_first_visit_shows_presentation_and_detects_language(self):
         reply_text = AsyncMock()
         update = SimpleNamespace(
             message=SimpleNamespace(reply_text=reply_text),
@@ -58,100 +58,110 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
             effective_chat=SimpleNamespace(id=101),
         )
         context = SimpleNamespace(args=[], user_data={})
-
         await main.start(update, context)
-
         reply_text.assert_awaited_once()
         args, kwargs = reply_text.await_args
         self.assertIn("PRIZORA", args[0])
-        self.assertEqual(kwargs["reply_markup"].inline_keyboard[0][0].callback_data, "lang:ru")
+        self.assertIn("готовим запуск", args[0])
+        self.assertEqual(callback_data(kwargs["reply_markup"]), ["language"])
+        self.assertEqual(kwargs["reply_markup"].inline_keyboard[0][0].url, main.PRIZORA_SITE_URL)
         self.assertEqual(context.user_data["suggested_language"], "ru")
 
-    async def test_start_returning_user_shows_welcome_and_main_menu(self):
+    async def test_returning_user_sees_only_site_and_language_actions(self):
         reply_text = AsyncMock()
         update = SimpleNamespace(
             message=SimpleNamespace(reply_text=reply_text),
             effective_user=SimpleNamespace(id=102),
             effective_chat=SimpleNamespace(id=102),
         )
-        context = SimpleNamespace(args=[], user_data={"language": "ru"})
-
-        with patch.object(main, "maybe_show_home_ad", new=AsyncMock()):
-            await main.start(update, context)
-
+        context = SimpleNamespace(args=[], user_data={"language": "en"})
+        await main.start(update, context)
         reply_text.assert_awaited_once()
         args, kwargs = reply_text.await_args
         self.assertIn("PRIZORA", args[0])
-        self.assertEqual(
-            set(callback_data(kwargs["reply_markup"])),
-            {"create", "formats", "plans", "mycontests", "support", "ads:home", "help", "language"},
-        )
+        self.assertIn("preparing", args[0])
+        self.assertEqual(callback_data(kwargs["reply_markup"]), ["language"])
+        self.assertEqual(kwargs["reply_markup"].inline_keyboard[0][0].url, main.PRIZORA_SITE_URL)
 
-    async def test_language_selection_returns_to_main_menu(self):
+    async def test_language_selection_returns_to_presentation_menu(self):
         edit_message_text = AsyncMock()
         query = SimpleNamespace(
-            data="lang:ru",
+            data="lang:de",
             answer=AsyncMock(),
             edit_message_text=edit_message_text,
             from_user=SimpleNamespace(id=103),
             message=SimpleNamespace(chat_id=103),
         )
         context = SimpleNamespace(user_data={})
-
         await main.button_handler(SimpleNamespace(callback_query=query), context)
-
         query.answer.assert_awaited_once()
         edit_message_text.assert_awaited_once()
-        self.assertEqual(context.user_data["language"], "ru")
-        self.assertIn("create", callback_data(edit_message_text.await_args.kwargs["reply_markup"]))
+        self.assertEqual(context.user_data["language"], "de")
+        self.assertIn("Wir bereiten den Start", edit_message_text.await_args.args[0])
+        self.assertEqual(callback_data(edit_message_text.await_args.kwargs["reply_markup"]), ["language"])
 
-    async def test_main_menu_callbacks_open_their_screens(self):
-        cases = {
-            "create": "create_title",
-            "formats": "formats_title",
-            "plans": "plans_title",
-            "help": "help_text",
-            "language": "language_prompt",
-        }
-        for callback, expected_key in cases.items():
+    async def test_legacy_workflow_callbacks_are_blocked(self):
+        for callback in ("create", "formats", "plans", "mycontests", "support", "ads:home", "help", "format:wheel"):
             with self.subTest(callback=callback):
                 edit_message_text = AsyncMock()
+                answer = AsyncMock()
                 query = SimpleNamespace(
                     data=callback,
-                    answer=AsyncMock(),
+                    answer=answer,
                     edit_message_text=edit_message_text,
                     from_user=SimpleNamespace(id=104),
                     message=SimpleNamespace(chat_id=104),
                 )
                 context = SimpleNamespace(user_data={"language": "ru"})
+                await main.button_handler(SimpleNamespace(callback_query=query), context)
+                answer.assert_awaited_once()
+                self.assertTrue(answer.await_args.kwargs.get("show_alert"))
+                edit_message_text.assert_not_awaited()
 
-                with patch.object(main, "maybe_show_home_ad", new=AsyncMock()):
-                    await main.button_handler(SimpleNamespace(callback_query=query), context)
+    async def test_help_command_explains_launch_status_and_payment_safety(self):
+        reply_text = AsyncMock()
+        update = SimpleNamespace(
+            message=SimpleNamespace(reply_text=reply_text),
+            effective_user=SimpleNamespace(id=105),
+        )
+        context = SimpleNamespace(user_data={"language": "en"})
+        await main.help_command(update, context)
+        reply_text.assert_awaited_once()
+        message = reply_text.await_args.args[0]
+        self.assertIn("under development", message)
+        self.assertIn("Do not send money", message)
+        self.assertEqual(callback_data(reply_text.await_args.kwargs["reply_markup"]), ["language"])
 
-                query.answer.assert_awaited_once()
-                edit_message_text.assert_awaited_once()
-                self.assertIn(main.I18N["ru"][expected_key].split("\n")[0],
-                              edit_message_text.await_args.args[0])
-                self.assertIsNotNone(edit_message_text.await_args.kwargs.get("reply_markup"))
+    async def test_old_contest_deep_link_does_not_start_registration(self):
+        reply_text = AsyncMock()
+        update = SimpleNamespace(
+            message=SimpleNamespace(reply_text=reply_text),
+            effective_user=SimpleNamespace(language_code="de", id=106),
+            effective_chat=SimpleNamespace(id=106),
+        )
+        context = SimpleNamespace(args=["join_legacy123"], user_data={})
+        await main.start(update, context)
+        reply_text.assert_awaited_once()
+        message = reply_text.await_args.args[0]
+        self.assertIn("noch in Entwicklung", message)
+        self.assertEqual(callback_data(reply_text.await_args.kwargs["reply_markup"]), ["language"])
 
-    async def test_home_callback_restores_main_menu(self):
+    async def test_home_callback_restores_presentation_menu(self):
         edit_message_text = AsyncMock()
         query = SimpleNamespace(
             data="home",
             answer=AsyncMock(),
             edit_message_text=edit_message_text,
-            from_user=SimpleNamespace(id=105),
-            message=SimpleNamespace(chat_id=105),
+            from_user=SimpleNamespace(id=107),
+            message=SimpleNamespace(chat_id=107),
         )
         context = SimpleNamespace(user_data={"language": "ru", "awaiting_prize_name": True})
-
-        with patch.object(main, "maybe_show_home_ad", new=AsyncMock()):
-            await main.button_handler(SimpleNamespace(callback_query=query), context)
-
+        await main.button_handler(SimpleNamespace(callback_query=query), context)
         query.answer.assert_awaited_once()
         edit_message_text.assert_awaited_once()
         self.assertFalse(context.user_data["awaiting_prize_name"])
-        self.assertIn("create", callback_data(edit_message_text.await_args.kwargs["reply_markup"]))
+        self.assertIn("готовим запуск", edit_message_text.await_args.args[0])
+        self.assertEqual(callback_data(edit_message_text.await_args.kwargs["reply_markup"]), ["language"])
 
 
 if __name__ == "__main__":
