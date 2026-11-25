@@ -37,7 +37,13 @@ class AdminFoundationTests(unittest.TestCase):
 
     def test_user_language_is_persisted_without_overwriting_profile(self):
         user = SimpleNamespace(id=700100, username="lang_user", full_name="Language User")
-        admin.register_user(user)
+        now = admin._stamp()
+        with sqlite3.connect(self.db_path) as db:
+            db.execute(
+                "INSERT INTO user_profiles(user_id, username, full_name, first_seen, last_seen) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (user.id, user.username, user.full_name, now, now),
+            )
         self.assertIsNone(admin.get_user_language(700100, self.db_path))
         self.assertTrue(admin.set_user_language(700100, "de", self.db_path))
         self.assertEqual(admin.get_user_language(700100, self.db_path), "de")
