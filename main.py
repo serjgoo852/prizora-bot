@@ -1689,16 +1689,20 @@ async def maybe_show_home_ad(chat_id: int, user_id: int, context: ContextTypes.D
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     admin.register_user(update.effective_user)
-    # Keep existing published-contest deep links working during the transition.
-    if context.args and context.args[0].startswith("join_"):
-        await handle_join_start(update, context)
-        return
     if admin.is_user_blocked(update.effective_user.id, scope="account"):
         await update.message.reply_text("⛔ Доступ к PRIZORA ограничен. Если считаешь это ошибкой, обратись к администратору.")
         return
 
     if "language" not in context.user_data and "suggested_language" not in context.user_data:
         context.user_data["suggested_language"] = detected_language(update)
+
+    # Presentation mode: old contest deep links must not reopen registration.
+    if context.args and context.args[0].startswith("join_"):
+        await update.message.reply_text(
+            tr(context, "help_text"),
+            reply_markup=main_menu(current_language(context)),
+        )
+        return
 
     await update.message.reply_text(
         tr(context, "welcome"),
