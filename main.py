@@ -1788,20 +1788,21 @@ async def button_handler(
     language = current_language(context)
 
     if data == "start:launch":
-        saved_language = admin.get_user_language(query.from_user.id)
-        if not saved_language and context.user_data.get("language") not in SUPPORTED_LANGUAGES:
-            language = context.user_data.get("suggested_language", detected_language(update))
-            context.user_data["suggested_language"] = language
-            await query.edit_message_text(
-                tr(context, "language_detected", language=SUPPORTED_LANGUAGES[language])
-                + "\n\n" + tr(context, "language_prompt"),
-                reply_markup=language_menu(),
-            )
-        else:
-            await query.edit_message_text(
-                tr(context, "welcome"),
-                reply_markup=presentation_menu(current_language(context)),
-            )
+        language = (
+            admin.get_user_language(query.from_user.id)
+            or context.user_data.get("language")
+            or context.user_data.get("suggested_language")
+            or detected_language(update)
+        )
+        if language not in SUPPORTED_LANGUAGES:
+            language = "en"
+        context.user_data["language"] = language
+        context.user_data["suggested_language"] = language
+        admin.set_user_language(query.from_user.id, language)
+        await query.edit_message_text(
+            tr(context, "welcome"),
+            reply_markup=presentation_menu(language),
+        )
     elif data == "support":
         await admin.support_command(update, context)
     elif data == "wallet":
