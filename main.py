@@ -1373,15 +1373,14 @@ def main_menu(language: str):
 
 def presentation_menu(language: str):
     labels = {
-        "ru": ("🌐 Открыть сайт PRIZORA", "🌍 Язык", "⚙️ Прежнее меню"),
-        "en": ("🌐 Visit PRIZORA website", "🌍 Language", "⚙️ Previous menu"),
-        "de": ("🌐 PRIZORA-Website öffnen", "🌍 Sprache", "⚙️ Bisheriges Menü"),
+        "ru": ("🌐 Перейти на сайт PRIZORA", "🌍 Выбрать язык"),
+        "en": ("🌐 Open PRIZORA website", "🌍 Choose language"),
+        "de": ("🌐 PRIZORA-Website öffnen", "🌍 Sprache wählen"),
     }
-    site_label, language_label, legacy_label = labels.get(language, labels["en"])
+    site_label, language_label = labels.get(language, labels["en"])
     keyboard = [
         [InlineKeyboardButton(site_label, url=PRIZORA_SITE_URL)],
         [InlineKeyboardButton(language_label, callback_data="language")],
-        [InlineKeyboardButton(legacy_label, callback_data="legacy:home")],
     ]
     return InlineKeyboardMarkup(keyboard)
 
@@ -1761,8 +1760,8 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("⛔ Доступ к PRIZORA ограничен. Если считаешь это ошибкой, обратись к администратору.")
         return
     await update.message.reply_text(
-        tr(context, "help_text"),
-        reply_markup=main_menu(current_language(context)),
+        tr(context, "welcome"),
+        reply_markup=presentation_menu(current_language(context)),
     )
 
 async def button_handler(
