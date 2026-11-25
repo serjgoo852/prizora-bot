@@ -174,6 +174,52 @@ class AdminRecoveryRateLimitTests(unittest.IsolatedAsyncioTestCase):
         os.environ.pop("PRIZORA_ADMIN_TELEGRAM_ID", None)
         self.tmp.cleanup()
 
+    async def test_password_login_is_locked_after_five_failed_attempts(self):
+        send_message = AsyncMock()
+        user_id = 900001
+        for _ in range(admin.MAX_LOGIN_FAILURES):
+            message = SimpleNamespace(
+                text="wrong-password",
+                delete=AsyncMock(),
+                chat=SimpleNamespace(type="private"),
+            )
+            update = SimpleNamespace(
+                effective_message=message,
+                effective_user=SimpleNamespace(id=user_id),
+            )
+            context = SimpleNamespace(
+                user_data={"admin_flow": "login_password"},
+                bot=SimpleNamespace(send_message=send_message),
+            )
+            self.assertTrue(await admin.handle_admin_text(update, context))
+
+        with sqlite3.connect(self.db_path) as db:
+            failures, locked_until = db.execute(
+                "SELECT failures, locked_until FROM admin_auth_attempts WHERE admin_id=?",
+                (user_id,),
+            ).fetchone()
+        self.assertEqual(failures, admin.MAX_LOGIN_FAILURES)
+        self.assertIsNotNone(locked_until)
+
+        send_message.reset_mock()
+        message = SimpleNamespace(
+            text="valid-recovery-code",
+            delete=AsyncMock(),
+            chat=SimpleNamespace(type="private"),
+        )
+        update = SimpleNamespace(
+            effective_message=message,
+            effective_user=SimpleNamespace(id=user_id),
+        )
+        context = SimpleNamespace(
+            user_data={"admin_flow": "login_password"},
+            bot=SimpleNamespace(send_message=send_message),
+        )
+        self.assertTrue(await admin.handle_admin_text(update, context))
+        send_message.assert_awaited_once()
+        self.assertIn("временно заблокирован", send_message.await_args.kwargs["text"].lower())
+        self.assertFalse(admin.has_session(user_id))
+
     async def test_recovery_code_is_locked_after_five_failed_attempts(self):
         send_message = AsyncMock()
         user_id = 900001
