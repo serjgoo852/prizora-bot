@@ -939,12 +939,54 @@ async def handle_admin_text(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         return True
 
     if flow == "recover_code":
+        now = _now()
         with _connect() as db:
+            attempt = db.execute(
+                "SELECT failures, locked_until FROM admin_auth_attempts WHERE admin_id=?",
+                (user_id,),
+            ).fetchone()
+            if attempt and attempt["locked_until"]:
+                try:
+                    if datetime.fromisoformat(attempt["locked_until"]) > now:
+                        context.user_data.pop("admin_flow", None)
+                        await context.bot.send_message(
+                            chat_id=user_id,
+                            text="⏳ Восстановление временно заблокировано на 15 минут после пяти неверных попыток.",
+                        )
+                        return True
+                    db.execute("DELETE FROM admin_auth_attempts WHERE admin_id=?", (user_id,))
+                    attempt = None
+                except ValueError:
+                    db.execute("DELETE FROM admin_auth_attempts WHERE admin_id=?", (user_id,))
+                    attempt = None
             security = _security_row(db)
-            valid = bool(security and _verify_secret(raw, security["recovery_salt"], security["recovery_hash"]))
+            valid = bool(
+                security
+                and _verify_secret(raw, security["recovery_salt"], security["recovery_hash"])
+            )
+            if valid:
+                db.execute("DELETE FROM admin_auth_attempts WHERE admin_id=?", (user_id,))
+            else:
+                failures = (int(attempt["failures"]) if attempt else 0) + 1
+                locked = _stamp(now + timedelta(minutes=LOCK_MINUTES)) if failures >= MAX_LOGIN_FAILURES else None
+                db.execute("""
+                    INSERT INTO admin_auth_attempts(admin_id, failures, locked_until)
+                    VALUES (?, ?, ?)
+                    ON CONFLICT(admin_id) DO UPDATE SET failures=excluded.failures,
+                                                        locked_until=excluded.locked_until
+                """, (user_id, failures, locked))
         if not valid:
             context.user_data.pop("admin_flow", None)
-            await context.bot.send_message(chat_id=user_id, text="⛔ Код восстановления неверен. Попробуй /recover ещё раз.")
+            if failures >= MAX_LOGIN_FAILURES:
+                await context.bot.send_message(
+                    chat_id=user_id,
+                    text="⛔ Пять неверных кодов. Восстановление заблокировано на 15 минут.",
+                )
+            else:
+                await context.bot.send_message(
+                    chat_id=user_id,
+                    text="⛔ Код восстановления неверен. Попробуй /recover ещё раз.",
+                )
             return True
         context.user_data["admin_flow"] = "recover_new_password"
         await context.bot.send_message(chat_id=user_id, text="Создай новый пароль (8–128 символов, без пробелов).")
