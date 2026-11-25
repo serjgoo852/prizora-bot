@@ -1739,6 +1739,9 @@ async def maybe_show_home_ad(chat_id: int, user_id: int, context: ContextTypes.D
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # Telegram's native "Start" button sends /start automatically; users never
+    # need to type the command. Read the saved language before registration.
+    saved_language = admin.get_user_language(update.effective_user.id)
     admin.register_user(update.effective_user)
     if admin.is_user_blocked(update.effective_user.id, scope="account"):
         await update.message.reply_text("⛔ Доступ к PRIZORA ограничен. Если считаешь это ошибкой, обратись к администратору.")
@@ -1750,16 +1753,22 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await handle_join_start(update, context)
         return
 
-    language = context.user_data.get("language") or admin.get_user_language(update.effective_user.id) or detected_language(update)
+    language = (
+        saved_language
+        or context.user_data.get("language")
+        or detected_language(update)
+    )
+    if language not in SUPPORTED_LANGUAGES:
+        language = "en"
+    context.user_data["language"] = language
     context.user_data["suggested_language"] = language
-    launch_text = {
-        "ru": "👑 PRIZORA\n\nДобро пожаловать. Нажми кнопку ниже, чтобы запустить бота и открыть презентацию проекта.",
-        "en": "👑 PRIZORA\n\nWelcome. Press the button below to launch the bot and view the project presentation.",
-        "de": "👑 PRIZORA\n\nWillkommen. Drücke die Schaltfläche unten, um den Bot zu starten und die Projektpräsentation zu öffnen.",
-    }
+    admin.set_user_language(update.effective_user.id, language)
+
+    # First visit and every later visit open the same presentation directly.
+    # Telegram itself supplies the one-time native Start button for new users.
     await update.message.reply_text(
-        launch_text[language],
-        reply_markup=launch_menu(language),
+        tr(context, "welcome"),
+        reply_markup=presentation_menu(language),
     )
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1787,23 +1796,7 @@ async def button_handler(
     await query.answer()
     language = current_language(context)
 
-    if data == "start:launch":
-        language = (
-            admin.get_user_language(query.from_user.id)
-            or context.user_data.get("language")
-            or context.user_data.get("suggested_language")
-            or detected_language(update)
-        )
-        if language not in SUPPORTED_LANGUAGES:
-            language = "en"
-        context.user_data["language"] = language
-        context.user_data["suggested_language"] = language
-        admin.set_user_language(query.from_user.id, language)
-        await query.edit_message_text(
-            tr(context, "welcome"),
-            reply_markup=presentation_menu(language),
-        )
-    elif data == "support":
+    if data == "support":
         await admin.support_command(update, context)
     elif data == "wallet":
         balance = admin.get_balance(query.from_user.id)
