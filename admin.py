@@ -126,6 +126,15 @@ def init_admin_database(db_path: Optional[str] = None) -> None:
             created_at TEXT NOT NULL
         );
         """)
+        # Additive migration: store interface language in the existing profile table.
+        # Existing wallets, contests and participant records are untouched.
+        profile_columns = {
+            row["name"] for row in db.execute("PRAGMA table_info(user_profiles)").fetchall()
+        }
+        if "language" not in profile_columns:
+            db.execute(
+                "ALTER TABLE user_profiles ADD COLUMN language TEXT NOT NULL DEFAULT 'en'"
+            )
         # Bring users already present in the contest database into the directory.
         db.execute("""
             INSERT OR IGNORE INTO user_profiles
@@ -137,6 +146,31 @@ def init_admin_database(db_path: Optional[str] = None) -> None:
             INSERT OR IGNORE INTO user_wallets(user_id, balance_kopecks, updated_at)
             SELECT user_id, 0, ? FROM user_profiles
         """, (_stamp(),))
+
+
+def get_user_language(user_id: int, db_path: Optional[str] = None) -> Optional[str]:
+    """Return a saved PRIZORA interface language, if one exists."""
+    with _connect(db_path) as db:
+        row = db.execute(
+            "SELECT language FROM user_profiles WHERE user_id=?",
+            (int(user_id),),
+        ).fetchone()
+    language = row["language"] if row else None
+    return language if language in ("ru", "en", "de") else None
+
+
+def set_user_language(
+    user_id: int, language: str, db_path: Optional[str] = None
+) -> bool:
+    """Persist a supported interface language without changing other profile fields."""
+    if language not in ("ru", "en", "de"):
+        return False
+    with _connect(db_path) as db:
+        cursor = db.execute(
+            "UPDATE user_profiles SET language=? WHERE user_id=?",
+            (language, int(user_id)),
+        )
+    return cursor.rowcount == 1
 
 
 def configured_admin_id() -> Optional[int]:
