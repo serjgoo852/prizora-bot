@@ -26,7 +26,7 @@ import admin
 from security import install_secret_redaction
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
-PRIZORA_SITE_URL = os.getenv("PRIZORA_SITE_URL", "https://prizora-mini-960242.apps.dada-tuda.ru").strip()
+PRIZORA_SITE_URL = (os.getenv("PRIZORA_SITE_URL", "").strip() or "https://prizora-mini-960242.apps.dada-tuda.ru")
 
 MOSCOW_TZ = timezone(timedelta(hours=3), "MSK")
 
@@ -1740,7 +1740,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await handle_join_start(update, context)
         return
 
-    if not admin.get_user_language(update.effective_user.id):
+    if not admin.get_user_language(update.effective_user.id) and context.user_data.get("language") not in SUPPORTED_LANGUAGES:
         language = context.user_data.get("suggested_language", detected_language(update))
         context.user_data["suggested_language"] = language
         await update.message.reply_text(
