@@ -888,6 +888,14 @@ def artwork_menu(context: ContextTypes.DEFAULT_TYPE):
 async def artwork_photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.message
 
+    # Ignore stale contest artwork and advertising/payment uploads in presentation mode.
+    clear_legacy_user_flows(context)
+    await message.reply_text(
+        tr(context, "help_text"),
+        reply_markup=main_menu(current_language(context)),
+    )
+    return
+
     # Ads artwork and payment receipts are handled independently from contest artwork.
     if context.user_data.get("ads_step") == "image":
         photo = message.photo[-1] if message.photo else None
@@ -1718,6 +1726,30 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         tr(context, "help_text"),
         reply_markup=main_menu(current_language(context)),
     )
+
+
+async def presentation_support_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Keep the legacy support workflow closed while the bot is in presentation mode."""
+    if admin.is_user_blocked(update.effective_user.id, scope="account"):
+        await update.message.reply_text("⛔ Доступ к PRIZORA ограничен.")
+        return
+    await update.message.reply_text(
+        tr(context, "help_text"),
+        reply_markup=main_menu(current_language(context)),
+    )
+
+
+def clear_legacy_user_flows(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Discard unfinished contest, advertising and user-support flows."""
+    for key in list(context.user_data):
+        if (
+            key.startswith("awaiting_")
+            or key.startswith("contest_")
+            or key.startswith("ads_")
+            or key == "support_flow"
+            or key == "contest_publish_pending"
+        ):
+            context.user_data.pop(key, None)
 
 
 async def button_handler(
@@ -2578,12 +2610,13 @@ async def prize_text_handler(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE
 ):
+    # Keep owner-only admin authentication and replies available, but do not
+    # continue any legacy user workflow while the public bot is in presentation mode.
     if await admin.handle_admin_text(update, context):
         return
     if await admin.handle_admin_support_text(update, context):
         return
-    if await admin.handle_support_text(update, context):
-        return
+    clear_legacy_user_flows(context)
     if admin.is_user_blocked(update.effective_user.id, scope="account"):
         await update.message.reply_text("⛔ Доступ к PRIZORA ограничен. Если считаешь это ошибкой, обратись к администратору.")
         return
@@ -3085,7 +3118,7 @@ def main():
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("admin", admin.admin_command))
     application.add_handler(CommandHandler("recover", admin.recover_command))
-    application.add_handler(CommandHandler("support", admin.support_command))
+    application.add_handler(CommandHandler("support", presentation_support_command))
     application.add_handler(CallbackQueryHandler(button_handler))
     application.add_handler(MessageHandler(filters.PHOTO | filters.Document.IMAGE, artwork_photo_handler))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, prize_text_handler))
