@@ -1437,7 +1437,7 @@ def build_prizora_wheel_animation() -> BytesIO:
         frames.append(frame.convert("P", palette=Image.Palette.ADAPTIVE))
     output = BytesIO()
     frames[0].save(output, format="GIF", save_all=True, append_images=frames[1:],
-                   duration=130, loop=0, optimize=True, disposal=2)
+                   duration=250, loop=0, optimize=True, disposal=2)
     output.seek(0)
     output.name = "prizora-premium-wheel.gif"
     return output
