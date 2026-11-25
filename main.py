@@ -9,7 +9,7 @@ import random
 from io import BytesIO
 from datetime import datetime, timedelta, timezone
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -26,6 +26,8 @@ import admin
 from security import install_secret_redaction
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
+MINIAPP_URL = os.getenv("PRIZORA_MINIAPP_URL", "https://prizora-mini-960242.apps.dada-tuda.ru").strip()
+MINIAPP_BUTTON_LABELS = {"ru": "🌐 Открыть PRIZORA", "en": "🌐 Open PRIZORA", "de": "🌐 PRIZORA öffnen"}
 
 MOSCOW_TZ = timezone(timedelta(hours=3), "MSK")
 
@@ -1340,7 +1342,9 @@ def subscription_choice_menu(language: str):
 
 def main_menu(language: str):
     t = I18N[language]
+    miniapp_label = MINIAPP_BUTTON_LABELS.get(language, MINIAPP_BUTTON_LABELS["ru"])
     keyboard = [
+        [InlineKeyboardButton(miniapp_label, web_app=WebAppInfo(url=MINIAPP_URL))],
         [InlineKeyboardButton(t["menu_create"], callback_data="create")],
         [
             InlineKeyboardButton(t["menu_formats"], callback_data="formats"),

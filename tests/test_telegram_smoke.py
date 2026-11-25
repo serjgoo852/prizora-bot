@@ -84,7 +84,7 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("PRIZORA", args[0])
         self.assertEqual(
             set(callback_data(kwargs["reply_markup"])),
-            {"create", "formats", "plans", "mycontests", "support", "ads:home", "help", "language"},
+            {"create", "formats", "plans", "mycontests", "wallet", "support", "ads:home", "help", "language"},
         )
 
     async def test_language_selection_returns_to_main_menu(self):
@@ -104,6 +104,20 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
         edit_message_text.assert_awaited_once()
         self.assertEqual(context.user_data["language"], "ru")
         self.assertIn("create", callback_data(edit_message_text.await_args.kwargs["reply_markup"]))
+
+    async def test_main_menu_contains_localized_miniapp_entry(self):
+        expected = {
+            "ru": "🌐 Открыть PRIZORA",
+            "en": "🌐 Open PRIZORA",
+            "de": "🌐 PRIZORA öffnen",
+        }
+        for language, label in expected.items():
+            with self.subTest(language=language):
+                markup = main.main_menu(language)
+                button = markup.inline_keyboard[0][0]
+                self.assertEqual(button.text, label)
+                self.assertIsNotNone(button.web_app)
+                self.assertEqual(button.web_app.url, main.MINIAPP_URL)
 
     async def test_main_menu_callbacks_open_their_screens(self):
         cases = {
