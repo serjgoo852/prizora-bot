@@ -1144,6 +1144,9 @@ async def handle_admin_callback(update: Update, context: ContextTypes.DEFAULT_TY
     query = update.callback_query
     if not query or not (query.data or "").startswith("admin:"):
         return False
+    if not query.message or query.message.chat.type != "private":
+        await query.answer("Административная панель доступна только в личном чате с PRIZORA.", show_alert=True)
+        return True
     admin_id = int(query.from_user.id)
     if not is_owner(admin_id) or not has_session(admin_id):
         await query.answer("Сеанс администратора завершён. Введи /admin.", show_alert=True)
