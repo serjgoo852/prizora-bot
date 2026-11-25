@@ -226,6 +226,21 @@ class AdminCallbackPrivacyTests(unittest.IsolatedAsyncioTestCase):
         self.previous_db_path = admin.DATABASE_PATH
         admin.DATABASE_PATH = os.path.join(self.tmp.name, "admin.sqlite3")
         os.environ["PRIZORA_ADMIN_TELEGRAM_ID"] = "900001"
+        with sqlite3.connect(admin.DATABASE_PATH) as db:
+            db.execute("""
+                CREATE TABLE contests (
+                    contest_id TEXT PRIMARY KEY, prize_name TEXT, contest_format TEXT,
+                    destination_title TEXT, starts_at TEXT, ends_at TEXT, drawn_at TEXT,
+                    winners_json TEXT, registration_mode TEXT, automation_enabled INTEGER,
+                    participant_limit INTEGER, winner_count INTEGER, created_at TEXT
+                )
+            """)
+            db.execute("""
+                CREATE TABLE participants (
+                    contest_id TEXT, user_id INTEGER, username TEXT,
+                    full_name TEXT, joined_at TEXT
+                )
+            """)
         admin.init_admin_database(admin.DATABASE_PATH)
 
     async def asyncTearDown(self):
