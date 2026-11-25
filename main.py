@@ -26,6 +26,7 @@ import admin
 from security import install_secret_redaction
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
+PRIZORA_SITE_URL = (os.getenv("PRIZORA_SITE_URL", "").strip() or "https://prizora-mini-960242.apps.dada-tuda.ru")
 
 MOSCOW_TZ = timezone(timedelta(hours=3), "MSK")
 
@@ -50,13 +51,11 @@ I18N = {
         "welcome": (
             "👑 PRIZORA\n"
             "━━━━━━━━━━━━━━━━━━\n"
-            "✨ ТВОЯ ПРЕМИАЛЬНАЯ ПЛОЩАДКА КОНКУРСОВ\n"
+            "ПЛАТФОРМА КОНКУРСОВ И РОЗЫГРЫШЕЙ\n"
             "━━━━━━━━━━━━━━━━━━\n\n"
-            "🎁 Создавай яркие конкурсы и розыгрыши.\n"
-            "🎡 Выбирай формат под свою аудиторию.\n"
-            "🏆 Собирай участников и определяй победителей.\n\n"
-            "💎 Новым пользователям доступен пробный период PRO — 7 дней.\n\n"
-            "👇 Выбери, с чего начнём:"
+            "PRIZORA готовится к запуску. Сейчас мы завершаем разработку платформы.\n"
+            "Здесь появятся розыгрыши, призы и инструменты для организаторов.\n\n"
+            "Нажми кнопку ниже, чтобы открыть сайт и следить за новостями запуска."
         ),
         "menu_create": "👑 Создать конкурс",
         "menu_formats": "✨ Форматы конкурсов",
@@ -238,13 +237,11 @@ I18N = {
         "welcome": (
             "👑 PRIZORA\n"
             "━━━━━━━━━━━━━━━━━━\n"
-            "✨ YOUR PREMIUM GIVEAWAY STUDIO\n"
+            "GIVEAWAY AND CONTEST PLATFORM\n"
             "━━━━━━━━━━━━━━━━━━\n\n"
-            "🎁 Create engaging contests and giveaways.\n"
-            "🎡 Choose a format for your audience.\n"
-            "🏆 Bring participants together and pick winners.\n\n"
-            "💎 New users get a 7-day PRO trial.\n\n"
-            "👇 Choose where to begin:"
+            "PRIZORA is preparing for launch. The platform is currently in development.\n"
+            "Giveaways, prizes and tools for organizers will be available here.\n\n"
+            "Use the button below to visit the website and follow launch updates."
         ),
         "menu_create": "👑 Create a contest",
         "menu_formats": "✨ Contest formats",
@@ -426,13 +423,11 @@ I18N = {
         "welcome": (
             "👑 PRIZORA\n"
             "━━━━━━━━━━━━━━━━━━\n"
-            "✨ DEIN PREMIUM-GEWINNSPIELSTUDIO\n"
+            "PLATTFORM FÜR GEWINNSPIELE UND WETTBEWERBE\n"
             "━━━━━━━━━━━━━━━━━━\n\n"
-            "🎁 Erstelle besondere Wettbewerbe und Verlosungen.\n"
-            "🎡 Wähle das passende Format für deine Community.\n"
-            "🏆 Ermittle die Gewinner deiner Aktionen.\n\n"
-            "💎 Neue Nutzer erhalten 7 Tage PRO zum Testen.\n\n"
-            "👇 Wähle, womit du beginnen möchtest:"
+            "PRIZORA bereitet den Start vor. Die Plattform befindet sich noch in Entwicklung.\n"
+            "Hier werden bald Gewinnspiele, Preise und Werkzeuge für Veranstalter verfügbar sein.\n\n"
+            "Öffne über die Schaltfläche unten die Website und verfolge die Startmeldungen."
         ),
         "menu_create": "🏆 Wettbewerb erstellen",
         "menu_formats": "🎮 Wettbewerbsformate",
@@ -757,6 +752,20 @@ def detected_language(update: Update) -> str:
     telegram_code = (update.effective_user.language_code or "").lower()
     base_code = telegram_code.split("-", 1)[0].split("_", 1)[0]
     return base_code if base_code in SUPPORTED_LANGUAGES else "en"
+
+
+def restore_user_language(user, context: ContextTypes.DEFAULT_TYPE) -> None:
+    saved = admin.get_user_language(user.id)
+    if saved in SUPPORTED_LANGUAGES:
+        context.user_data["language"] = saved
+        context.user_data["suggested_language"] = saved
+        return
+    if context.user_data.get("language") not in SUPPORTED_LANGUAGES:
+        code = (getattr(user, "language_code", None) or "").lower()
+        base_code = code.split("-", 1)[0].split("_", 1)[0]
+        context.user_data["suggested_language"] = (
+            base_code if base_code in SUPPORTED_LANGUAGES else "en"
+        )
 
 
 def current_language(context: ContextTypes.DEFAULT_TYPE) -> str:
@@ -1354,8 +1363,37 @@ def main_menu(language: str):
             InlineKeyboardButton(t["menu_help"], callback_data="help"),
             InlineKeyboardButton(t["menu_language"], callback_data="language"),
         ],
+        [InlineKeyboardButton(
+            {"ru": "↩️ К презентации PRIZORA", "en": "↩️ Back to PRIZORA", "de": "↩️ Zurück zu PRIZORA"}.get(language, "↩️ Back to PRIZORA"),
+            callback_data="presentation:home",
+        )],
     ]
     return InlineKeyboardMarkup(keyboard)
+
+
+def presentation_menu(language: str):
+    labels = {
+        "ru": ("🌐 Перейти на сайт PRIZORA", "🌍 Выбрать язык"),
+        "en": ("🌐 Open PRIZORA website", "🌍 Choose language"),
+        "de": ("🌐 PRIZORA-Website öffnen", "🌍 Sprache wählen"),
+    }
+    site_label, language_label = labels.get(language, labels["en"])
+    keyboard = [
+        [InlineKeyboardButton(site_label, url=PRIZORA_SITE_URL)],
+        [InlineKeyboardButton(language_label, callback_data="language")],
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+
+def launch_menu(language: str):
+    labels = {
+        "ru": "🚀 Запустить бота",
+        "en": "🚀 Launch bot",
+        "de": "🚀 Bot starten",
+    }
+    return InlineKeyboardMarkup([[
+        InlineKeyboardButton(labels.get(language, labels["en"]), callback_data="start:launch")
+    ]])
 
 
 def language_menu():
@@ -1701,38 +1739,46 @@ async def maybe_show_home_ad(chat_id: int, user_id: int, context: ContextTypes.D
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # Telegram's native "Start" button sends /start automatically; users never
+    # need to type the command. Read the saved language before registration.
+    saved_language = admin.get_user_language(update.effective_user.id)
     admin.register_user(update.effective_user)
-    if context.args and context.args[0].startswith("join_"):
-        await handle_join_start(update, context)
-        return
     if admin.is_user_blocked(update.effective_user.id, scope="account"):
         await update.message.reply_text("⛔ Доступ к PRIZORA ограничен. Если считаешь это ошибкой, обратись к администратору.")
         return
 
-    if "language" not in context.user_data:
-        language = detected_language(update)
-        context.user_data["suggested_language"] = language
-        await update.message.reply_text(
-            tr(context, "language_detected", language=SUPPORTED_LANGUAGES[language])
-            + "\n\n"
-            + tr(context, "language_prompt"),
-            reply_markup=language_menu(),
-        )
+    restore_user_language(update.effective_user, context)
+    if context.args and context.args[0].startswith("join_"):
+        # Preserve existing contest deep links and participant registration.
+        await handle_join_start(update, context)
         return
 
+    language = (
+        saved_language
+        or context.user_data.get("language")
+        or detected_language(update)
+    )
+    if language not in SUPPORTED_LANGUAGES:
+        language = "en"
+    context.user_data["language"] = language
+    context.user_data["suggested_language"] = language
+    admin.set_user_language(update.effective_user.id, language)
+
+    # First visit and every later visit open the same presentation directly.
+    # Telegram itself supplies the one-time native Start button for new users.
     await update.message.reply_text(
         tr(context, "welcome"),
-        reply_markup=main_menu(current_language(context)),
+        reply_markup=presentation_menu(language),
     )
-    await maybe_show_home_ad(update.effective_chat.id, update.effective_user.id, context)
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if admin.is_user_blocked(update.effective_user.id, scope="account"):
         await update.message.reply_text("⛔ Доступ к PRIZORA ограничен. Если считаешь это ошибкой, обратись к администратору.")
         return
+    restore_user_language(update.effective_user, context)
     await update.message.reply_text(
-        tr(context, "help_text"),
-        reply_markup=main_menu(current_language(context)),
+        tr(context, "welcome"),
+        reply_markup=presentation_menu(current_language(context)),
     )
 
 async def button_handler(
@@ -1740,6 +1786,7 @@ async def button_handler(
     context: ContextTypes.DEFAULT_TYPE
 ):
     query = update.callback_query
+    restore_user_language(query.from_user, context)
     data = query.data
     if data.startswith("admin:"):
         await admin.handle_admin_callback(update, context)
@@ -1812,10 +1859,23 @@ async def button_handler(
             return
         context.user_data["language"] = selected_language
         context.user_data["suggested_language"] = selected_language
+        admin.set_user_language(query.from_user.id, selected_language)
         language = selected_language
         await query.edit_message_text(
             tr(context, "welcome"),
+            reply_markup=presentation_menu(language),
+        )
+
+    elif data == "legacy:home":
+        await query.edit_message_text(
+            tr(context, "home_title"),
             reply_markup=main_menu(language),
+        )
+
+    elif data == "presentation:home":
+        await query.edit_message_text(
+            tr(context, "welcome"),
+            reply_markup=presentation_menu(language),
         )
 
     elif data == "home":
