@@ -100,6 +100,32 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("Wir bereiten den Start", edit_message_text.await_args.args[0])
         self.assertEqual(callback_data(edit_message_text.await_args.kwargs["reply_markup"]), ["language"])
 
+    async def test_selected_language_survives_new_user_context_after_restart(self):
+        user_id = 111
+        language_query = SimpleNamespace(
+            data="lang:de",
+            answer=AsyncMock(),
+            edit_message_text=AsyncMock(),
+            from_user=SimpleNamespace(id=user_id),
+            message=SimpleNamespace(chat_id=user_id),
+        )
+        await main.button_handler(
+            SimpleNamespace(callback_query=language_query),
+            SimpleNamespace(user_data={}),
+        )
+
+        reply_text = AsyncMock()
+        update = SimpleNamespace(
+            message=SimpleNamespace(reply_text=reply_text),
+            effective_user=SimpleNamespace(id=user_id, language_code="ru"),
+            effective_chat=SimpleNamespace(id=user_id),
+        )
+        restarted_context = SimpleNamespace(args=[], user_data={})
+        await main.start(update, restarted_context)
+
+        self.assertEqual(restarted_context.user_data["language"], "de")
+        self.assertIn("Wir bereiten den Start", reply_text.await_args.args[0])
+
     async def test_legacy_workflow_callbacks_are_blocked(self):
         for callback in ("create", "formats", "plans", "mycontests", "support", "ads:home", "help", "format:wheel"):
             with self.subTest(callback=callback):
