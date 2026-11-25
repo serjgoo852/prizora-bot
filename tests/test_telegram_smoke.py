@@ -94,6 +94,24 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("start:launch", callback_data(markup))
         self.assertEqual(main.admin.get_user_language(102), "de")
 
+    async def test_help_uses_saved_language_and_presentation(self):
+        reply_text = AsyncMock()
+        user = SimpleNamespace(id=109, language_code="en")
+        main.admin.register_user(user)
+        main.admin.set_user_language(109, "de")
+        update = SimpleNamespace(
+            message=SimpleNamespace(reply_text=reply_text),
+            effective_user=user,
+        )
+        context = SimpleNamespace(user_data={})
+
+        await main.help_command(update, context)
+
+        args, kwargs = reply_text.await_args
+        self.assertIn("PLATTFORM", args[0])
+        self.assertEqual(kwargs["reply_markup"].inline_keyboard[0][0].url, main.PRIZORA_SITE_URL)
+        self.assertEqual(context.user_data["language"], "de")
+
     async def test_language_selection_returns_to_main_menu(self):
         edit_message_text = AsyncMock()
         query = SimpleNamespace(
