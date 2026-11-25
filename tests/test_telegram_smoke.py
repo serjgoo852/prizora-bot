@@ -75,6 +75,7 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
             effective_chat=SimpleNamespace(id=102),
         )
         context = SimpleNamespace(args=[], user_data={"language": "ru"})
+        main.admin.set_user_language(102, "ru")
 
         with patch.object(main, "maybe_show_home_ad", new=AsyncMock()):
             await main.start(update, context)
@@ -84,7 +85,11 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("PRIZORA", args[0])
         self.assertEqual(
             set(callback_data(kwargs["reply_markup"])),
-            {"create", "formats", "plans", "mycontests", "support", "ads:home", "help", "language"},
+            {"language", "legacy:home"},
+        )
+        self.assertEqual(
+            kwargs["reply_markup"].inline_keyboard[0][0].url,
+            main.PRIZORA_SITE_URL,
         )
 
     async def test_language_selection_returns_to_main_menu(self):
@@ -96,6 +101,7 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
             from_user=SimpleNamespace(id=103),
             message=SimpleNamespace(chat_id=103),
         )
+        main.admin.register_user(query.from_user)
         context = SimpleNamespace(user_data={})
 
         await main.button_handler(SimpleNamespace(callback_query=query), context)
@@ -103,7 +109,9 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
         query.answer.assert_awaited_once()
         edit_message_text.assert_awaited_once()
         self.assertEqual(context.user_data["language"], "ru")
-        self.assertIn("create", callback_data(edit_message_text.await_args.kwargs["reply_markup"]))
+        self.assertIn("language", callback_data(edit_message_text.await_args.kwargs["reply_markup"]))
+        self.assertIn("legacy:home", callback_data(edit_message_text.await_args.kwargs["reply_markup"]))
+        self.assertEqual(main.admin.get_user_language(103), "ru")
 
     async def test_main_menu_callbacks_open_their_screens(self):
         cases = {
@@ -133,6 +141,23 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
                 self.assertIn(main.I18N["ru"][expected_key].split("\n")[0],
                               edit_message_text.await_args.args[0])
                 self.assertIsNotNone(edit_message_text.await_args.kwargs.get("reply_markup"))
+
+    async def test_legacy_menu_can_be_opened_and_return_to_presentation(self):
+        edit_message_text = AsyncMock()
+        query = SimpleNamespace(
+            data="legacy:home",
+            answer=AsyncMock(),
+            edit_message_text=edit_message_text,
+            from_user=SimpleNamespace(id=106),
+            message=SimpleNamespace(chat_id=106),
+        )
+        main.admin.register_user(query.from_user)
+        context = SimpleNamespace(user_data={"language": "en"})
+
+        await main.button_handler(SimpleNamespace(callback_query=query), context)
+
+        self.assertIn("create", callback_data(edit_message_text.await_args.kwargs["reply_markup"]))
+        self.assertIn("presentation:home", callback_data(edit_message_text.await_args.kwargs["reply_markup"]))
 
     async def test_home_callback_restores_main_menu(self):
         edit_message_text = AsyncMock()
