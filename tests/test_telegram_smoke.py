@@ -163,6 +163,56 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("готовим запуск", edit_message_text.await_args.args[0])
         self.assertEqual(callback_data(edit_message_text.await_args.kwargs["reply_markup"]), ["language"])
 
+    async def test_support_command_keeps_legacy_support_closed(self):
+        reply_text = AsyncMock()
+        update = SimpleNamespace(
+            message=SimpleNamespace(reply_text=reply_text),
+            effective_user=SimpleNamespace(id=108),
+        )
+        context = SimpleNamespace(user_data={"language": "ru"})
+        await main.presentation_support_command(update, context)
+        reply_text.assert_awaited_once()
+        self.assertIn("готовим запуск", reply_text.await_args.args[0])
+        self.assertEqual(callback_data(reply_text.await_args.kwargs["reply_markup"]), ["language"])
+
+    async def test_text_message_cannot_continue_old_user_workflows(self):
+        reply_text = AsyncMock()
+        update = SimpleNamespace(
+            message=SimpleNamespace(text="test message", reply_text=reply_text),
+            effective_user=SimpleNamespace(id=109),
+        )
+        context = SimpleNamespace(user_data={
+            "language": "en",
+            "support_flow": True,
+            "ads_step": "payment_note",
+            "ads_payment_order": "old-order",
+            "awaiting_prize_name": True,
+        })
+        await main.prize_text_handler(update, context)
+        reply_text.assert_awaited_once()
+        self.assertIn("under development", reply_text.await_args.args[0])
+        self.assertNotIn("support_flow", context.user_data)
+        self.assertNotIn("ads_step", context.user_data)
+        self.assertNotIn("ads_payment_order", context.user_data)
+        self.assertNotIn("awaiting_prize_name", context.user_data)
+
+    async def test_photo_upload_cannot_continue_old_ad_or_contest_flow(self):
+        reply_text = AsyncMock()
+        update = SimpleNamespace(
+            message=SimpleNamespace(reply_text=reply_text, photo=[SimpleNamespace(file_id="fake")]),
+            effective_user=SimpleNamespace(id=110),
+        )
+        context = SimpleNamespace(user_data={
+            "language": "de",
+            "ads_step": "image",
+            "awaiting_contest_logo": True,
+        })
+        await main.artwork_photo_handler(update, context)
+        reply_text.assert_awaited_once()
+        self.assertIn("Entwicklung", reply_text.await_args.args[0])
+        self.assertNotIn("ads_step", context.user_data)
+        self.assertNotIn("awaiting_contest_logo", context.user_data)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
