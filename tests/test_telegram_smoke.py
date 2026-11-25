@@ -45,6 +45,49 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
             ads_task.assert_not_awaited()
             await main.post_stop(application)
 
+    def test_presentation_mode_does_not_reenable_legacy_contest_automation(self):
+        with tempfile.TemporaryDirectory(prefix="prizora-db-migration-") as temp_dir:
+            db_path = os.path.join(temp_dir, "legacy.sqlite3")
+            with main.sqlite3.connect(db_path) as db:
+                db.execute("""
+                    CREATE TABLE contests (
+                        contest_id TEXT PRIMARY KEY,
+                        organizer_id INTEGER NOT NULL,
+                        destination_chat_id INTEGER NOT NULL,
+                        destination_title TEXT NOT NULL,
+                        prize_name TEXT NOT NULL,
+                        contest_format TEXT NOT NULL,
+                        participant_limit INTEGER NOT NULL,
+                        winner_count INTEGER NOT NULL,
+                        subscription_chat_id INTEGER,
+                        starts_at TEXT NOT NULL,
+                        ends_at TEXT NOT NULL,
+                        rules TEXT NOT NULL,
+                        created_at TEXT NOT NULL,
+                        published_at TEXT NOT NULL
+                    )
+                """)
+                db.execute("""
+                    INSERT INTO contests (
+                        contest_id, organizer_id, destination_chat_id, destination_title,
+                        prize_name, contest_format, participant_limit, winner_count,
+                        subscription_chat_id, starts_at, ends_at, rules, created_at, published_at
+                    ) VALUES ('legacy-future', 1, 2, 'test', 'test prize', 'wheel',
+                              10, 1, NULL, '2098-01-01T00:00:00+00:00',
+                              '2098-01-02T00:00:00+00:00', 'test', '2097-01-01', '2097-01-01')
+                """)
+
+            with patch.object(main, "DATABASE_PATH", db_path), \\
+                 patch.object(main, "PRESENTATION_MODE", True):
+                main.init_database()
+
+            with main.sqlite3.connect(db_path) as db:
+                enabled = db.execute(
+                    "SELECT automation_enabled FROM contests WHERE contest_id='legacy-future'"
+                ).fetchone()[0]
+            self.assertEqual(enabled, 0)
+
+
     async def test_live_mode_background_tasks_are_tracked_and_cancelled(self):
         async def blocked_scheduler(*args, **kwargs):
             await asyncio.Event().wait()
