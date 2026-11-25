@@ -1385,6 +1385,17 @@ def presentation_menu(language: str):
     return InlineKeyboardMarkup(keyboard)
 
 
+def launch_menu(language: str):
+    labels = {
+        "ru": "🚀 Запустить бота",
+        "en": "🚀 Launch bot",
+        "de": "🚀 Bot starten",
+    }
+    return InlineKeyboardMarkup([[
+        InlineKeyboardButton(labels.get(language, labels["en"]), callback_data="start:launch")
+    ]])
+
+
 def language_menu():
     keyboard = [
         [InlineKeyboardButton(SUPPORTED_LANGUAGES["ru"], callback_data="lang:ru")],
@@ -1739,20 +1750,16 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await handle_join_start(update, context)
         return
 
-    if not admin.get_user_language(update.effective_user.id) and context.user_data.get("language") not in SUPPORTED_LANGUAGES:
-        language = context.user_data.get("suggested_language", detected_language(update))
-        context.user_data["suggested_language"] = language
-        await update.message.reply_text(
-            tr(context, "language_detected", language=SUPPORTED_LANGUAGES[language])
-            + "\n\n"
-            + tr(context, "language_prompt"),
-            reply_markup=language_menu(),
-        )
-        return
-
+    language = context.user_data.get("language") or admin.get_user_language(update.effective_user.id) or detected_language(update)
+    context.user_data["suggested_language"] = language
+    launch_text = {
+        "ru": "👑 PRIZORA\\n\\nДобро пожаловать. Нажми кнопку ниже, чтобы запустить бота и открыть презентацию проекта.",
+        "en": "👑 PRIZORA\\n\\nWelcome. Press the button below to launch the bot and view the project presentation.",
+        "de": "👑 PRIZORA\\n\\nWillkommen. Drücke die Schaltfläche unten, um den Bot zu starten und die Projektpräsentation zu öffnen.",
+    }
     await update.message.reply_text(
-        tr(context, "welcome"),
-        reply_markup=presentation_menu(current_language(context)),
+        launch_text[language],
+        reply_markup=launch_menu(language),
     )
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1780,7 +1787,22 @@ async def button_handler(
     await query.answer()
     language = current_language(context)
 
-    if data == "support":
+    if data == "start:launch":
+        saved_language = admin.get_user_language(query.from_user.id)
+        if not saved_language and context.user_data.get("language") not in SUPPORTED_LANGUAGES:
+            language = context.user_data.get("suggested_language", detected_language(update))
+            context.user_data["suggested_language"] = language
+            await query.edit_message_text(
+                tr(context, "language_detected", language=SUPPORTED_LANGUAGES[language])
+                + "\\n\\n" + tr(context, "language_prompt"),
+                reply_markup=language_menu(),
+            )
+        else:
+            await query.edit_message_text(
+                tr(context, "welcome"),
+                reply_markup=presentation_menu(current_language(context)),
+            )
+    elif data == "support":
         await admin.support_command(update, context)
     elif data == "wallet":
         balance = admin.get_balance(query.from_user.id)
