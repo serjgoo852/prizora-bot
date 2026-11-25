@@ -938,6 +938,24 @@ async def artwork_photo_handler(update: Update, context: ContextTypes.DEFAULT_TY
     message = update.message
     restore_user_language(update, context)
 
+    # The owner can still use the admin panel during presentation mode.
+    # Admin text prompts and support replies are intentionally text-only.
+    if (
+        update.effective_user
+        and admin.is_owner(update.effective_user.id)
+        and message.chat
+        and message.chat.type == "private"
+        and (
+            context.user_data.get("admin_flow")
+            or context.user_data.get("admin_support_reply_to") is not None
+        )
+    ):
+        await message.reply_text(
+            "Административные команды и ответы поддержки принимаются текстом. "
+            "Отправь текстовый ответ в личном чате с PRIZORA."
+        )
+        return
+
     # Ignore stale contest artwork and advertising/payment uploads in presentation mode.
     clear_legacy_user_flows(context)
     await message.reply_text(
