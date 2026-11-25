@@ -4,6 +4,8 @@ import sqlite3
 import tempfile
 import unittest
 from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
 
 import admin
 
@@ -132,6 +134,75 @@ class AdminFoundationTests(unittest.TestCase):
         self.assertEqual(admin._contest_status(contest), "🟢 Регистрация открыта")
         people = admin._admin_participants("contest-1", db_path=self.db_path)
         self.assertEqual(people[0]["user_id"], 700020)
+
+
+class AdminRecoveryRateLimitTests(unittest.IsolatedAsyncioTestCase):
+    async def asyncSetUp(self):
+        self.tmp = tempfile.TemporaryDirectory(prefix="prizora-admin-recovery-test-")
+        self.db_path = os.path.join(self.tmp.name, "admin.sqlite3")
+        self.previous_db_path = admin.DATABASE_PATH
+        admin.DATABASE_PATH = self.db_path
+        os.environ["PRIZORA_ADMIN_TELEGRAM_ID"] = "900001"
+        admin.init_admin_database(self.db_path)
+        salt, digest = admin._hash_secret("valid-recovery-code")
+        with sqlite3.connect(self.db_path) as db:
+            db.execute(
+                """INSERT INTO admin_security (
+                       singleton_id, password_salt, password_hash,
+                       recovery_salt, recovery_hash, updated_at
+                   ) VALUES (1, ?, ?, ?, ?, ?)""",
+                (salt, digest, salt, digest, datetime.now(timezone.utc).isoformat()),
+            )
+
+    async def asyncTearDown(self):
+        admin.DATABASE_PATH = self.previous_db_path
+        os.environ.pop("PRIZORA_ADMIN_TELEGRAM_ID", None)
+        self.tmp.cleanup()
+
+    async def test_recovery_code_is_locked_after_five_failed_attempts(self):
+        send_message = AsyncMock()
+        user_id = 900001
+        for _ in range(admin.MAX_LOGIN_FAILURES):
+            message = SimpleNamespace(text="wrong-recovery-code", delete=AsyncMock())
+            update = SimpleNamespace(
+                effective_message=message,
+                effective_user=SimpleNamespace(id=user_id),
+            )
+            context = SimpleNamespace(
+                user_data={"admin_flow": "recover_code"},
+                bot=SimpleNamespace(send_message=send_message),
+            )
+            self.assertTrue(await admin.handle_admin_text(update, context))
+
+        with sqlite3.connect(self.db_path) as db:
+            failures, locked_until = db.execute(
+                "SELECT failures, locked_until FROM admin_auth_attempts WHERE admin_id=?",
+                (user_id,),
+            ).fetchone()
+        self.assertEqual(failures, admin.MAX_LOGIN_FAILURES)
+        self.assertIsNotNone(locked_until)
+
+        send_message.reset_mock()
+        message = SimpleNamespace(text="valid-recovery-code", delete=AsyncMock())
+        update = SimpleNamespace(
+            effective_message=message,
+            effective_user=SimpleNamespace(id=user_id),
+        )
+        context = SimpleNamespace(
+            user_data={"admin_flow": "recover_code"},
+            bot=SimpleNamespace(send_message=send_message),
+        )
+        self.assertTrue(await admin.handle_admin_text(update, context))
+        send_message.assert_awaited_once()
+        self.assertIn("заблокировано", send_message.await_args.kwargs["text"].lower())
+        self.assertNotIn("admin_flow", context.user_data)
+
+        with sqlite3.connect(self.db_path) as db:
+            final_failures = db.execute(
+                "SELECT failures FROM admin_auth_attempts WHERE admin_id=?",
+                (user_id,),
+            ).fetchone()[0]
+        self.assertEqual(final_failures, admin.MAX_LOGIN_FAILURES)
 
 
 if __name__ == "__main__":
