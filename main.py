@@ -750,7 +750,11 @@ def save_published_contest(context: ContextTypes.DEFAULT_TYPE, organizer_id: int
 
 
 def detected_language(update: Update) -> str:
-    telegram_code = (getattr(update.effective_user, "language_code", None) or "").lower()
+    user = getattr(update, "effective_user", None)
+    if user is None:
+        query = getattr(update, "callback_query", None)
+        user = getattr(query, "from_user", None)
+    telegram_code = (getattr(user, "language_code", None) or "").lower()
     base_code = telegram_code.split("-", 1)[0].split("_", 1)[0]
     return base_code if base_code in SUPPORTED_LANGUAGES else "en"
 
@@ -759,7 +763,10 @@ def restore_user_language(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     """Restore a manually selected language from SQLite after bot restarts."""
     if context.user_data.get("language") in SUPPORTED_LANGUAGES:
         return
-    user = update.effective_user
+    user = getattr(update, "effective_user", None)
+    if user is None:
+        query = getattr(update, "callback_query", None)
+        user = getattr(query, "from_user", None)
     if user is None:
         return
     with sqlite3.connect(DATABASE_PATH, timeout=30) as connection:
