@@ -221,6 +221,18 @@ class AdminRecoveryRateLimitTests(unittest.IsolatedAsyncioTestCase):
 
 
 class AdminCallbackPrivacyTests(unittest.IsolatedAsyncioTestCase):
+    async def asyncSetUp(self):
+        self.tmp = tempfile.TemporaryDirectory(prefix="prizora-admin-privacy-test-")
+        self.previous_db_path = admin.DATABASE_PATH
+        admin.DATABASE_PATH = os.path.join(self.tmp.name, "admin.sqlite3")
+        os.environ["PRIZORA_ADMIN_TELEGRAM_ID"] = "900001"
+        admin.init_admin_database(admin.DATABASE_PATH)
+
+    async def asyncTearDown(self):
+        admin.DATABASE_PATH = self.previous_db_path
+        os.environ.pop("PRIZORA_ADMIN_TELEGRAM_ID", None)
+        self.tmp.cleanup()
+
     async def test_admin_callback_is_rejected_outside_private_chat(self):
         query = SimpleNamespace(
             data="admin:home",
