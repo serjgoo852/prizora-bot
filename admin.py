@@ -468,6 +468,17 @@ async def handle_admin_support_text(update: Update, context: ContextTypes.DEFAUL
     if not is_owner(user.id) or not has_session(user.id):
         context.user_data.pop("admin_support_reply_to", None)
         return False
+    if not message.chat or message.chat.type != "private":
+        try:
+            await message.delete()
+        except Exception:
+            pass
+        context.user_data.pop("admin_support_reply_to", None)
+        await context.bot.send_message(
+            chat_id=user.id,
+            text="Ответы службы поддержки доступны только в личном чате с PRIZORA.",
+        )
+        return True
     body = (message.text or "").strip()
     if not body or len(body) > 2000:
         await message.reply_text("Ответ должен содержать от 1 до 2000 символов.")
@@ -859,7 +870,38 @@ async def handle_admin_text(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     if not is_owner(user_id):
         context.user_data.pop("admin_flow", None)
         return False
-    raw = (update.effective_message.text or "").strip()
+
+    message = update.effective_message
+    if not message.chat or message.chat.type != "private":
+        try:
+            await message.delete()
+        except Exception:
+            pass
+        context.user_data.pop("admin_flow", None)
+        context.user_data.pop("admin_support_reply_to", None)
+        await context.bot.send_message(
+            chat_id=user_id,
+            text="Административные действия и ввод пароля доступны только в личном чате с PRIZORA.",
+        )
+        return True
+
+    authentication_flows = {
+        "setup_password", "login_password", "recover_code", "recover_new_password"
+    }
+    if flow not in authentication_flows and not has_session(user_id):
+        for key in (
+            "admin_flow", "admin_support_reply_to", "admin_target_user",
+            "admin_pending_amount", "admin_pending_reason", "admin_block_level",
+            "admin_block_duration",
+        ):
+            context.user_data.pop(key, None)
+        await context.bot.send_message(
+            chat_id=user_id,
+            text="⏳ Сеанс администратора завершён. Введи /admin и войди заново.",
+        )
+        return True
+
+    raw = (message.text or "").strip()
     try:
         await update.effective_message.delete()
     except Exception:
