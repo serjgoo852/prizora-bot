@@ -28,7 +28,8 @@ from security import install_secret_redaction
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
 PRIZORA_SITE_URL = os.getenv("PRIZORA_SITE_URL", "https://prizora-mini-960242.apps.dada-tuda.ru").strip()
 # Safe by default: public contest and advertising automation stays paused until explicitly enabled.
-PRESENTATION_MODE = os.getenv("PRIZORA_PRESENTATION_MODE", "true").strip().lower() in {"1", "true", "yes", "on"}
+# This branch is presentation-only. Do not expose a runtime opt-out until legacy user handlers are restored and tested.
+PRESENTATION_MODE = True
 
 MOSCOW_TZ = timezone(timedelta(hours=3), "MSK")
 
