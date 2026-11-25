@@ -4,6 +4,7 @@ import sqlite3
 import tempfile
 import unittest
 from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
 
 import admin
 
@@ -33,6 +34,15 @@ class AdminFoundationTests(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
         os.environ.pop("PRIZORA_ADMIN_TELEGRAM_ID", None)
+
+    def test_user_language_is_persisted_without_overwriting_profile(self):
+        user = SimpleNamespace(id=700100, username="lang_user", full_name="Language User")
+        admin.register_user(user)
+        self.assertIsNone(admin.get_user_language(700100, self.db_path))
+        self.assertTrue(admin.set_user_language(700100, "de", self.db_path))
+        self.assertEqual(admin.get_user_language(700100, self.db_path), "de")
+        self.assertFalse(admin.set_user_language(700100, "fr", self.db_path))
+        self.assertEqual(admin.get_user_language(700100, self.db_path), "de")
 
     def test_password_hash_is_salted_and_verifiable(self):
         salt, digest = admin._hash_secret("11Qawsedrf11")
