@@ -179,6 +179,55 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("Do not send money", message)
         self.assertEqual(callback_data(reply_text.await_args.kwargs["reply_markup"]), ["language"])
 
+
+    async def test_welcome_and_help_are_localized_in_all_supported_languages(self):
+        expected = {
+            "ru": {
+                "welcome": "Мы готовим запуск",
+                "help": "готовится к запуску",
+                "safety": "Не переводите деньги",
+            },
+            "en": {
+                "welcome": "We are preparing",
+                "help": "under development",
+                "safety": "Do not send money",
+            },
+            "de": {
+                "welcome": "Wir bereiten den Start",
+                "help": "noch in Entwicklung",
+                "safety": "Überweise kein Geld",
+            },
+        }
+        for index, (language, phrases) in enumerate(expected.items(), start=1):
+            with self.subTest(language=language):
+                reply_text = AsyncMock()
+                update = SimpleNamespace(
+                    message=SimpleNamespace(reply_text=reply_text),
+                    effective_user=SimpleNamespace(id=120 + index),
+                    effective_chat=SimpleNamespace(id=120 + index),
+                )
+                context = SimpleNamespace(args=[], user_data={"language": language})
+                await main.start(update, context)
+                self.assertIn(phrases["welcome"], reply_text.await_args.args[0])
+                self.assertEqual(
+                    callback_data(reply_text.await_args.kwargs["reply_markup"]),
+                    ["language"],
+                )
+
+                help_reply = AsyncMock()
+                help_update = SimpleNamespace(
+                    message=SimpleNamespace(reply_text=help_reply),
+                    effective_user=SimpleNamespace(id=120 + index),
+                )
+                await main.help_command(help_update, context)
+                help_message = help_reply.await_args.args[0]
+                self.assertIn(phrases["help"], help_message)
+                self.assertIn(phrases["safety"], help_message)
+                self.assertEqual(
+                    callback_data(help_reply.await_args.kwargs["reply_markup"]),
+                    ["language"],
+                )
+
     async def test_old_contest_deep_link_does_not_start_registration(self):
         reply_text = AsyncMock()
         update = SimpleNamespace(
