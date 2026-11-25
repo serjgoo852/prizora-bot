@@ -1909,7 +1909,7 @@ async def button_handler(
             ]),
         )
     elif data == "language":
-        if query.message.animation:
+        if getattr(query.message, "animation", None):
             await query.edit_message_caption(
                 caption=tr(context, "language_prompt"),
                 reply_markup=language_menu(),
@@ -1928,7 +1928,7 @@ async def button_handler(
         context.user_data["suggested_language"] = selected_language
         admin.set_user_language(query.from_user.id, selected_language)
         language = selected_language
-        if query.message.animation:
+        if getattr(query.message, "animation", None):
             await query.edit_message_caption(
                 caption=tr(context, "welcome"),
                 reply_markup=presentation_menu(language),
@@ -1946,7 +1946,7 @@ async def button_handler(
         )
 
     elif data == "presentation:home":
-        if query.message.animation:
+        if getattr(query.message, "animation", None):
             await query.edit_message_caption(
                 caption=tr(context, "welcome"),
                 reply_markup=presentation_menu(language),
