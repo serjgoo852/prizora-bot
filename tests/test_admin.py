@@ -220,5 +220,26 @@ class AdminRecoveryRateLimitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(final_failures, admin.MAX_LOGIN_FAILURES)
 
 
+class AdminCallbackPrivacyTests(unittest.IsolatedAsyncioTestCase):
+    async def test_admin_callback_is_rejected_outside_private_chat(self):
+        query = SimpleNamespace(
+            data="admin:home",
+            from_user=SimpleNamespace(id=900001),
+            message=SimpleNamespace(chat=SimpleNamespace(type="group")),
+            answer=AsyncMock(),
+            edit_message_text=AsyncMock(),
+        )
+        update = SimpleNamespace(callback_query=query)
+        context = SimpleNamespace(user_data={})
+
+        handled = await admin.handle_admin_callback(update, context)
+
+        self.assertTrue(handled)
+        query.answer.assert_awaited_once()
+        self.assertTrue(query.answer.await_args.kwargs["show_alert"])
+        self.assertIn("личном чате", query.answer.await_args.args[0])
+        query.edit_message_text.assert_not_awaited()
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
