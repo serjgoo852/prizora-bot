@@ -34,12 +34,24 @@ def callback_data(markup):
 
 
 class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
-    async def test_background_tasks_are_tracked_and_cancelled_on_shutdown(self):
+    async def test_presentation_mode_does_not_start_background_automation(self):
+        application = SimpleNamespace(bot_data={})
+        with patch.object(main, "PRESENTATION_MODE", True), \
+             patch.object(main, "contest_scheduler", new=AsyncMock()) as contest_task, \
+             patch.object(main, "ads_expiry_scheduler", new=AsyncMock()) as ads_task:
+            await main.post_init(application)
+            self.assertEqual(application.bot_data["prizora_background_tasks"], [])
+            contest_task.assert_not_awaited()
+            ads_task.assert_not_awaited()
+            await main.post_stop(application)
+
+    async def test_live_mode_background_tasks_are_tracked_and_cancelled(self):
         async def blocked_scheduler(*args, **kwargs):
             await asyncio.Event().wait()
 
         application = SimpleNamespace(bot_data={})
-        with patch.object(main, "contest_scheduler", new=blocked_scheduler), \
+        with patch.object(main, "PRESENTATION_MODE", False), \
+             patch.object(main, "contest_scheduler", new=blocked_scheduler), \
              patch.object(main, "ads_expiry_scheduler", new=blocked_scheduler):
             await main.post_init(application)
             tasks = application.bot_data["prizora_background_tasks"]
