@@ -189,7 +189,7 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("Wir bereiten den Start", reply_text.await_args.args[0])
 
     async def test_legacy_workflow_callbacks_are_blocked(self):
-        for callback in ("create", "formats", "plans", "mycontests", "support", "ads:home", "help", "format:wheel"):
+        for callback in ("create", "formats", "plans", "mycontests", "support", "ads:home", "ads:new", "ads:days:7", "ads:paid:old-order", "ads:admin", "ads:edit:save", "publish_confirm", "publish_cancel", "wallet:topup", "help", "format:wheel"):
             with self.subTest(callback=callback):
                 edit_message_text = AsyncMock()
                 answer = AsyncMock()
@@ -206,6 +206,35 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
                 self.assertTrue(answer.await_args.kwargs.get("show_alert"))
                 edit_message_text.assert_not_awaited()
 
+
+
+    async def test_legacy_payment_and_publication_callbacks_have_no_side_effects(self):
+        callbacks = (
+            "ads:new", "ads:days:7", "ads:paid:old-order", "ads:admin",
+            "ads:edit:save", "publish_confirm", "publish_cancel", "wallet:topup",
+        )
+        with patch.object(main.ads, "create_campaign_draft") as create_campaign, \
+             patch.object(main.ads, "create_ad_order") as create_order, \
+             patch.object(main.ads, "record_payment_submission") as payment_submission, \
+             patch.object(main.ads, "set_payment_review") as payment_review, \
+             patch.object(main, "save_published_contest") as publish_contest:
+            for index, callback in enumerate(callbacks, start=1):
+                answer = AsyncMock()
+                query = SimpleNamespace(
+                    data=callback,
+                    answer=answer,
+                    from_user=SimpleNamespace(id=500 + index),
+                    message=SimpleNamespace(chat_id=500 + index),
+                )
+                context = SimpleNamespace(user_data={"language": "ru"})
+                await main.button_handler(SimpleNamespace(callback_query=query), context)
+                answer.assert_awaited_once()
+                self.assertTrue(answer.await_args.kwargs.get("show_alert"))
+        create_campaign.assert_not_called()
+        create_order.assert_not_called()
+        payment_submission.assert_not_called()
+        payment_review.assert_not_called()
+        publish_contest.assert_not_called()
 
     async def test_legacy_callback_warning_uses_selected_language(self):
         expected = {
