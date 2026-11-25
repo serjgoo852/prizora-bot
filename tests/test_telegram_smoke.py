@@ -77,9 +77,9 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
                               '2098-01-02T00:00:00+00:00', 'test', '2097-01-01', '2097-01-01')
                 """)
 
-            with patch.object(main, "DATABASE_PATH", db_path), \\
-                 patch.object(main, "PRESENTATION_MODE", True):
-                main.init_database()
+            with patch.object(main, "DATABASE_PATH", db_path):
+                with patch.object(main, "PRESENTATION_MODE", True):
+                    main.init_database()
 
             with main.sqlite3.connect(db_path) as db:
                 enabled = db.execute(
