@@ -2616,12 +2616,16 @@ async def prize_text_handler(
         return
     if await admin.handle_admin_support_text(update, context):
         return
-    clear_legacy_user_flows(context)
     if admin.is_user_blocked(update.effective_user.id, scope="account"):
-        await update.message.reply_text("⛔ Доступ к PRIZORA ограничен. Если считаешь это ошибкой, обратись к администратору.")
+        await update.message.reply_text("⛔ Доступ к PRIZORA ограничен.")
         return
+    clear_legacy_user_flows(context)
     admin.register_user(update.effective_user)
-    message_text = (update.message.text or "").strip()
+    await update.message.reply_text(
+        tr(context, "help_text"),
+        reply_markup=main_menu(current_language(context)),
+    )
+    return
 
     ads_step = context.user_data.get("ads_step")
     if ads_step in ("title", "link", "description", "payment_note", "edit_title", "edit_link", "edit_description"):
