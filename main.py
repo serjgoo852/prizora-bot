@@ -27,6 +27,8 @@ from security import install_secret_redaction
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
 PRIZORA_SITE_URL = os.getenv("PRIZORA_SITE_URL", "https://prizora-mini-960242.apps.dada-tuda.ru").strip()
+# Safe by default: public contest and advertising automation stays paused until explicitly enabled.
+PRESENTATION_MODE = os.getenv("PRIZORA_PRESENTATION_MODE", "true").strip().lower() in {"1", "true", "yes", "on"}
 
 MOSCOW_TZ = timezone(timedelta(hours=3), "MSK")
 
@@ -2999,6 +3001,9 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
 
 def draw_due_contests():
     """Persist one immutable random draw for every contest whose end time passed."""
+    if PRESENTATION_MODE:
+        logging.info("Presentation mode: automatic contest draws are paused")
+        return []
     now = datetime.now(timezone.utc).isoformat()
     drawn = []
     with sqlite3.connect(DATABASE_PATH, timeout=30) as connection:
@@ -3033,6 +3038,8 @@ def draw_due_contests():
 
 
 def pending_result_posts():
+    if PRESENTATION_MODE:
+        return []
     with sqlite3.connect(DATABASE_PATH) as connection:
         connection.row_factory = sqlite3.Row
         return connection.execute(
@@ -3080,6 +3087,8 @@ def format_result_message(contest):
 
 async def publish_pending_results(application):
     """Publish an immutable automatic draw while retaining the branded contest artwork."""
+    if PRESENTATION_MODE:
+        return
     for contest in pending_result_posts():
         try:
             result_text = format_result_message(contest)
@@ -3124,6 +3133,9 @@ async def publish_pending_results(application):
 
 async def contest_scheduler(application):
     """Background clock: runs even when nobody sends the bot a message."""
+    if PRESENTATION_MODE:
+        logging.info("Presentation mode: contest scheduler is disabled")
+        return
     while True:
         try:
             drawn = draw_due_contests()
@@ -3137,6 +3149,9 @@ async def contest_scheduler(application):
 
 async def ads_expiry_scheduler():
     """Expire paid PRIZORA Ads campaigns independently of contest scheduling."""
+    if PRESENTATION_MODE:
+        logging.info("Presentation mode: advertising expiry scheduler is disabled")
+        return
     while True:
         try:
             expired = ads.expire_campaigns()
@@ -3150,6 +3165,10 @@ async def ads_expiry_scheduler():
 async def post_init(application):
     # post_init runs before Application.start(), so Application.create_task()
     # would warn that these tasks are not tracked for graceful shutdown.
+    if PRESENTATION_MODE:
+        logging.info("PRIZORA presentation mode is active; all public automation remains paused")
+        application.bot_data["prizora_background_tasks"] = []
+        return
     tasks = [
         asyncio.create_task(contest_scheduler(application), name="prizora-contest-scheduler"),
         asyncio.create_task(ads_expiry_scheduler(), name="prizora-ads-expiry-scheduler"),
