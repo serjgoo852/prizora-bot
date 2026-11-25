@@ -697,6 +697,13 @@ def init_database():
                 FOREIGN KEY (contest_id) REFERENCES contests(contest_id)
             )
         """)
+        connection.execute("""
+            CREATE TABLE IF NOT EXISTS user_preferences (
+                user_id INTEGER PRIMARY KEY,
+                language TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+        """)
 
 
 def save_published_contest(context: ContextTypes.DEFAULT_TYPE, organizer_id: int, announcement_message_id: int) -> str:
@@ -743,9 +750,42 @@ def save_published_contest(context: ContextTypes.DEFAULT_TYPE, organizer_id: int
 
 
 def detected_language(update: Update) -> str:
-    telegram_code = (update.effective_user.language_code or "").lower()
+    telegram_code = (getattr(update.effective_user, "language_code", None) or "").lower()
     base_code = telegram_code.split("-", 1)[0].split("_", 1)[0]
     return base_code if base_code in SUPPORTED_LANGUAGES else "en"
+
+
+def restore_user_language(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Restore a manually selected language from SQLite after bot restarts."""
+    if context.user_data.get("language") in SUPPORTED_LANGUAGES:
+        return
+    user = update.effective_user
+    if user is None:
+        return
+    with sqlite3.connect(DATABASE_PATH, timeout=30) as connection:
+        row = connection.execute(
+            "SELECT language FROM user_preferences WHERE user_id=?",
+            (int(user.id),),
+        ).fetchone()
+    if row and row[0] in SUPPORTED_LANGUAGES:
+        context.user_data["language"] = row[0]
+        context.user_data["suggested_language"] = row[0]
+    elif "suggested_language" not in context.user_data:
+        context.user_data["suggested_language"] = detected_language(update)
+
+
+def save_user_language(user_id: int, language: str) -> None:
+    if language not in SUPPORTED_LANGUAGES:
+        raise ValueError("unsupported language")
+    with sqlite3.connect(DATABASE_PATH, timeout=30) as connection:
+        connection.execute(
+            """INSERT INTO user_preferences(user_id, language, updated_at)
+               VALUES (?, ?, ?)
+               ON CONFLICT(user_id) DO UPDATE SET
+                   language=excluded.language,
+                   updated_at=excluded.updated_at""",
+            (int(user_id), language, datetime.now(timezone.utc).isoformat(timespec="seconds")),
+        )
 
 
 def current_language(context: ContextTypes.DEFAULT_TYPE) -> str:
@@ -887,6 +927,7 @@ def artwork_menu(context: ContextTypes.DEFAULT_TYPE):
 
 async def artwork_photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.message
+    restore_user_language(update, context)
 
     # Ignore stale contest artwork and advertising/payment uploads in presentation mode.
     clear_legacy_user_flows(context)
@@ -1701,8 +1742,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("⛔ Доступ к PRIZORA ограничен. Если считаешь это ошибкой, обратись к администратору.")
         return
 
-    if "language" not in context.user_data and "suggested_language" not in context.user_data:
-        context.user_data["suggested_language"] = detected_language(update)
+    restore_user_language(update, context)
 
     # Presentation mode: old contest deep links must not reopen registration.
     if context.args and context.args[0].startswith("join_"):
@@ -1719,6 +1759,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    restore_user_language(update, context)
     if admin.is_user_blocked(update.effective_user.id, scope="account"):
         await update.message.reply_text("⛔ Доступ к PRIZORA ограничен. Если считаешь это ошибкой, обратись к администратору.")
         return
@@ -1730,6 +1771,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def presentation_support_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Keep the legacy support workflow closed while the bot is in presentation mode."""
+    restore_user_language(update, context)
     if admin.is_user_blocked(update.effective_user.id, scope="account"):
         await update.message.reply_text("⛔ Доступ к PRIZORA ограничен.")
         return
@@ -1757,6 +1799,7 @@ async def button_handler(
     context: ContextTypes.DEFAULT_TYPE
 ):
     query = update.callback_query
+    restore_user_language(update, context)
     data = query.data
     if data.startswith("admin:"):
         await admin.handle_admin_callback(update, context)
@@ -1837,6 +1880,7 @@ async def button_handler(
             return
         context.user_data["language"] = selected_language
         context.user_data["suggested_language"] = selected_language
+        save_user_language(query.from_user.id, selected_language)
         language = selected_language
         await query.edit_message_text(
             tr(context, "welcome"),
@@ -2612,6 +2656,7 @@ async def prize_text_handler(
 ):
     # Keep owner-only admin authentication and replies available, but do not
     # continue any legacy user workflow while the public bot is in presentation mode.
+    restore_user_language(update, context)
     if await admin.handle_admin_text(update, context):
         return
     if await admin.handle_admin_support_text(update, context):
