@@ -1775,6 +1775,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if admin.is_user_blocked(update.effective_user.id, scope="account"):
         await update.message.reply_text("⛔ Доступ к PRIZORA ограничен. Если считаешь это ошибкой, обратись к администратору.")
         return
+    restore_user_language(update.effective_user, context)
     await update.message.reply_text(
         tr(context, "welcome"),
         reply_markup=presentation_menu(current_language(context)),
