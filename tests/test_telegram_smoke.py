@@ -195,7 +195,7 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
             "de": {
                 "welcome": "Wir bereiten den Start",
                 "help": "noch in Entwicklung",
-                "safety": "Überweise kein Geld",
+                "safety": "Bitte überweise kein Geld",
             },
         }
         for index, (language, phrases) in enumerate(expected.items(), start=1):
