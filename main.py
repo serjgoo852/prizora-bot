@@ -1753,9 +1753,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     language = context.user_data.get("language") or admin.get_user_language(update.effective_user.id) or detected_language(update)
     context.user_data["suggested_language"] = language
     launch_text = {
-        "ru": "👑 PRIZORA\\n\\nДобро пожаловать. Нажми кнопку ниже, чтобы запустить бота и открыть презентацию проекта.",
-        "en": "👑 PRIZORA\\n\\nWelcome. Press the button below to launch the bot and view the project presentation.",
-        "de": "👑 PRIZORA\\n\\nWillkommen. Drücke die Schaltfläche unten, um den Bot zu starten und die Projektpräsentation zu öffnen.",
+        "ru": "👑 PRIZORA\n\nДобро пожаловать. Нажми кнопку ниже, чтобы запустить бота и открыть презентацию проекта.",
+        "en": "👑 PRIZORA\n\nWelcome. Press the button below to launch the bot and view the project presentation.",
+        "de": "👑 PRIZORA\n\nWillkommen. Drücke die Schaltfläche unten, um den Bot zu starten und die Projektpräsentation zu öffnen.",
     }
     await update.message.reply_text(
         launch_text[language],
@@ -1794,7 +1794,7 @@ async def button_handler(
             context.user_data["suggested_language"] = language
             await query.edit_message_text(
                 tr(context, "language_detected", language=SUPPORTED_LANGUAGES[language])
-                + "\\n\\n" + tr(context, "language_prompt"),
+                + "\n\n" + tr(context, "language_prompt"),
                 reply_markup=language_menu(),
             )
         else:
