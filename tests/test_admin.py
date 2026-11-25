@@ -178,7 +178,7 @@ class AdminRecoveryRateLimitTests(unittest.IsolatedAsyncioTestCase):
         send_message = AsyncMock()
         user_id = 900001
         for _ in range(admin.MAX_LOGIN_FAILURES):
-            message = SimpleNamespace(text="wrong-recovery-code", delete=AsyncMock())
+            message = SimpleNamespace(text="wrong-recovery-code", delete=AsyncMock(), chat=SimpleNamespace(type="private"))
             update = SimpleNamespace(
                 effective_message=message,
                 effective_user=SimpleNamespace(id=user_id),
@@ -198,7 +198,7 @@ class AdminRecoveryRateLimitTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNotNone(locked_until)
 
         send_message.reset_mock()
-        message = SimpleNamespace(text="valid-recovery-code", delete=AsyncMock())
+        message = SimpleNamespace(text="valid-recovery-code", delete=AsyncMock(), chat=SimpleNamespace(type="private"))
         update = SimpleNamespace(
             effective_message=message,
             effective_user=SimpleNamespace(id=user_id),
@@ -239,6 +239,52 @@ class AdminCallbackPrivacyTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(query.answer.await_args.kwargs["show_alert"])
         self.assertIn("личном чате", query.answer.await_args.args[0])
         query.edit_message_text.assert_not_awaited()
+
+    async def test_expired_admin_session_cannot_continue_user_lookup(self):
+        send_message = AsyncMock()
+        message = SimpleNamespace(
+            text="700020", delete=AsyncMock(), chat=SimpleNamespace(type="private")
+        )
+        update = SimpleNamespace(
+            effective_message=message,
+            effective_user=SimpleNamespace(id=900001),
+        )
+        context = SimpleNamespace(
+            user_data={"admin_flow": "find_user"},
+            bot=SimpleNamespace(send_message=send_message),
+        )
+
+        handled = await admin.handle_admin_text(update, context)
+
+        self.assertTrue(handled)
+        self.assertNotIn("admin_flow", context.user_data)
+        send_message.assert_awaited_once()
+        self.assertIn("сеанс администратора завершён", send_message.await_args.kwargs["text"].lower())
+
+    async def test_admin_password_input_in_group_is_deleted_and_rejected(self):
+        send_message = AsyncMock()
+        message = SimpleNamespace(
+            text="NeverStoreThisPassword123!",
+            delete=AsyncMock(),
+            chat=SimpleNamespace(type="group"),
+        )
+        update = SimpleNamespace(
+            effective_message=message,
+            effective_user=SimpleNamespace(id=900001),
+        )
+        context = SimpleNamespace(
+            user_data={"admin_flow": "login_password"},
+            bot=SimpleNamespace(send_message=send_message),
+        )
+
+        handled = await admin.handle_admin_text(update, context)
+
+        self.assertTrue(handled)
+        message.delete.assert_awaited_once()
+        self.assertNotIn("admin_flow", context.user_data)
+        send_message.assert_awaited_once()
+        self.assertNotIn("NeverStoreThisPassword123!", str(send_message.await_args))
+        self.assertIn("личном чате", send_message.await_args.kwargs["text"].lower())
 
 
 if __name__ == "__main__":
