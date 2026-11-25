@@ -165,20 +165,24 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_support_command_keeps_legacy_support_closed(self):
         reply_text = AsyncMock()
+        message = SimpleNamespace(reply_text=reply_text)
         update = SimpleNamespace(
-            message=SimpleNamespace(reply_text=reply_text),
+            message=message,
+            effective_message=message,
             effective_user=SimpleNamespace(id=108),
         )
         context = SimpleNamespace(user_data={"language": "ru"})
         await main.presentation_support_command(update, context)
         reply_text.assert_awaited_once()
-        self.assertIn("готовим запуск", reply_text.await_args.args[0])
+        self.assertIn("готовится к запуску", reply_text.await_args.args[0])
         self.assertEqual(callback_data(reply_text.await_args.kwargs["reply_markup"]), ["language"])
 
     async def test_text_message_cannot_continue_old_user_workflows(self):
         reply_text = AsyncMock()
+        message = SimpleNamespace(text="test message", reply_text=reply_text)
         update = SimpleNamespace(
-            message=SimpleNamespace(text="test message", reply_text=reply_text),
+            message=message,
+            effective_message=message,
             effective_user=SimpleNamespace(id=109),
         )
         context = SimpleNamespace(user_data={
