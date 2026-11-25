@@ -19,6 +19,8 @@ main.admin.DATABASE_PATH = main.DATABASE_PATH
 
 class AutomaticDrawTests(unittest.TestCase):
     def setUp(self):
+        self.old_presentation_mode = main.PRESENTATION_MODE
+        main.PRESENTATION_MODE = False
         self.old_path = main.DATABASE_PATH
         self.path = os.path.join(_test_dir.name, f"draw-{id(self)}.sqlite3")
         main.DATABASE_PATH = self.path
@@ -26,6 +28,7 @@ class AutomaticDrawTests(unittest.TestCase):
         main.init_database()
 
     def tearDown(self):
+        main.PRESENTATION_MODE = self.old_presentation_mode
         main.DATABASE_PATH = self.old_path
         main.admin.DATABASE_PATH = self.old_path
 
@@ -59,6 +62,22 @@ class AutomaticDrawTests(unittest.TestCase):
                 "SELECT winners_json FROM contests WHERE contest_id=?", (contest_id,)
             ).fetchone()
         return json.loads(row[0] or "[]")
+
+
+    def test_presentation_mode_does_not_draw_or_queue_old_contests(self):
+        old_mode = main.PRESENTATION_MODE
+        main.PRESENTATION_MODE = True
+        try:
+            self.add_contest("paused", 1, [601, 602])
+            self.assertEqual(main.draw_due_contests(), [])
+            self.assertEqual(main.pending_result_posts(), [])
+            with sqlite3.connect(self.path) as db:
+                drawn_at = db.execute(
+                    "SELECT drawn_at FROM contests WHERE contest_id='paused'"
+                ).fetchone()[0]
+            self.assertIsNone(drawn_at)
+        finally:
+            main.PRESENTATION_MODE = old_mode
 
     def test_two_participants_one_winner_selects_exactly_one(self):
         self.add_contest("two-one", 1, [101, 102])
@@ -96,6 +115,8 @@ class AutomaticDrawTests(unittest.TestCase):
 
 class BrandedResultPublicationTests(unittest.IsolatedAsyncioTestCase):
     async def test_result_copies_original_announcement_artwork(self):
+        old_mode = main.PRESENTATION_MODE
+        main.PRESENTATION_MODE = False
         old_path = main.DATABASE_PATH
         path = os.path.join(_test_dir.name, f"result-{id(self)}.sqlite3")
         main.DATABASE_PATH = path
@@ -142,6 +163,7 @@ class BrandedResultPublicationTests(unittest.IsolatedAsyncioTestCase):
                 ).fetchone()[0]
             self.assertEqual(result_id, 654)
         finally:
+            main.PRESENTATION_MODE = old_mode
             main.DATABASE_PATH = old_path
             main.admin.DATABASE_PATH = old_path
 
