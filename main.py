@@ -1909,10 +1909,16 @@ async def button_handler(
             ]),
         )
     elif data == "language":
-        await query.edit_message_caption(
-            caption=tr(context, "language_prompt"),
-            reply_markup=language_menu(),
-        )
+        if query.message.animation:
+            await query.edit_message_caption(
+                caption=tr(context, "language_prompt"),
+                reply_markup=language_menu(),
+            )
+        else:
+            await query.edit_message_text(
+                tr(context, "language_prompt"),
+                reply_markup=language_menu(),
+            )
 
     elif data.startswith("lang:"):
         selected_language = data.split(":", 1)[1]
@@ -1922,10 +1928,16 @@ async def button_handler(
         context.user_data["suggested_language"] = selected_language
         admin.set_user_language(query.from_user.id, selected_language)
         language = selected_language
-        await query.edit_message_caption(
-            caption=tr(context, "welcome"),
-            reply_markup=presentation_menu(language),
-        )
+        if query.message.animation:
+            await query.edit_message_caption(
+                caption=tr(context, "welcome"),
+                reply_markup=presentation_menu(language),
+            )
+        else:
+            await query.edit_message_text(
+                tr(context, "welcome"),
+                reply_markup=presentation_menu(language),
+            )
 
     elif data == "legacy:home":
         await query.edit_message_text(
@@ -1934,10 +1946,16 @@ async def button_handler(
         )
 
     elif data == "presentation:home":
-        await query.edit_message_text(
-            tr(context, "welcome"),
-            reply_markup=presentation_menu(language),
-        )
+        if query.message.animation:
+            await query.edit_message_caption(
+                caption=tr(context, "welcome"),
+                reply_markup=presentation_menu(language),
+            )
+        else:
+            await query.edit_message_text(
+                tr(context, "welcome"),
+                reply_markup=presentation_menu(language),
+            )
 
     elif data == "home":
         for state_key in (
