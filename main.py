@@ -1814,8 +1814,13 @@ async def button_handler(
     # Presentation mode: stale keyboards from the former bot UI must not
     # reopen contest, wallet, advertising or other unfinished workflows.
     if data not in ("language", "home") and not data.startswith("lang:"):
+        unavailable_messages = {
+            "ru": "PRIZORA готовится к запуску. Функции пока временно недоступны.",
+            "en": "PRIZORA is preparing for launch. Features are temporarily unavailable.",
+            "de": "PRIZORA bereitet den Start vor. Die Funktionen sind vorübergehend nicht verfügbar.",
+        }
         await query.answer(
-            "PRIZORA готовится к запуску. Функции пока временно недоступны.",
+            unavailable_messages.get(current_language(context), unavailable_messages["en"]),
             show_alert=True,
         )
         return
