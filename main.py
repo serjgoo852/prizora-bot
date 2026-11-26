@@ -3244,11 +3244,18 @@ async def prize_text_handler(
         )
 
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Log full tracebacks for unexpected Telegram update-handler failures."""
+    """Log a searchable one-line exception plus the full traceback."""
+    error = context.error
     logging.error(
-        "Unhandled exception while processing Telegram update",
-        exc_info=(type(context.error), context.error, context.error.__traceback__),
+        "PRIZORA_UPDATE_EXCEPTION: %s: %s",
+        type(error).__name__ if error is not None else "UnknownError",
+        str(error) if error is not None else "No exception details supplied",
     )
+    if error is not None:
+        logging.error(
+            "Unhandled exception while processing Telegram update",
+            exc_info=(type(error), error, error.__traceback__),
+        )
 
 
 def draw_due_contests():
