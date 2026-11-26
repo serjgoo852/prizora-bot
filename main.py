@@ -1383,124 +1383,190 @@ def presentation_menu(language: str):
 
 
 def build_prizora_wheel_animation() -> BytesIO:
-    """Render a continuously rotating premium prize wheel GIF for Telegram."""
-    size = 480
+    """Render a polished gold-and-obsidian 3D-style prize wheel GIF for Telegram."""
+    size = 560
     center = size // 2
-    radius = 190
-    gold = (231, 184, 83, 255)
-    pale = (255, 235, 190, 255)
-    dark = (12, 13, 17, 255)
-    ivory = (246, 239, 220, 255)
+    radius = 218
+    gold = (232, 187, 91, 255)
+    bright_gold = (255, 226, 157, 255)
+    dark_gold = (111, 72, 25, 255)
+    ivory = (255, 245, 220, 255)
 
+    font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
     try:
-        brand_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 25)
-        small_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 12)
+        brand_font = ImageFont.truetype(font_path, 29)
+        sub_font = ImageFont.truetype(font_path, 12)
+        prize_font = ImageFont.truetype(font_path, 13)
     except OSError:
         brand_font = ImageFont.load_default()
-        small_font = brand_font
+        sub_font = brand_font
+        prize_font = brand_font
 
-    # Draw one detailed wheel layer. Each prize is a small vector illustration,
-    # not a text placeholder, and rotates with its sector.
+    # Rich dark radial backdrop with a soft spotlight behind the wheel.
+    background = Image.new("RGB", (size, size))
+    pixels = background.load()
+    for py in range(size):
+        for px in range(size):
+            distance = math.sqrt((px-center)**2 + (py-center)**2) / (size * 0.78)
+            glow = max(0.0, 1.0-distance)
+            pixels[px, py] = (
+                int(7 + 10*glow), int(8 + 8*glow), int(13 + 5*glow)
+            )
+
+    # The wheel is drawn larger than its visible face to create a deep metal rim.
     wheel = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     d = ImageDraw.Draw(wheel)
-    d.ellipse((center-radius-20, center-radius-20, center+radius+20, center+radius+20),
-              fill=(7, 8, 11, 255), outline=gold, width=9)
-    sector_colors = [(39, 31, 18, 255), (20, 22, 27, 255)]
-    prizes = ["phone", "headphones", "tv", "gift", "watch", "cash", "car", "trophy"]
+    d.ellipse((center-radius-18, center-radius-9, center+radius+18, center+radius+27),
+              fill=(0, 0, 0, 180))
+    d.ellipse((center-radius-15, center-radius-15, center+radius+15, center+radius+15),
+              fill=(35, 25, 15, 255), outline=dark_gold, width=8)
+    d.ellipse((center-radius-7, center-radius-7, center+radius+7, center+radius+7),
+              fill=(12, 13, 18, 255), outline=bright_gold, width=4)
 
-    for i, prize in enumerate(prizes):
+    prizes = [
+        ("phone", "SMARTPHONE"), ("headphones", "AUDIO"),
+        ("tv", "4K TV"), ("gift", "GIFT"),
+        ("watch", "WATCH"), ("cash", "CASH"),
+        ("car", "CAR"), ("trophy", "BONUS"),
+    ]
+    sector_colors = [(48, 34, 18, 255), (20, 24, 31, 255)]
+    face_box = (center-radius, center-radius, center+radius, center+radius)
+
+    for i, (kind, label) in enumerate(prizes):
         a0 = -112.5 + i * 45
-        d.pieslice((center-radius, center-radius, center+radius, center+radius),
-                   a0, a0+45, fill=sector_colors[i % 2], outline=gold, width=3)
+        d.pieslice(face_box, a0, a0+45, fill=sector_colors[i % 2],
+                   outline=(213, 165, 75, 255), width=3)
+        # Fine radial bevel line and a gold inset around each prize.
         angle = math.radians(a0 + 22.5)
-        x = center + math.cos(angle) * 132
-        y = center + math.sin(angle) * 132
-        # A subtle gold medallion behind each prize illustration.
-        d.ellipse((x-35, y-35, x+35, y+35), fill=(13, 15, 19, 255),
-                  outline=(181, 137, 53, 255), width=2)
-        ink = pale
-        accent = gold
-        if prize == "phone":
-            d.rounded_rectangle((x-15,y-25,x+15,y+25), radius=5, fill=(35,43,53,255), outline=ink, width=3)
-            d.rounded_rectangle((x-10,y-17,x+10,y+16), radius=2, fill=(91,135,166,255), outline=accent, width=1)
-            d.ellipse((x-2,y+19,x+2,y+23), fill=ink)
-        elif prize == "headphones":
-            d.arc((x-23,y-24,x+23,y+23), 180, 360, fill=ink, width=6)
-            d.rounded_rectangle((x-25,y-4,x-14,y+22), radius=4, fill=accent, outline=ink, width=2)
-            d.rounded_rectangle((x+14,y-4,x+25,y+22), radius=4, fill=accent, outline=ink, width=2)
-        elif prize == "tv":
-            d.rounded_rectangle((x-28,y-19,x+28,y+17), radius=5, fill=(34,43,52,255), outline=ink, width=3)
-            d.rectangle((x-21,y-13,x+21,y+10), fill=(83,126,155,255))
-            d.line((x-9,y+19,x-14,y+26), fill=ink, width=3)
-            d.line((x+9,y+19,x+14,y+26), fill=ink, width=3)
-        elif prize == "gift":
-            d.rectangle((x-23,y-8,x+23,y+22), fill=(151,45,42,255), outline=ink, width=2)
-            d.rectangle((x-27,y-14,x+27,y-5), fill=(190,61,51,255), outline=ink, width=2)
-            d.rectangle((x-4,y-14,x+4,y+22), fill=accent)
-            d.arc((x-18,y-29,x,y-8), 190, 350, fill=accent, width=4)
-            d.arc((x,y-29,x+18,y-8), 190, 350, fill=accent, width=4)
-        elif prize == "watch":
-            d.rounded_rectangle((x-12,y-28,x+12,y+28), radius=5, fill=(116,79,35,255), outline=accent, width=2)
-            d.rounded_rectangle((x-22,y-17,x+22,y+17), radius=8, fill=(25,29,34,255), outline=ink, width=3)
-            d.ellipse((x-11,y-11,x+11,y+11), outline=accent, width=2)
-            d.line((x,y,x+6,y-6), fill=ink, width=2)
-        elif prize == "cash":
-            d.rounded_rectangle((x-27,y-17,x+27,y+17), radius=4, fill=(42,112,72,255), outline=ink, width=2)
-            d.ellipse((x-9,y-9,x+9,y+9), outline=accent, width=2)
-            d.text((x,y), "$", font=brand_font, fill=ivory, anchor="mm")
-        elif prize == "car":
-            d.rounded_rectangle((x-27,y-8,x+27,y+14), radius=7, fill=(145,47,39,255), outline=ink, width=2)
-            d.polygon([(x-17,y-8),(x-8,y-21),(x+12,y-21),(x+22,y-8)], fill=(145,47,39,255), outline=ink)
-            d.rectangle((x-7,y-18,x+9,y-10), fill=(115,157,174,255))
-            d.ellipse((x-19,y+8,x-7,y+20), fill=dark, outline=ink, width=2)
-            d.ellipse((x+8,y+8,x+20,y+20), fill=dark, outline=ink, width=2)
-        else:
-            d.polygon([(x-22,y-18),(x-12,y+9),(x+12,y+9),(x+22,y-18),(x+7,y-12),(x,y-23),(x-7,y-12)],
-                      fill=accent, outline=ink)
-            d.rectangle((x-12,y+10,x+12,y+25), fill=(177,124,42,255), outline=ink, width=2)
+        x = center + math.cos(angle) * 151
+        y = center + math.sin(angle) * 151
+        d.ellipse((x-47, y-47, x+47, y+47),
+                  fill=(9, 11, 16, 255), outline=(113, 81, 37, 255), width=3)
+        d.ellipse((x-42, y-42, x+42, y+42),
+                  outline=(242, 204, 126, 255), width=2)
+        # Gloss highlight makes the medallion look like polished glass.
+        d.arc((x-36, y-36, x+36, y+36), 198, 326,
+              fill=(255, 245, 213, 190), width=2)
 
-    # Decorative outer studs and inner ring add depth.
-    for i in range(48):
-        angle = math.radians(i * 7.5)
-        x = center + math.cos(angle) * (radius+11)
-        y = center + math.sin(angle) * (radius+11)
-        r = 5 if i % 2 == 0 else 3
-        d.ellipse((x-r,y-r,x+r,y+r), fill=pale, outline=gold, width=1)
+        ink = (255, 239, 199, 255)
+        accent = (232, 185, 86, 255)
+        if kind == "phone":
+            d.rounded_rectangle((x-18,y-31,x+18,y+31), radius=7,
+                                fill=(26,34,46,255), outline=ink, width=3)
+            d.rounded_rectangle((x-13,y-23,x+13,y+21), radius=3,
+                                fill=(38,112,151,255), outline=accent, width=2)
+            d.polygon([(x-10,y+15),(x+11,y-16),(x+11,y+18)],
+                      fill=(102,190,214,130))
+            d.ellipse((x-3,y+24,x+3,y+29), fill=ink)
+        elif kind == "headphones":
+            d.arc((x-29,y-29,x+29,y+27), 180, 360, fill=ink, width=8)
+            d.rounded_rectangle((x-31,y-5,x-16,y+27), radius=5,
+                                fill=(185,133,52,255), outline=ink, width=2)
+            d.rounded_rectangle((x+16,y-5,x+31,y+27), radius=5,
+                                fill=(185,133,52,255), outline=ink, width=2)
+            d.line((x-22,y+20,x-22,y+7), fill=bright_gold, width=3)
+            d.line((x+22,y+20,x+22,y+7), fill=bright_gold, width=3)
+        elif kind == "tv":
+            d.rounded_rectangle((x-34,y-24,x+34,y+20), radius=5,
+                                fill=(22,29,38,255), outline=ink, width=3)
+            d.rectangle((x-27,y-17,x+27,y+13), fill=(28,93,128,255))
+            d.polygon([(x-23,y+10),(x+1,y-15),(x+23,y-15),(x+23,y+10)],
+                      fill=(84,157,183,180))
+            d.line((x-11,y+23,x-16,y+30), fill=ink, width=3)
+            d.line((x+11,y+23,x+16,y+30), fill=ink, width=3)
+        elif kind == "gift":
+            d.rectangle((x-28,y-8,x+28,y+27), fill=(145,39,48,255), outline=ink, width=2)
+            d.rectangle((x-32,y-17,x+32,y-7), fill=(190,54,57,255), outline=ink, width=2)
+            d.rectangle((x-5,y-17,x+5,y+27), fill=accent)
+            d.arc((x-23,y-35,x+1,y-12), 190, 350, fill=bright_gold, width=5)
+            d.arc((x-1,y-35,x+23,y-12), 190, 350, fill=bright_gold, width=5)
+        elif kind == "watch":
+            d.rounded_rectangle((x-13,y-34,x+13,y+34), radius=6,
+                                fill=(133,91,39,255), outline=accent, width=2)
+            d.rounded_rectangle((x-25,y-20,x+25,y+20), radius=9,
+                                fill=(18,22,29,255), outline=ink, width=3)
+            d.ellipse((x-15,y-15,x+15,y+15), fill=(28,35,44,255),
+                      outline=accent, width=2)
+            d.line((x,y,x+8,y-8), fill=ink, width=3)
+            d.line((x,y,x-7,y+4), fill=ink, width=2)
+        elif kind == "cash":
+            d.rounded_rectangle((x-34,y-22,x+34,y+22), radius=5,
+                                fill=(29,103,65,255), outline=ink, width=2)
+            d.ellipse((x-13,y-13,x+13,y+13), outline=bright_gold, width=2)
+            d.text((x,y), "$", font=brand_font, fill=ivory, anchor="mm")
+            d.line((x-25,y-14,x-25,y+14), fill=(129,196,142,255), width=2)
+        elif kind == "car":
+            d.rounded_rectangle((x-34,y-9,x+34,y+17), radius=8,
+                                fill=(151,43,37,255), outline=ink, width=2)
+            d.polygon([(x-22,y-9),(x-10,y-26),(x+14,y-26),(x+27,y-9)],
+                      fill=(171,48,40,255), outline=ink)
+            d.polygon([(x-8,y-23),(x+11,y-23),(x+20,y-10),(x-17,y-10)],
+                      fill=(101,158,181,255))
+            d.ellipse((x-24,y+9,x-9,y+24), fill=(9,11,15,255), outline=ink, width=2)
+            d.ellipse((x+10,y+9,x+25,y+24), fill=(9,11,15,255), outline=ink, width=2)
+        else:
+            d.polygon([(x-28,y-21),(x-16,y+10),(x+16,y+10),(x+28,y-21),
+                       (x+8,y-13),(x,y-29),(x-8,y-13)],
+                      fill=accent, outline=ink)
+            d.rectangle((x-15,y+10,x+15,y+29), fill=(161,111,37,255),
+                        outline=ink, width=2)
+
+        # Short labels sit on the outer part of each sector, not over the prize.
+        tx = center + math.cos(angle) * 202
+        ty = center + math.sin(angle) * 202
+        d.text((tx, ty), label, font=prize_font, fill=ivory, anchor="mm",
+               stroke_width=1, stroke_fill=(0,0,0,220))
+
+    # Precision studs and layered outer rings.
+    for i in range(64):
+        angle = math.radians(i * 5.625)
+        x = center + math.cos(angle) * (radius+7)
+        y = center + math.sin(angle) * (radius+7)
+        r = 4 if i % 2 == 0 else 2
+        d.ellipse((x-r,y-r,x+r,y+r), fill=bright_gold,
+                  outline=(116,78,29,255), width=1)
 
     frames = []
-    frame_count = 32
+    frame_count = 40
     for frame_index in range(frame_count):
-        rotated = wheel.rotate(frame_index * (360 / frame_count), resample=Image.Resampling.BICUBIC)
-        frame = Image.new("RGBA", (size, size), (8, 9, 13, 255))
-        # Keep the wheel centered, with a soft dark presentation background.
+        rotated = wheel.rotate(frame_index * (360 / frame_count),
+                               resample=Image.Resampling.BICUBIC)
+        frame = background.convert("RGBA")
         frame.alpha_composite(rotated)
         hub = ImageDraw.Draw(frame)
-        hub.ellipse((center-78,center-78,center+78,center+78),
-                    fill=(9,10,14,255), outline=gold, width=9)
-        hub.ellipse((center-66,center-66,center+66,center+66),
-                    outline=(111,82,36,255), width=2)
-        hub.text((center,center-9), "PRIZORA", font=brand_font, fill=gold, anchor="mm")
-        hub.text((center,center+23), "GIVEAWAYS", font=small_font, fill=ivory, anchor="mm")
-        # Fixed top pointer remains still while the prize wheel turns.
-        hub.polygon([(center,8),(center-19,48),(center+19,48)],
-                    fill=gold, outline=pale)
-        hub.line((center,14,center,42), fill=(255,255,245,255), width=2)
+        # Fixed central medallion: only the prize wheel rotates behind it.
+        hub.ellipse((center-91,center-91,center+91,center+91),
+                    fill=(5,7,11,255), outline=(92,63,25,255), width=12)
+        hub.ellipse((center-80,center-80,center+80,center+80),
+                    fill=(13,15,20,255), outline=bright_gold, width=4)
+        hub.arc((center-73,center-73,center+73,center+73),
+                205, 335, fill=(255,245,213,220), width=3)
+        hub.text((center,center-10), "PRIZORA", font=brand_font,
+                 fill=bright_gold, anchor="mm", stroke_width=1,
+                 stroke_fill=(92,59,20,255))
+        hub.text((center,center+27), "GIVEAWAYS", font=sub_font,
+                 fill=ivory, anchor="mm")
+        # Fixed pointer with a dark drop shadow and a bright gold face.
+        hub.polygon([(center,13),(center-25,62),(center+25,62)],
+                    fill=(0,0,0,180))
+        hub.polygon([(center,7),(center-21,54),(center+21,54)],
+                    fill=gold, outline=ivory)
+        hub.line((center,13,center,44), fill=(255,252,232,255), width=3)
         frames.append(frame.convert("RGB").quantize(colors=255))
 
     output = BytesIO()
-    # Reuse the first frame palette so every frame has consistent colors;
-    # the explicit multi-frame save prevents Telegram receiving a still image.
     palette_frame = frames[0]
     palette_frames = [palette_frame]
     for frame in frames[1:]:
         palette_frames.append(frame.quantize(palette=palette_frame))
     palette_frames[0].save(
         output, format="GIF", save_all=True, append_images=palette_frames[1:],
-        duration=90, loop=0, optimize=False, disposal=2,
+        duration=85, loop=0, optimize=False, disposal=2,
     )
     output.seek(0)
     output.name = "prizora-premium-wheel.gif"
     return output
+
 
 async def send_prizora_presentation(message, context, language: str):
     animation = build_prizora_wheel_animation()
