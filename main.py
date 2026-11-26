@@ -50,13 +50,7 @@ I18N = {
         "language_prompt": "🌐 Выбери язык PRIZORA. Его можно изменить в любой момент в главном меню.",
         "language_detected": "Язык Telegram: {language}. Можешь выбрать другой.",
         "language_saved": "✅ Язык интерфейса: Русский.",
-        "welcome": (
-            "PRIZORA — ПЛАТФОРМА РОЗЫГРЫШЕЙ\n\n"
-            "🎁 УЧАСТВУЙ И ВЫИГРЫВАЙ — выбирай розыгрыши и борись за призы.\n"
-            "👑 СОЗДАВАЙ СВОИ — запускай конкурсы и разыгрывай призы для своей аудитории.\n\n"
-            "Честные правила. Автоматический выбор победителей.\n"
-            "Нажми кнопку ниже, чтобы открыть PRIZORA Mini."
-        ),
+        "welcome": "",
         "menu_create": "👑 Создать конкурс",
         "menu_formats": "✨ Форматы конкурсов",
         "menu_plans": "💰 Мои тарифы",
@@ -1382,7 +1376,7 @@ def presentation_menu(language: str):
 
 
 
-def build_prizora_wheel_animation() -> BytesIO:
+def build_prizora_wheel_animation(language: str = "ru") -> BytesIO:
     """Render a polished gold-and-obsidian 3D-style prize wheel GIF for Telegram."""
     size = 560
     center = size // 2
@@ -1554,6 +1548,87 @@ def build_prizora_wheel_animation() -> BytesIO:
         hub.line((center,13,center,44), fill=(255,252,232,255), width=3)
         frames.append(frame.convert("RGB").quantize(colors=255))
 
+    # Place the two audience messages into the same wide animated banner.
+    # The wheel remains the visual center; no separate plain-text caption is sent.
+    audience_copy = {
+        "ru": (
+            ("ХОЧЕШЬ ВЫИГРАТЬ?", "Участвуй в розыгрышах PRIZORA"),
+            ("ХОЧЕШЬ РАЗЫГРАТЬ?", "Создавай конкурсы и дари призы"),
+        ),
+        "en": (
+            ("WANT TO WIN?", "Join PRIZORA giveaways"),
+            ("WANT TO HOST?", "Create contests and award prizes"),
+        ),
+        "de": (
+            ("PREISE GEWINNEN?", "Nimm an PRIZORA-Gewinnspielen teil"),
+            ("GEWINNSPIEL STARTEN?", "Erstelle Gewinnspiele und vergib Preise"),
+        ),
+    }
+    left_copy, right_copy = audience_copy.get(language, audience_copy["en"])
+    banner_frames = []
+    banner_size = (1040, 560)
+    try:
+        panel_title_font = ImageFont.truetype(font_path, 18)
+        panel_sub_font = ImageFont.truetype(font_path, 12)
+    except OSError:
+        panel_title_font = brand_font
+        panel_sub_font = sub_font
+
+    for wheel_frame in frames:
+        banner = Image.new("RGB", banner_size, (7, 8, 13))
+        bd = ImageDraw.Draw(banner)
+        # Subtle gold light rails frame the composition without competing with the wheel.
+        for x in range(8, 1040, 24):
+            bd.line((x, 0, x, 560), fill=(12, 12, 17), width=1)
+        bd.line((12, 22, 1028, 22), fill=(108, 76, 31), width=2)
+        bd.line((12, 538, 1028, 538), fill=(108, 76, 31), width=2)
+        banner.paste(wheel_frame.convert("RGB"), (240, 0))
+
+        def draw_audience_panel(x, copy):
+            title, subtitle = copy
+            panel_box = (x, 174, x + 212, 386)
+            bd.rounded_rectangle(panel_box, radius=18, fill=(13, 14, 19),
+                                 outline=(224, 177, 82), width=3)
+            bd.rounded_rectangle((x + 7, 181, x + 205, 379), radius=13,
+                                 outline=(91, 67, 35), width=1)
+            bd.ellipse((x + 83, 196, x + 129, 242),
+                       fill=(28, 22, 13), outline=(238, 195, 106), width=2)
+            if x < 300:
+                # Prize/star emblem for participants.
+                bd.polygon([(x+106,202),(x+112,215),(x+126,217),(x+116,226),
+                            (x+119,239),(x+106,232),(x+94,239),(x+97,226),
+                            (x+87,217),(x+101,215)],
+                           fill=(245, 204, 119))
+            else:
+                # Crown emblem for organizers.
+                bd.polygon([(x+91,229),(x+87,211),(x+101,220),(x+106,205),
+                            (x+112,220),(x+126,211),(x+121,229)],
+                           fill=(245, 204, 119))
+                bd.rectangle((x+92,231,x+120,236), fill=(245,204,119))
+            bd.text((x + 106, 270), title, font=panel_title_font,
+                    fill=(255, 222, 155), anchor="mm", align="center")
+            words = subtitle.split()
+            lines, current = [], ""
+            for word in words:
+                candidate = (current + " " + word).strip()
+                if bd.textbbox((0, 0), candidate, font=panel_sub_font)[2] > 184 and current:
+                    lines.append(current)
+                    current = word
+                else:
+                    current = candidate
+            if current:
+                lines.append(current)
+            for index, line in enumerate(lines[:3]):
+                bd.text((x + 106, 316 + index * 19), line,
+                        font=panel_sub_font, fill=(245, 240, 226),
+                        anchor="mm", align="center")
+
+        draw_audience_panel(14, left_copy)
+        draw_audience_panel(814, right_copy)
+        banner_frames.append(banner.quantize(colors=255))
+
+    frames = banner_frames
+
     output = BytesIO()
     palette_frame = frames[0]
     palette_frames = [palette_frame]
@@ -1569,10 +1644,9 @@ def build_prizora_wheel_animation() -> BytesIO:
 
 
 async def send_prizora_presentation(message, context, language: str):
-    animation = build_prizora_wheel_animation()
+    animation = build_prizora_wheel_animation(language)
     await message.reply_animation(
         animation=animation,
-        caption=tr(context, "welcome"),
         reply_markup=presentation_menu(language),
     )
 
