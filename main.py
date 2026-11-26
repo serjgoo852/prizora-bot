@@ -1412,11 +1412,8 @@ def build_prizora_wheel_animation() -> BytesIO:
         d.text((tx-(bbox[2]-bbox[0])/2, ty-(bbox[3]-bbox[1])/2),
                label, font=font, fill=(255, 224, 153, 255), stroke_width=1,
                stroke_fill=(70, 42, 8, 255))
-    d.ellipse((center-76, center-76, center+76, center+76),
-              fill=(8, 9, 12, 255), outline=gold, width=8)
-    d.text((center, center-12), "PRIZORA", font=brand_font, fill=gold, anchor="mm")
-    d.text((center, center+19), "PREMIUM", font=small_font,
-           fill=(245, 225, 184, 255), anchor="mm")
+    # Keep the brand hub separate from the rotating wheel layer.
+    # It is composited onto every frame after the sectors have rotated.
     for i in range(24):
         angle = math.radians(i * 15)
         x = center + math.cos(angle) * (radius+1)
@@ -1430,6 +1427,16 @@ def build_prizora_wheel_animation() -> BytesIO:
         rotated = wheel.rotate(frame_index * 15, resample=Image.Resampling.BICUBIC)
         frame = Image.new("RGBA", (size, size), (8, 9, 12, 0))
         frame.alpha_composite(rotated)
+
+        # The central PRIZORA/PREMIUM badge stays upright and stationary.
+        hub = ImageDraw.Draw(frame)
+        hub.ellipse((center-76, center-76, center+76, center+76),
+                    fill=(8, 9, 12, 255), outline=gold, width=8)
+        hub.text((center, center-12), "PRIZORA", font=brand_font,
+                 fill=gold, anchor="mm")
+        hub.text((center, center+19), "PREMIUM", font=small_font,
+                 fill=(245, 225, 184, 255), anchor="mm")
+
         pointer = ImageDraw.Draw(frame)
         pointer.polygon([(center, 10), (center-18, 48), (center+18, 48)],
                         fill=(255, 205, 91, 255), outline=(255, 239, 191, 255))
