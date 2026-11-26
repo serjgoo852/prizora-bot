@@ -1513,27 +1513,47 @@ def build_prizora_wheel_animation(language: str = "ru") -> BytesIO:
     for frame_index in range(frame_count):
         rotated = wheel.rotate(frame_index * (360 / frame_count),
                                resample=Image.Resampling.BICUBIC)
+        # Build a visible cylindrical drum: deep lower shell, elliptical front,
+        # layered metallic rims and a fixed central PRIZORA medallion.
         frame = background.convert("RGBA")
-        frame.alpha_composite(rotated)
+        shell = ImageDraw.Draw(frame)
+        shell.ellipse((35, 112, 525, 548), fill=(2, 3, 6, 255),
+                     outline=(91, 61, 25, 255), width=8)
+        shell.arc((43, 126, 517, 540), 8, 172,
+                  fill=(235, 184, 82, 255), width=5)
+        shell.arc((49, 135, 511, 536), 8, 172,
+                  fill=(48, 37, 23, 255), width=12)
+        # Subtle vertical ribs on the exposed lower barrel surface.
+        for rib_x in range(92, 490, 34):
+            shell.line((rib_x, 466, rib_x, 507),
+                       fill=(83, 61, 34, 210), width=3)
+            shell.line((rib_x + 2, 468, rib_x + 2, 503),
+                       fill=(178, 129, 55, 150), width=1)
+
+        # Compress the circular face vertically to create a strong perspective.
+        face = rotated.resize((560, 430), Image.Resampling.LANCZOS)
+        face_y = 48
+        face.alpha_composite(Image.new("RGBA", face.size, (0, 0, 0, 0)))
+        frame.alpha_composite(face, (0, face_y))
         hub = ImageDraw.Draw(frame)
-        # Fixed central medallion: only the prize wheel rotates behind it.
-        hub.ellipse((center-91,center-91,center+91,center+91),
-                    fill=(5,7,11,255), outline=(92,63,25,255), width=12)
-        hub.ellipse((center-80,center-80,center+80,center+80),
+        hub_y = face_y + 215
+        hub.ellipse((center-94,hub_y-73,center+94,hub_y+73),
+                    fill=(0,0,0,220), outline=(92,63,25,255), width=12)
+        hub.ellipse((center-82,hub_y-63,center+82,hub_y+63),
                     fill=(13,15,20,255), outline=bright_gold, width=4)
-        hub.arc((center-73,center-73,center+73,center+73),
+        hub.arc((center-74,hub_y-56,center+74,hub_y+56),
                 205, 335, fill=(255,245,213,220), width=3)
-        hub.text((center,center-10), "PRIZORA", font=brand_font,
+        hub.text((center,hub_y-9), "PRIZORA", font=brand_font,
                  fill=bright_gold, anchor="mm", stroke_width=1,
                  stroke_fill=(92,59,20,255))
-        hub.text((center,center+27), "GIVEAWAYS", font=sub_font,
+        hub.text((center,hub_y+25), "GIVEAWAYS", font=sub_font,
                  fill=ivory, anchor="mm")
-        # Fixed pointer with a dark drop shadow and a bright gold face.
-        hub.polygon([(center,13),(center-25,62),(center+25,62)],
+        # Fixed pointer above the face, independent of the rotating prizes.
+        hub.polygon([(center,9),(center-25,61),(center+25,61)],
                     fill=(0,0,0,180))
-        hub.polygon([(center,7),(center-21,54),(center+21,54)],
+        hub.polygon([(center,3),(center-21,54),(center+21,54)],
                     fill=gold, outline=ivory)
-        hub.line((center,13,center,44), fill=(255,252,232,255), width=3)
+        hub.line((center,10,center,44), fill=(255,252,232,255), width=3)
         frames.append(frame.convert("RGB").quantize(colors=255))
 
     # Place the two audience messages into the same wide animated banner.
