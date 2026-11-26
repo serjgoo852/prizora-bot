@@ -2984,8 +2984,10 @@ document.addEventListener('DOMContentLoaded',()=>{
       );
     }else{
       let angle=0,last=0;
-      function spin(t){if(!last)last=t;angle=(angle+(t-last)*.02)%360;last=t;rays.style.transform='translate(-50%,-50%) rotate('+angle+'deg)';requestAnimationFrame(spin)}
-      requestAnimationFrame(spin);
+      if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+        function spin(t){if(document.hidden){requestAnimationFrame(spin);return;}if(!last)last=t;angle=(angle+(t-last)*.02)%360;last=t;rays.style.transform='translate(-50%,-50%) rotate('+angle+'deg)';requestAnimationFrame(spin)}
+        requestAnimationFrame(spin);
+      }
     }
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',startPrizoraRays,{once:true});
@@ -3034,7 +3036,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   });}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',scan);
   else scan();
-  new MutationObserver(scan).observe(document.documentElement,{childList:true,subtree:true});
+  // Static landing content: no subtree-wide MutationObserver needed.
 })();
 </script>
 
@@ -3101,7 +3103,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  if(window.visualViewport){visualViewport.addEventListener('scroll',schedule);visualViewport.addEventListener('resize',schedule);}
  if('IntersectionObserver'in window){const io=new IntersectionObserver(schedule,{threshold:[0,.1,.25,.5,.75]});collect();targets.forEach(el=>io.observe(el));}
  collect();schedule();
- if(window.matchMedia('(min-width:701px)').matches)setInterval(schedule,300);
+ // Event-driven updates replace the former 300ms polling timer.
 })();
 </script>
 
