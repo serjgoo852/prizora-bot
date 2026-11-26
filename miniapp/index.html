@@ -2958,6 +2958,7 @@ html body .pro-showcase>.approved-hero .approved-hero-hit::after{
  const menuPanel=document.getElementById('menu');
  const menuNavs=[...document.querySelectorAll('.bottom nav a[href="#menu"],.bottom nav a[href="#profile"]')];
  const homeNav=document.querySelector('.bottom nav a[href="#"]');
+ const contestsNav=document.querySelector('.bottom nav a[href="#contests"]');
  const cabinetPanels=[...document.querySelectorAll('.cabinet-panel')];
  if(menuPanel&&menuNavs.length){
    const openMenu=e=>{
@@ -2966,10 +2967,12 @@ html body .pro-showcase>.approved-hero .approved-hero-hit::after{
      cabinetPanels.forEach(panel=>panel.hidden=true);
      menuNavs.forEach(a=>a.classList.toggle('active',a===e.currentTarget));
      if(homeNav)homeNav.classList.remove('active');
+     if(contestsNav)contestsNav.classList.remove('active');
      menuPanel.scrollIntoView({behavior:'smooth',block:'start'});
    };
    menuNavs.forEach(a=>a.addEventListener('click',openMenu));
-   if(homeNav)homeNav.addEventListener('click',e=>{e.preventDefault();menuPanel.hidden=true;window.scrollTo({top:0,behavior:'smooth'});homeNav.classList.add('active');menuNavs.forEach(a=>a.classList.remove('active'))});
+   if(homeNav)homeNav.addEventListener('click',e=>{e.preventDefault();menuPanel.hidden=true;cabinetPanels.forEach(panel=>panel.hidden=true);window.scrollTo({top:0,behavior:'smooth'});homeNav.classList.add('active');menuNavs.forEach(a=>a.classList.remove('active'));if(contestsNav)contestsNav.classList.remove('active')});
+   if(contestsNav)contestsNav.addEventListener('click',e=>{e.preventDefault();menuPanel.hidden=true;cabinetPanels.forEach(panel=>panel.hidden=true);document.getElementById('contests')?.scrollIntoView({behavior:'smooth',block:'start'});contestsNav.classList.add('active');menuNavs.forEach(a=>a.classList.remove('active'));if(homeNav)homeNav.classList.remove('active')});
    document.querySelectorAll('.user-menu-grid a[href^="#user-"]').forEach(link=>{
      link.addEventListener('click',e=>{
        e.preventDefault();
