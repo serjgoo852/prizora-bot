@@ -2750,7 +2750,7 @@ html body .pro-showcase>.approved-hero .approved-hero-hit::after{
   <div class="ad-promo-copy"><span class="ad-promo-kicker">PRIZORA · РЕКЛАМНЫЕ ВОЗМОЖНОСТИ</span>
     <h2>Рекламируйте свой канал <em>на PRIZORA</em></h2>
     <p>Расскажите о своей группе или канале нашей аудитории. Сделайте свой проект заметнее!</p>
-    <a class="ad-promo-button" href="#menu" onclick="const m=document.getElementById('menu');if(m){m.hidden=false;setTimeout(()=>m.scrollIntoView({behavior:'smooth',block:'center'}),60)}">Разместить рекламу <b>→</b></a>
+    <a class="ad-promo-button" href="#user-ads" onclick="event.preventDefault();const m=document.getElementById('menu');const p=document.getElementById('user-ads');if(m&&p){m.hidden=false;document.querySelectorAll('.cabinet-panel').forEach(x=>x.hidden=true);p.hidden=false;setTimeout(()=>{m.scrollIntoView({behavior:'smooth',block:'start'});p.scrollIntoView({behavior:'smooth',block:'center'})},80)}">Разместить рекламу <b>→</b></a>
   </div>
   <div class="ad-promo-stamp">ВАШ<br>КАНАЛ<br><strong>ЗДЕСЬ</strong></div>
 </section>
