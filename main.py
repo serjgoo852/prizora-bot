@@ -51,10 +51,11 @@ I18N = {
         "language_detected": "Язык Telegram: {language}. Можешь выбрать другой.",
         "language_saved": "✅ Язык интерфейса: Русский.",
         "welcome": (
-            "PRIZORA — ПРЕМИАЛЬНАЯ ПЛАТФОРМА РОЗЫГРЫШЕЙ\n"
-            "Испытай удачу. Следи за розыгрышами. Выигрывай призы.\n\n"
-            "Прозрачные правила и автоматический выбор победителей.\n"
-            "Открой PRIZORA Mini по кнопке ниже."
+            "PRIZORA — ПЛАТФОРМА РОЗЫГРЫШЕЙ\n\n"
+            "🎁 УЧАСТВУЙ И ВЫИГРЫВАЙ — выбирай розыгрыши и борись за призы.\n"
+            "👑 СОЗДАВАЙ СВОИ — запускай конкурсы и разыгрывай призы для своей аудитории.\n\n"
+            "Честные правила. Автоматический выбор победителей.\n"
+            "Нажми кнопку ниже, чтобы открыть PRIZORA Mini."
         ),
         "menu_create": "👑 Создать конкурс",
         "menu_formats": "✨ Форматы конкурсов",
@@ -234,9 +235,10 @@ I18N = {
         "language_detected": "Telegram language detected: {language}. You can choose another language.",
         "language_saved": "✅ Interface language set to English.",
         "welcome": (
-            "PRIZORA — PREMIUM GIVEAWAY PLATFORM\n"
-            "Try your luck. Follow giveaways. Win prizes.\n\n"
-            "Clear rules and automatic winner selection.\n"
+            "PRIZORA — GIVEAWAY PLATFORM\n\n"
+            "🎁 JOIN & WIN — discover giveaways and compete for prizes.\n"
+            "👑 CREATE YOUR OWN — launch contests and offer prizes to your audience.\n\n"
+            "Clear rules. Automatic winner selection.\n"
             "Open PRIZORA Mini using the button below."
         ),
         "menu_create": "👑 Create a contest",
@@ -417,9 +419,10 @@ I18N = {
         "language_detected": "Erkannte Telegram-Sprache: {language}. Du kannst eine andere Sprache wählen.",
         "language_saved": "✅ Die Oberflächensprache ist jetzt Deutsch.",
         "welcome": (
-            "PRIZORA — PREMIUM-GEWINNSPIELPLATTFORM\n"
-            "Versuche dein Glück. Entdecke Gewinnspiele. Gewinne Preise.\n\n"
-            "Klare Regeln und automatische Gewinnerauswahl.\n"
+            "PRIZORA — GEWINNSPIELPLATTFORM\n\n"
+            "🎁 TEILNEHMEN & GEWINNEN — entdecke Gewinnspiele und gewinne Preise.\n"
+            "👑 EIGENE GEWINNSPIELE — starte Wettbewerbe und biete deiner Community Preise.\n\n"
+            "Klare Regeln. Automatische Gewinnerauswahl.\n"
             "Öffne PRIZORA Mini über die Schaltfläche unten."
         ),
         "menu_create": "🏆 Wettbewerb erstellen",
@@ -1380,75 +1383,124 @@ def presentation_menu(language: str):
 
 
 def build_prizora_wheel_animation() -> BytesIO:
-    """Create a compact premium wheel GIF for the Telegram presentation."""
+    """Render a continuously rotating premium prize wheel GIF for Telegram."""
     size = 480
     center = size // 2
-    radius = 198
-    labels = ["PHONE", "AUDIO", "TV", "GIFT", "WATCH", "CASH", "AUTO", "BONUS"]
-    gold = (226, 174, 65)
-    dark = (16, 17, 20)
-    try:
-        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 15)
-        brand_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 22)
-        small_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 11)
-    except OSError:
-        font = ImageFont.load_default()
-        brand_font = font
-        small_font = font
+    radius = 190
+    gold = (231, 184, 83, 255)
+    pale = (255, 235, 190, 255)
+    dark = (12, 13, 17, 255)
+    ivory = (246, 239, 220, 255)
 
+    try:
+        brand_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 25)
+        small_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 12)
+    except OSError:
+        brand_font = ImageFont.load_default()
+        small_font = brand_font
+
+    # Draw one detailed wheel layer. Each prize is a small vector illustration,
+    # not a text placeholder, and rotates with its sector.
     wheel = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     d = ImageDraw.Draw(wheel)
-    d.ellipse((center-radius-13, center-radius-13, center+radius+13, center+radius+13),
-              fill=(7, 8, 10, 255), outline=gold, width=8)
-    colors = [(35, 29, 18, 255), (19, 20, 23, 255)]
-    for i, label in enumerate(labels):
-        start = -90 + i * 45
+    d.ellipse((center-radius-20, center-radius-20, center+radius+20, center+radius+20),
+              fill=(7, 8, 11, 255), outline=gold, width=9)
+    sector_colors = [(39, 31, 18, 255), (20, 22, 27, 255)]
+    prizes = ["phone", "headphones", "tv", "gift", "watch", "cash", "car", "trophy"]
+
+    for i, prize in enumerate(prizes):
+        a0 = -112.5 + i * 45
         d.pieslice((center-radius, center-radius, center+radius, center+radius),
-                   start, start+45, fill=colors[i % 2], outline=gold, width=3)
-        angle = math.radians(start + 22.5)
-        tx = center + math.cos(angle) * 137
-        ty = center + math.sin(angle) * 137
-        bbox = d.textbbox((0, 0), label, font=font)
-        d.text((tx-(bbox[2]-bbox[0])/2, ty-(bbox[3]-bbox[1])/2),
-               label, font=font, fill=(255, 224, 153, 255), stroke_width=1,
-               stroke_fill=(70, 42, 8, 255))
-    # Keep the brand hub separate from the rotating wheel layer.
-    # It is composited onto every frame after the sectors have rotated.
-    for i in range(24):
-        angle = math.radians(i * 15)
-        x = center + math.cos(angle) * (radius+1)
-        y = center + math.sin(angle) * (radius+1)
-        r = 5 if i % 2 == 0 else 4
-        d.ellipse((x-r, y-r, x+r, y+r), fill=(255, 231, 167, 255),
-                  outline=(255, 255, 225, 255), width=1)
+                   a0, a0+45, fill=sector_colors[i % 2], outline=gold, width=3)
+        angle = math.radians(a0 + 22.5)
+        x = center + math.cos(angle) * 132
+        y = center + math.sin(angle) * 132
+        # A subtle gold medallion behind each prize illustration.
+        d.ellipse((x-35, y-35, x+35, y+35), fill=(13, 15, 19, 255),
+                  outline=(181, 137, 53, 255), width=2)
+        ink = pale
+        accent = gold
+        if prize == "phone":
+            d.rounded_rectangle((x-15,y-25,x+15,y+25), radius=5, fill=(35,43,53,255), outline=ink, width=3)
+            d.rounded_rectangle((x-10,y-17,x+10,y+16), radius=2, fill=(91,135,166,255), outline=accent, width=1)
+            d.ellipse((x-2,y+19,x+2,y+23), fill=ink)
+        elif prize == "headphones":
+            d.arc((x-23,y-24,x+23,y+23), 180, 360, fill=ink, width=6)
+            d.rounded_rectangle((x-25,y-4,x-14,y+22), radius=4, fill=accent, outline=ink, width=2)
+            d.rounded_rectangle((x+14,y-4,x+25,y+22), radius=4, fill=accent, outline=ink, width=2)
+        elif prize == "tv":
+            d.rounded_rectangle((x-28,y-19,x+28,y+17), radius=5, fill=(34,43,52,255), outline=ink, width=3)
+            d.rectangle((x-21,y-13,x+21,y+10), fill=(83,126,155,255))
+            d.line((x-9,y+19,x-14,y+26), fill=ink, width=3)
+            d.line((x+9,y+19,x+14,y+26), fill=ink, width=3)
+        elif prize == "gift":
+            d.rectangle((x-23,y-8,x+23,y+22), fill=(151,45,42,255), outline=ink, width=2)
+            d.rectangle((x-27,y-14,x+27,y-5), fill=(190,61,51,255), outline=ink, width=2)
+            d.rectangle((x-4,y-14,x+4,y+22), fill=accent)
+            d.arc((x-18,y-29,x,y-8), 190, 350, fill=accent, width=4)
+            d.arc((x,y-29,x+18,y-8), 190, 350, fill=accent, width=4)
+        elif prize == "watch":
+            d.rounded_rectangle((x-12,y-28,x+12,y+28), radius=5, fill=(116,79,35,255), outline=accent, width=2)
+            d.rounded_rectangle((x-22,y-17,x+22,y+17), radius=8, fill=(25,29,34,255), outline=ink, width=3)
+            d.ellipse((x-11,y-11,x+11,y+11), outline=accent, width=2)
+            d.line((x,y,x+6,y-6), fill=ink, width=2)
+        elif prize == "cash":
+            d.rounded_rectangle((x-27,y-17,x+27,y+17), radius=4, fill=(42,112,72,255), outline=ink, width=2)
+            d.ellipse((x-9,y-9,x+9,y+9), outline=accent, width=2)
+            d.text((x,y), "$", font=brand_font, fill=ivory, anchor="mm")
+        elif prize == "car":
+            d.rounded_rectangle((x-27,y-8,x+27,y+14), radius=7, fill=(145,47,39,255), outline=ink, width=2)
+            d.polygon([(x-17,y-8),(x-8,y-21),(x+12,y-21),(x+22,y-8)], fill=(145,47,39,255), outline=ink)
+            d.rectangle((x-7,y-18,x+9,y-10), fill=(115,157,174,255))
+            d.ellipse((x-19,y+8,x-7,y+20), fill=dark, outline=ink, width=2)
+            d.ellipse((x+8,y+8,x+20,y+20), fill=dark, outline=ink, width=2)
+        else:
+            d.polygon([(x-22,y-18),(x-12,y+9),(x+12,y+9),(x+22,y-18),(x+7,y-12),(x,y-23),(x-7,y-12)],
+                      fill=accent, outline=ink)
+            d.rectangle((x-12,y+10,x+12,y+25), fill=(177,124,42,255), outline=ink, width=2)
+
+    # Decorative outer studs and inner ring add depth.
+    for i in range(48):
+        angle = math.radians(i * 7.5)
+        x = center + math.cos(angle) * (radius+11)
+        y = center + math.sin(angle) * (radius+11)
+        r = 5 if i % 2 == 0 else 3
+        d.ellipse((x-r,y-r,x+r,y+r), fill=pale, outline=gold, width=1)
 
     frames = []
-    for frame_index in range(24):
-        rotated = wheel.rotate(frame_index * 15, resample=Image.Resampling.BICUBIC)
-        frame = Image.new("RGBA", (size, size), (8, 9, 12, 0))
+    frame_count = 32
+    for frame_index in range(frame_count):
+        rotated = wheel.rotate(frame_index * (360 / frame_count), resample=Image.Resampling.BICUBIC)
+        frame = Image.new("RGBA", (size, size), (8, 9, 13, 255))
+        # Keep the wheel centered, with a soft dark presentation background.
         frame.alpha_composite(rotated)
-
-        # The central PRIZORA/PREMIUM badge stays upright and stationary.
         hub = ImageDraw.Draw(frame)
-        hub.ellipse((center-76, center-76, center+76, center+76),
-                    fill=(8, 9, 12, 255), outline=gold, width=8)
-        hub.text((center, center-12), "PRIZORA", font=brand_font,
-                 fill=gold, anchor="mm")
-        hub.text((center, center+19), "PREMIUM", font=small_font,
-                 fill=(245, 225, 184, 255), anchor="mm")
+        hub.ellipse((center-78,center-78,center+78,center+78),
+                    fill=(9,10,14,255), outline=gold, width=9)
+        hub.ellipse((center-66,center-66,center+66,center+66),
+                    outline=(111,82,36,255), width=2)
+        hub.text((center,center-9), "PRIZORA", font=brand_font, fill=gold, anchor="mm")
+        hub.text((center,center+23), "GIVEAWAYS", font=small_font, fill=ivory, anchor="mm")
+        # Fixed top pointer remains still while the prize wheel turns.
+        hub.polygon([(center,8),(center-19,48),(center+19,48)],
+                    fill=gold, outline=pale)
+        hub.line((center,14,center,42), fill=(255,255,245,255), width=2)
+        frames.append(frame.convert("RGB").quantize(colors=255))
 
-        pointer = ImageDraw.Draw(frame)
-        pointer.polygon([(center, 10), (center-18, 48), (center+18, 48)],
-                        fill=(255, 205, 91, 255), outline=(255, 239, 191, 255))
-        pointer.line([(center, 16), (center, 43)], fill=(255, 255, 238, 255), width=2)
-        frames.append(frame.convert("P", palette=Image.Palette.ADAPTIVE))
     output = BytesIO()
-    frames[0].save(output, format="GIF", save_all=True, append_images=frames[1:],
-                   duration=250, loop=0, optimize=True, disposal=2)
+    # Reuse the first frame palette so every frame has consistent colors;
+    # the explicit multi-frame save prevents Telegram receiving a still image.
+    palette_frame = frames[0]
+    palette_frames = [palette_frame]
+    for frame in frames[1:]:
+        palette_frames.append(frame.quantize(palette=palette_frame))
+    palette_frames[0].save(
+        output, format="GIF", save_all=True, append_images=palette_frames[1:],
+        duration=90, loop=0, optimize=False, disposal=2,
+    )
     output.seek(0)
     output.name = "prizora-premium-wheel.gif"
     return output
-
 
 async def send_prizora_presentation(message, context, language: str):
     animation = build_prizora_wheel_animation()
