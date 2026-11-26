@@ -6,6 +6,7 @@ import uuid
 import asyncio
 import json
 import random
+import math
 from io import BytesIO
 from datetime import datetime, timedelta, timezone
 
@@ -19,6 +20,7 @@ from telegram.ext import (
     filters,
 )
 from telegram.error import TelegramError
+from PIL import Image, ImageDraw, ImageFont
 
 import ads
 import admin
@@ -49,13 +51,10 @@ I18N = {
         "language_detected": "Язык Telegram: {language}. Можешь выбрать другой.",
         "language_saved": "✅ Язык интерфейса: Русский.",
         "welcome": (
-            "👑 PRIZORA\n"
-            "━━━━━━━━━━━━━━━━━━\n"
-            "ПЛАТФОРМА КОНКУРСОВ И РОЗЫГРЫШЕЙ\n"
-            "━━━━━━━━━━━━━━━━━━\n\n"
-            "PRIZORA готовится к запуску. Сейчас мы завершаем разработку платформы.\n"
-            "Здесь появятся розыгрыши, призы и инструменты для организаторов.\n\n"
-            "Нажми кнопку ниже, чтобы открыть сайт и следить за новостями запуска."
+            "PRIZORA — ПРЕМИАЛЬНАЯ ПЛАТФОРМА РОЗЫГРЫШЕЙ\n"
+            "Испытай удачу. Следи за розыгрышами. Выигрывай призы.\n\n"
+            "Прозрачные правила и автоматический выбор победителей.\n"
+            "Открой PRIZORA Mini по кнопке ниже."
         ),
         "menu_create": "👑 Создать конкурс",
         "menu_formats": "✨ Форматы конкурсов",
@@ -235,13 +234,10 @@ I18N = {
         "language_detected": "Telegram language detected: {language}. You can choose another language.",
         "language_saved": "✅ Interface language set to English.",
         "welcome": (
-            "👑 PRIZORA\n"
-            "━━━━━━━━━━━━━━━━━━\n"
-            "GIVEAWAY AND CONTEST PLATFORM\n"
-            "━━━━━━━━━━━━━━━━━━\n\n"
-            "PRIZORA is preparing for launch. The platform is currently in development.\n"
-            "Giveaways, prizes and tools for organizers will be available here.\n\n"
-            "Use the button below to visit the website and follow launch updates."
+            "PRIZORA — PREMIUM GIVEAWAY PLATFORM\n"
+            "Try your luck. Follow giveaways. Win prizes.\n\n"
+            "Clear rules and automatic winner selection.\n"
+            "Open PRIZORA Mini using the button below."
         ),
         "menu_create": "👑 Create a contest",
         "menu_formats": "✨ Contest formats",
@@ -421,13 +417,10 @@ I18N = {
         "language_detected": "Erkannte Telegram-Sprache: {language}. Du kannst eine andere Sprache wählen.",
         "language_saved": "✅ Die Oberflächensprache ist jetzt Deutsch.",
         "welcome": (
-            "👑 PRIZORA\n"
-            "━━━━━━━━━━━━━━━━━━\n"
-            "PLATTFORM FÜR GEWINNSPIELE UND WETTBEWERBE\n"
-            "━━━━━━━━━━━━━━━━━━\n\n"
-            "PRIZORA bereitet den Start vor. Die Plattform befindet sich noch in Entwicklung.\n"
-            "Hier werden bald Gewinnspiele, Preise und Werkzeuge für Veranstalter verfügbar sein.\n\n"
-            "Öffne über die Schaltfläche unten die Website und verfolge die Startmeldungen."
+            "PRIZORA — PREMIUM-GEWINNSPIELPLATTFORM\n"
+            "Versuche dein Glück. Entdecke Gewinnspiele. Gewinne Preise.\n\n"
+            "Klare Regeln und automatische Gewinnerauswahl.\n"
+            "Öffne PRIZORA Mini über die Schaltfläche unten."
         ),
         "menu_create": "🏆 Wettbewerb erstellen",
         "menu_formats": "🎮 Wettbewerbsformate",
@@ -1385,6 +1378,87 @@ def presentation_menu(language: str):
     return InlineKeyboardMarkup(keyboard)
 
 
+
+def build_prizora_wheel_animation() -> BytesIO:
+    """Create a compact premium wheel GIF for the Telegram presentation."""
+    size = 480
+    center = size // 2
+    radius = 198
+    labels = ["PHONE", "AUDIO", "TV", "GIFT", "WATCH", "CASH", "AUTO", "BONUS"]
+    gold = (226, 174, 65)
+    dark = (16, 17, 20)
+    try:
+        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 15)
+        brand_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 22)
+        small_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 11)
+    except OSError:
+        font = ImageFont.load_default()
+        brand_font = font
+        small_font = font
+
+    wheel = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    d = ImageDraw.Draw(wheel)
+    d.ellipse((center-radius-13, center-radius-13, center+radius+13, center+radius+13),
+              fill=(7, 8, 10, 255), outline=gold, width=8)
+    colors = [(35, 29, 18, 255), (19, 20, 23, 255)]
+    for i, label in enumerate(labels):
+        start = -90 + i * 45
+        d.pieslice((center-radius, center-radius, center+radius, center+radius),
+                   start, start+45, fill=colors[i % 2], outline=gold, width=3)
+        angle = math.radians(start + 22.5)
+        tx = center + math.cos(angle) * 137
+        ty = center + math.sin(angle) * 137
+        bbox = d.textbbox((0, 0), label, font=font)
+        d.text((tx-(bbox[2]-bbox[0])/2, ty-(bbox[3]-bbox[1])/2),
+               label, font=font, fill=(255, 224, 153, 255), stroke_width=1,
+               stroke_fill=(70, 42, 8, 255))
+    # Keep the brand hub separate from the rotating wheel layer.
+    # It is composited onto every frame after the sectors have rotated.
+    for i in range(24):
+        angle = math.radians(i * 15)
+        x = center + math.cos(angle) * (radius+1)
+        y = center + math.sin(angle) * (radius+1)
+        r = 5 if i % 2 == 0 else 4
+        d.ellipse((x-r, y-r, x+r, y+r), fill=(255, 231, 167, 255),
+                  outline=(255, 255, 225, 255), width=1)
+
+    frames = []
+    for frame_index in range(24):
+        rotated = wheel.rotate(frame_index * 15, resample=Image.Resampling.BICUBIC)
+        frame = Image.new("RGBA", (size, size), (8, 9, 12, 0))
+        frame.alpha_composite(rotated)
+
+        # The central PRIZORA/PREMIUM badge stays upright and stationary.
+        hub = ImageDraw.Draw(frame)
+        hub.ellipse((center-76, center-76, center+76, center+76),
+                    fill=(8, 9, 12, 255), outline=gold, width=8)
+        hub.text((center, center-12), "PRIZORA", font=brand_font,
+                 fill=gold, anchor="mm")
+        hub.text((center, center+19), "PREMIUM", font=small_font,
+                 fill=(245, 225, 184, 255), anchor="mm")
+
+        pointer = ImageDraw.Draw(frame)
+        pointer.polygon([(center, 10), (center-18, 48), (center+18, 48)],
+                        fill=(255, 205, 91, 255), outline=(255, 239, 191, 255))
+        pointer.line([(center, 16), (center, 43)], fill=(255, 255, 238, 255), width=2)
+        frames.append(frame.convert("P", palette=Image.Palette.ADAPTIVE))
+    output = BytesIO()
+    frames[0].save(output, format="GIF", save_all=True, append_images=frames[1:],
+                   duration=250, loop=0, optimize=True, disposal=2)
+    output.seek(0)
+    output.name = "prizora-premium-wheel.gif"
+    return output
+
+
+async def send_prizora_presentation(message, context, language: str):
+    animation = build_prizora_wheel_animation()
+    await message.reply_animation(
+        animation=animation,
+        caption=tr(context, "welcome"),
+        reply_markup=presentation_menu(language),
+    )
+
+
 def launch_menu(language: str):
     labels = {
         "ru": "🚀 Запустить бота",
@@ -1766,20 +1840,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # First visit and every later visit open the same presentation directly.
     # Telegram itself supplies the one-time native Start button for new users.
-    await update.message.reply_text(
-        tr(context, "welcome"),
-        reply_markup=presentation_menu(language),
-    )
+    await send_prizora_presentation(update.message, context, language)
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if admin.is_user_blocked(update.effective_user.id, scope="account"):
         await update.message.reply_text("⛔ Доступ к PRIZORA ограничен. Если считаешь это ошибкой, обратись к администратору.")
         return
     restore_user_language(update.effective_user, context)
-    await update.message.reply_text(
-        tr(context, "welcome"),
-        reply_markup=presentation_menu(current_language(context)),
-    )
+    await send_prizora_presentation(update.message, context, current_language(context))
 
 async def button_handler(
     update: Update,
@@ -1848,10 +1916,16 @@ async def button_handler(
             ]),
         )
     elif data == "language":
-        await query.edit_message_text(
-            tr(context, "language_prompt"),
-            reply_markup=language_menu(),
-        )
+        if getattr(query.message, "animation", None):
+            await query.edit_message_caption(
+                caption=tr(context, "language_prompt"),
+                reply_markup=language_menu(),
+            )
+        else:
+            await query.edit_message_text(
+                tr(context, "language_prompt"),
+                reply_markup=language_menu(),
+            )
 
     elif data.startswith("lang:"):
         selected_language = data.split(":", 1)[1]
@@ -1861,10 +1935,16 @@ async def button_handler(
         context.user_data["suggested_language"] = selected_language
         admin.set_user_language(query.from_user.id, selected_language)
         language = selected_language
-        await query.edit_message_text(
-            tr(context, "welcome"),
-            reply_markup=presentation_menu(language),
-        )
+        if getattr(query.message, "animation", None):
+            await query.edit_message_caption(
+                caption=tr(context, "welcome"),
+                reply_markup=presentation_menu(language),
+            )
+        else:
+            await query.edit_message_text(
+                tr(context, "welcome"),
+                reply_markup=presentation_menu(language),
+            )
 
     elif data == "legacy:home":
         await query.edit_message_text(
@@ -1873,10 +1953,16 @@ async def button_handler(
         )
 
     elif data == "presentation:home":
-        await query.edit_message_text(
-            tr(context, "welcome"),
-            reply_markup=presentation_menu(language),
-        )
+        if getattr(query.message, "animation", None):
+            await query.edit_message_caption(
+                caption=tr(context, "welcome"),
+                reply_markup=presentation_menu(language),
+            )
+        else:
+            await query.edit_message_text(
+                tr(context, "welcome"),
+                reply_markup=presentation_menu(language),
+            )
 
     elif data == "home":
         for state_key in (

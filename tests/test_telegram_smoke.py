@@ -34,6 +34,22 @@ def callback_data(markup):
 
 
 class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
+    async def test_premium_wheel_animation_is_six_second_loop(self):
+        animation = main.build_prizora_wheel_animation()
+        with main.Image.open(animation) as gif:
+            self.assertEqual(gif.n_frames, 24)
+            self.assertEqual(gif.info.get("duration"), 250)
+            self.assertEqual(gif.size, (480, 480))
+
+    async def test_premium_wheel_center_badge_stays_stationary(self):
+        animation = main.build_prizora_wheel_animation()
+        with main.Image.open(animation) as gif:
+            gif.seek(0)
+            first = gif.convert("RGB").crop((195, 195, 285, 285))
+            gif.seek(12)
+            opposite = gif.convert("RGB").crop((195, 195, 285, 285))
+        self.assertEqual(list(first.getdata()), list(opposite.getdata()))
+
     async def test_background_tasks_are_tracked_and_cancelled_on_shutdown(self):
         async def blocked_scheduler(*args, **kwargs):
             await asyncio.Event().wait()
@@ -51,9 +67,9 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("prizora_background_tasks", application.bot_data)
 
     async def test_start_first_visit_opens_presentation_directly(self):
-        reply_text = AsyncMock()
+        reply_animation = AsyncMock()
         update = SimpleNamespace(
-            message=SimpleNamespace(reply_text=reply_text),
+            message=SimpleNamespace(reply_animation=reply_animation),
             effective_user=SimpleNamespace(language_code="ru", id=101),
             effective_chat=SimpleNamespace(id=101),
         )
@@ -61,10 +77,10 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
 
         await main.start(update, context)
 
-        reply_text.assert_awaited_once()
-        args, kwargs = reply_text.await_args
-        self.assertIn("PRIZORA", args[0])
-        self.assertIn("ПЛАТФОРМА", args[0])
+        reply_animation.assert_awaited_once()
+        args, kwargs = reply_animation.await_args
+        self.assertIn("PRIZORA", kwargs["caption"])
+        self.assertIn("ПРЕМИАЛЬНАЯ ПЛАТФОРМА", kwargs["caption"])
         markup = kwargs["reply_markup"]
         self.assertEqual(markup.inline_keyboard[0][0].url, main.PRIZORA_SITE_URL)
         self.assertIn("language", callback_data(markup))
@@ -72,9 +88,9 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(main.admin.get_user_language(101), "ru")
 
     async def test_start_returning_user_opens_presentation_without_intro(self):
-        reply_text = AsyncMock()
+        reply_animation = AsyncMock()
         update = SimpleNamespace(
-            message=SimpleNamespace(reply_text=reply_text),
+            message=SimpleNamespace(reply_animation=reply_animation),
             effective_user=SimpleNamespace(id=102, language_code="en"),
             effective_chat=SimpleNamespace(id=102),
         )
@@ -84,10 +100,10 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
 
         await main.start(update, context)
 
-        reply_text.assert_awaited_once()
-        args, kwargs = reply_text.await_args
-        self.assertIn("PRIZORA", args[0])
-        self.assertIn("PLATTFORM", args[0])
+        reply_animation.assert_awaited_once()
+        args, kwargs = reply_animation.await_args
+        self.assertIn("PRIZORA", kwargs["caption"])
+        self.assertIn("PREMIUM", kwargs["caption"])
         markup = kwargs["reply_markup"]
         self.assertEqual(markup.inline_keyboard[0][0].url, main.PRIZORA_SITE_URL)
         self.assertIn("language", callback_data(markup))
@@ -95,20 +111,20 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(main.admin.get_user_language(102), "de")
 
     async def test_help_uses_saved_language_and_presentation(self):
-        reply_text = AsyncMock()
+        reply_animation = AsyncMock()
         user = SimpleNamespace(id=109, language_code="en")
         main.admin.register_user(user)
         main.admin.set_user_language(109, "de")
         update = SimpleNamespace(
-            message=SimpleNamespace(reply_text=reply_text),
+            message=SimpleNamespace(reply_animation=reply_animation),
             effective_user=user,
         )
         context = SimpleNamespace(user_data={})
 
         await main.help_command(update, context)
 
-        args, kwargs = reply_text.await_args
-        self.assertIn("PLATTFORM", args[0])
+        args, kwargs = reply_animation.await_args
+        self.assertIn("PREMIUM", kwargs["caption"])
         self.assertEqual(kwargs["reply_markup"].inline_keyboard[0][0].url, main.PRIZORA_SITE_URL)
         self.assertEqual(context.user_data["language"], "de")
 
@@ -132,6 +148,90 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("language", callback_data(edit_message_text.await_args.kwargs["reply_markup"]))
         self.assertNotIn("legacy:home", callback_data(edit_message_text.await_args.kwargs["reply_markup"]))
         self.assertEqual(main.admin.get_user_language(103), "ru")
+
+    async def test_language_prompt_edits_animated_presentation_caption(self):
+        edit_message_caption = AsyncMock()
+        edit_message_text = AsyncMock()
+        query = SimpleNamespace(
+            data="language",
+            answer=AsyncMock(),
+            edit_message_caption=edit_message_caption,
+            edit_message_text=edit_message_text,
+            from_user=SimpleNamespace(id=107),
+            message=SimpleNamespace(chat_id=107, animation=SimpleNamespace()),
+        )
+        context = SimpleNamespace(user_data={"language": "ru"})
+
+        await main.button_handler(SimpleNamespace(callback_query=query), context)
+
+        edit_message_caption.assert_awaited_once()
+        edit_message_text.assert_not_awaited()
+        self.assertEqual(
+            edit_message_caption.await_args.kwargs["caption"],
+            main.I18N["ru"]["language_prompt"],
+        )
+        self.assertEqual(
+            callback_data(edit_message_caption.await_args.kwargs["reply_markup"]),
+            ["lang:ru", "lang:en", "lang:de"],
+        )
+
+    async def test_all_languages_update_animated_presentation_caption(self):
+        for index, language in enumerate(("ru", "en", "de"), start=1):
+            with self.subTest(language=language):
+                edit_message_caption = AsyncMock()
+                edit_message_text = AsyncMock()
+                user_id = 110 + index
+                query = SimpleNamespace(
+                    data=f"lang:{language}",
+                    answer=AsyncMock(),
+                    edit_message_caption=edit_message_caption,
+                    edit_message_text=edit_message_text,
+                    from_user=SimpleNamespace(id=user_id),
+                    message=SimpleNamespace(chat_id=user_id, animation=SimpleNamespace()),
+                )
+                main.admin.register_user(query.from_user)
+                context = SimpleNamespace(user_data={})
+
+                await main.button_handler(SimpleNamespace(callback_query=query), context)
+
+                edit_message_caption.assert_awaited_once()
+                edit_message_text.assert_not_awaited()
+                self.assertEqual(
+                    edit_message_caption.await_args.kwargs["caption"],
+                    main.I18N[language]["welcome"],
+                )
+                self.assertEqual(context.user_data["language"], language)
+                self.assertEqual(main.admin.get_user_language(user_id), language)
+                self.assertIn(
+                    "language",
+                    callback_data(edit_message_caption.await_args.kwargs["reply_markup"]),
+                )
+
+    async def test_presentation_home_restores_animated_caption(self):
+        edit_message_caption = AsyncMock()
+        edit_message_text = AsyncMock()
+        query = SimpleNamespace(
+            data="presentation:home",
+            answer=AsyncMock(),
+            edit_message_caption=edit_message_caption,
+            edit_message_text=edit_message_text,
+            from_user=SimpleNamespace(id=114),
+            message=SimpleNamespace(chat_id=114, animation=SimpleNamespace()),
+        )
+        context = SimpleNamespace(user_data={"language": "de"})
+
+        await main.button_handler(SimpleNamespace(callback_query=query), context)
+
+        edit_message_caption.assert_awaited_once()
+        edit_message_text.assert_not_awaited()
+        self.assertEqual(
+            edit_message_caption.await_args.kwargs["caption"],
+            main.I18N["de"]["welcome"],
+        )
+        self.assertEqual(
+            edit_message_caption.await_args.kwargs["reply_markup"].inline_keyboard[0][0].url,
+            main.PRIZORA_SITE_URL,
+        )
 
     async def test_main_menu_callbacks_open_their_screens(self):
         cases = {
