@@ -228,13 +228,7 @@ I18N = {
         "language_prompt": "🌐 Choose the PRIZORA interface language. You can change it anytime from the main menu.",
         "language_detected": "Telegram language detected: {language}. You can choose another language.",
         "language_saved": "✅ Interface language set to English.",
-        "welcome": (
-            "PRIZORA — GIVEAWAY PLATFORM\n\n"
-            "🎁 JOIN & WIN — discover giveaways and compete for prizes.\n"
-            "👑 CREATE YOUR OWN — launch contests and offer prizes to your audience.\n\n"
-            "Clear rules. Automatic winner selection.\n"
-            "Open PRIZORA Mini using the button below."
-        ),
+        "welcome": "",
         "menu_create": "👑 Create a contest",
         "menu_formats": "✨ Contest formats",
         "menu_plans": "💰 My plans",
@@ -412,13 +406,7 @@ I18N = {
         "language_prompt": "🌐 Wähle die Sprache der PRIZORA-Oberfläche. Du kannst sie jederzeit im Hauptmenü ändern.",
         "language_detected": "Erkannte Telegram-Sprache: {language}. Du kannst eine andere Sprache wählen.",
         "language_saved": "✅ Die Oberflächensprache ist jetzt Deutsch.",
-        "welcome": (
-            "PRIZORA — GEWINNSPIELPLATTFORM\n\n"
-            "🎁 TEILNEHMEN & GEWINNEN — entdecke Gewinnspiele und gewinne Preise.\n"
-            "👑 EIGENE GEWINNSPIELE — starte Wettbewerbe und biete deiner Community Preise.\n\n"
-            "Klare Regeln. Automatische Gewinnerauswahl.\n"
-            "Öffne PRIZORA Mini über die Schaltfläche unten."
-        ),
+        "welcome": "",
         "menu_create": "🏆 Wettbewerb erstellen",
         "menu_formats": "🎮 Wettbewerbsformate",
         "menu_plans": "💎 Meine Tarife",
@@ -2128,15 +2116,12 @@ async def button_handler(
         admin.set_user_language(query.from_user.id, selected_language)
         language = selected_language
         if getattr(query.message, "animation", None):
-            await query.edit_message_caption(
-                caption=tr(context, "welcome"),
-                reply_markup=presentation_menu(language),
+            await query.edit_message_reply_markup(
+                reply_markup=presentation_menu(language)
             )
         else:
-            await query.edit_message_text(
-                tr(context, "welcome"),
-                reply_markup=presentation_menu(language),
-            )
+            await query.message.delete()
+            await send_prizora_presentation(query.message, context, language)
 
     elif data == "legacy:home":
         await query.edit_message_text(
@@ -2146,15 +2131,12 @@ async def button_handler(
 
     elif data == "presentation:home":
         if getattr(query.message, "animation", None):
-            await query.edit_message_caption(
-                caption=tr(context, "welcome"),
-                reply_markup=presentation_menu(language),
+            await query.edit_message_reply_markup(
+                reply_markup=presentation_menu(language)
             )
         else:
-            await query.edit_message_text(
-                tr(context, "welcome"),
-                reply_markup=presentation_menu(language),
-            )
+            await query.message.delete()
+            await send_prizora_presentation(query.message, context, language)
 
     elif data == "home":
         for state_key in (
