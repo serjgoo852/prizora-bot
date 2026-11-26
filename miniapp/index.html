@@ -2872,11 +2872,21 @@ html body .pro-showcase>.approved-hero .approved-hero-hit::after{
  prev.addEventListener('click',()=>go(Math.round(angle/step)-1,true));
  next.addEventListener('click',()=>go(Math.round(angle/step)+1,true));
  const drum=document.querySelector('.carousel');
- drum.addEventListener('mouseenter',()=>{paused=true});
- /* Desktop wheel: rotate one or more prize positions without scrolling the page. */
+ const drumSurface=drum.querySelector('.carousel-inner');
+ /* Pause/scroll only when the pointer is over the visible 3D drum surface,
+    not over the carousel's outer padding or the surrounding gold frame. */
+ function pointerInsideDrum(x,y){
+   const r=drumSurface.getBoundingClientRect();
+   return x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom;
+ }
+ document.addEventListener('mousemove',e=>{
+   if(window.matchMedia('(max-width:700px)').matches||mouseDown)return;
+   paused=pointerInsideDrum(e.clientX,e.clientY);
+ },{passive:true});
+ /* Desktop wheel: rotate only while the pointer is inside the visible drum. */
  let wheelDelta=0;
  drum.addEventListener('wheel',e=>{
-   if(window.matchMedia('(max-width:700px)').matches)return;
+   if(window.matchMedia('(max-width:700px)').matches||!pointerInsideDrum(e.clientX,e.clientY))return;
    e.preventDefault();
    wheelDelta+=e.deltaY;
    const threshold=45;
@@ -2888,7 +2898,6 @@ html body .pro-showcase>.approved-hero .approved-hero-hit::after{
      paused=true;
    }
  },{passive:false});
- drum.addEventListener('mouseleave',()=>{paused=false});
  drum.addEventListener('focusin',()=>{paused=true});
  drum.addEventListener('focusout',()=>{paused=false});
  drum.addEventListener('touchstart',e=>{startX=e.touches[0].clientX;dragging=true;paused=true},{passive:true});
@@ -2896,7 +2905,7 @@ html body .pro-showcase>.approved-hero .approved-hero-hit::after{
  /* Desktop: drag the 3D drum with the left mouse button, like a swipe on mobile. */
  let mouseDown=false,mouseStartX=0,mouseLastX=0;
  drum.addEventListener('mousedown',e=>{
-   if(e.button!==0)return;
+   if(e.button!==0||!pointerInsideDrum(e.clientX,e.clientY))return;
    mouseDown=true;dragging=true;paused=true;
    mouseStartX=mouseLastX=e.clientX;
    e.preventDefault();
@@ -2910,7 +2919,7 @@ html body .pro-showcase>.approved-hero .approved-hero-hit::after{
    mouseDown=false;dragging=false;
    const dx=e.clientX-mouseStartX;
    if(Math.abs(dx)>18)go(Math.round(angle/step)+(dx<0?1:-1),true);
-   paused=drum.matches(':hover')?true:false;
+   paused=pointerInsideDrum(e.clientX,e.clientY);
  });
  setDrumGeometry();
  paint();
