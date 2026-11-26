@@ -2715,6 +2715,33 @@ html body .pro-showcase>.approved-hero .approved-hero-hit::after{
 /* PRIZORA launch status banner */
 .prizora-launch-banner{position:relative;z-index:30;display:flex;align-items:center;gap:14px;width:100%;margin:0 auto 22px;padding:17px 20px;border:1px solid #c18a2d;border-radius:18px;background:linear-gradient(110deg,#3b260d,#171109 58%,#211505);box-shadow:0 12px 34px #0008,0 0 24px #e4a52c18;text-align:left}.prizora-launch-banner .plb-mark{flex:0 0 42px;width:42px;height:42px;display:grid;place-items:center;border-radius:13px;background:linear-gradient(145deg,#ffe49a,#d18a18);color:#261805;font-size:24px}.prizora-launch-banner .plb-copy{min-width:0;flex:1}.prizora-launch-banner strong{display:block;color:#ffe19a;font-size:clamp(15px,2.5vw,20px);line-height:1.25}.prizora-launch-banner p{margin:5px 0 0;color:#e0d3bb;font-size:14px;line-height:1.4}.prizora-launch-banner .plb-state{flex:0 0 auto;border:1px solid #a77b31;border-radius:99px;padding:7px 11px;color:#ffe19a;font-size:10px;font-weight:800;letter-spacing:1px;white-space:nowrap}.cta[aria-disabled="true"],.approved-hero-hit[aria-disabled="true"]{cursor:default;pointer-events:none}@media(max-width:600px){.prizora-launch-banner{gap:10px;padding:14px 13px;margin-bottom:17px}.prizora-launch-banner .plb-mark{width:36px;height:36px;flex-basis:36px;font-size:20px}.prizora-launch-banner p{font-size:12px}.prizora-launch-banner .plb-state{font-size:8px;padding:6px 8px}}
 </style>
+
+<style id="prizora-benefits-motion-v1">
+/* Gentle, lightweight motion for the four existing benefit icons. */
+#prizora-benefits .benefit-item{opacity:.72;transform:translateY(8px);transition:opacity .55s ease,transform .55s ease}
+#prizora-benefits.is-visible .benefit-item{opacity:1;transform:translateY(0)}
+#prizora-benefits .benefit-item:nth-child(2){transition-delay:.09s}
+#prizora-benefits .benefit-item:nth-child(3){transition-delay:.18s}
+#prizora-benefits .benefit-item:nth-child(4){transition-delay:.27s}
+#prizora-benefits .benefit-item b{display:block;position:relative;width:max-content;margin:0 auto 7px;font-size:27px;line-height:1.35;filter:drop-shadow(0 0 0 transparent);transform-origin:50% 65%;will-change:transform,filter}
+#prizora-benefits.is-visible .benefit-shield b{animation:benefitShield 6s ease-in-out infinite}
+#prizora-benefits.is-visible .benefit-lightning b{animation:benefitFlash 6s ease-in-out infinite .7s}
+#prizora-benefits.is-visible .benefit-diamond b{animation:benefitDiamond 6s ease-in-out infinite 1.4s}
+#prizora-benefits.is-visible .benefit-gift b{animation:benefitGift 6s ease-in-out infinite 2.1s}
+@keyframes benefitShield{0%,7%,100%{transform:scale(1);filter:drop-shadow(0 0 0 #f7bd45)}3%{transform:scale(1.13);filter:drop-shadow(0 0 9px #f7bd45)}}
+@keyframes benefitFlash{0%,8%,100%{transform:translateY(0) scale(1);filter:brightness(1)}3%{transform:translateY(-3px) scale(1.18);filter:brightness(1.7) drop-shadow(0 0 8px #ffe16b)}}
+@keyframes benefitDiamond{0%,10%,100%{transform:rotate(0) scale(1);filter:brightness(1) drop-shadow(0 0 0 #72d9ff)}5%{transform:rotate(-8deg) scale(1.12);filter:brightness(1.45) drop-shadow(0 0 9px #72d9ff)}}
+@keyframes benefitGift{0%,10%,100%{transform:translateY(0) rotate(0);filter:drop-shadow(0 0 0 #f7bd45)}5%{transform:translateY(-5px) rotate(-5deg);filter:drop-shadow(0 0 8px #f7bd45)}}
+@media(prefers-reduced-motion:reduce){#prizora-benefits .benefit-item{opacity:1;transform:none;transition:none}#prizora-benefits .benefit-item b{animation:none!important}}
+</style>
+<script id="prizora-benefits-motion-script">
+(()=>{const section=document.getElementById('prizora-benefits');if(!section)return;
+if(!('IntersectionObserver' in window)){section.classList.add('is-visible');return}
+const observer=new IntersectionObserver(entries=>{if(entries.some(entry=>entry.isIntersecting)){section.classList.add('is-visible');observer.disconnect()}},{threshold:.25});
+observer.observe(section);
+})();
+</script>
+
 </head><body><div id="prizora-splash" aria-label="PRIZORA"><div class="ps-aura"></div><div class="ps-ring ps-ring-one"></div><div class="ps-ring ps-ring-two"></div><div class="ps-burst"></div><div class="ps-spark ps-one"></div><div class="ps-spark ps-two"></div><div class="ps-spark ps-three"></div><div class="ps-wordmark">PRIZORA</div><div class="ps-rule"></div><div class="ps-tagline">ТВОЙ ШАНС ВЫИГРАТЬ ПРИЗ!</div></div><main class="wrap">
 <section class="prizora-launch-banner" role="status" aria-label="Статус запуска PRIZORA"><div class="plb-mark" aria-hidden="true">✦</div><div class="plb-copy"><strong>PRIZORA — СКОРО ОТКРЫТИЕ</strong><p>Платформа находится в разработке. Приём заявок и участие в розыгрышах пока не запущены. О дате старта сообщим отдельно.</p></div><span class="plb-state">В РАЗРАБОТКЕ</span></section>
 <header class="top"><div class="brand"><img alt="PRIZORA" src="https://raw.githubusercontent.com/serjgoo852/prizora-bot/prizora-mini-safe-repair/screenshots/prizora-logo-transparent%281%29.png"/><div><strong>PRIZORA</strong><small>розыгрыши · доверие · победа</small></div></div><span class="pill">✦ ПРЕМИУМ</span></header>
@@ -2817,7 +2844,7 @@ html body .pro-showcase>.approved-hero .approved-hero-hit::after{
 </div>
 <div class="pro-contest-foot"><span>✦ PRIZORA PRO</span><span>Листай, чтобы увидеть другие призы</span></div>
 </section>
-<div class="section-head"><h2>⭐ Преимущества PRIZORA</h2></div><section class="benefits"><div><b>🛡</b>Честные розыгрыши</div><div><b>⚡</b>Против накруток</div><div><b>💎</b>Прозрачные результаты</div><div><b>🎁</b>Быстрая поддержка</div></section>
+<div class="section-head"><h2>⭐ Преимущества PRIZORA</h2></div><section class="benefits" id="prizora-benefits" aria-label="Преимущества PRIZORA"><div class="benefit-item benefit-shield"><b aria-hidden="true">🛡</b><span>Честные розыгрыши</span></div><div class="benefit-item benefit-lightning"><b aria-hidden="true">⚡</b><span>Против накруток</span></div><div class="benefit-item benefit-diamond"><b aria-hidden="true">💎</b><span>Прозрачные результаты</span></div><div class="benefit-item benefit-gift"><b aria-hidden="true">🎁</b><span>Быстрая поддержка</span></div></section>
 </main><footer class="bottom"><nav><a class="active" href="#"><b>⌂</b>Главная</a><a href="#contests"><b>🏆</b>Конкурсы</a><a href="#profile"><b>♛</b>Профиль</a><a href="#menu"><b>☰</b>Меню</a></nav></footer>
 <script>
 (()=>{
