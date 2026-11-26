@@ -2982,6 +2982,20 @@ html body .pro-showcase>.approved-hero .approved-hero-hit::after{
        if(panel){panel.hidden=false;panel.scrollIntoView({behavior:'smooth',block:'nearest'})}
      });
    });
+   /* Support direct links and refreshes to a cabinet subsection. */
+   const restoreCabinetHash=()=>{
+     const targetId=location.hash.slice(1);
+     const target=document.getElementById(targetId);
+     if(target&&target.classList.contains('cabinet-panel')){
+       menuPanel.hidden=false;
+       cabinetPanels.forEach(panel=>panel.hidden=panel!==target);
+     }else if(targetId==='menu'||targetId==='profile'){
+       menuPanel.hidden=false;
+       cabinetPanels.forEach(panel=>panel.hidden=true);
+     }
+   };
+   restoreCabinetHash();
+   window.addEventListener('hashchange',restoreCabinetHash);
  }
 
 (()=>{const items=[...document.querySelectorAll('.pro-fade-item')];if(items.length<2||window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;let i=0;setInterval(()=>{items[i].classList.remove('active');i=(i+1)%items.length;items[i].classList.add('active')},5200)})();
