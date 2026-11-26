@@ -2735,10 +2735,12 @@ html body .pro-showcase>.approved-hero .approved-hero-hit::after{
 @media(prefers-reduced-motion:reduce){#prizora-benefits .benefit-item{opacity:1;transform:none;transition:none}#prizora-benefits .benefit-item b{animation:none!important}}
 </style>
 <script id="prizora-benefits-motion-script">
-(()=>{const section=document.getElementById('prizora-benefits');if(!section)return;
+(()=>{const init=()=>{const section=document.getElementById('prizora-benefits');if(!section)return;
 if(!('IntersectionObserver' in window)){section.classList.add('is-visible');return}
 const observer=new IntersectionObserver(entries=>{if(entries.some(entry=>entry.isIntersecting)){section.classList.add('is-visible');observer.disconnect()}},{threshold:.25});
 observer.observe(section);
+};
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init,{once:true})}else{init()}
 })();
 </script>
 
