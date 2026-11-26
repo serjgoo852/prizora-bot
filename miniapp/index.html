@@ -2963,6 +2963,7 @@ html body .pro-showcase>.approved-hero .approved-hero-hit::after{
    const openMenu=e=>{
      e.preventDefault();
      menuPanel.hidden=false;
+     cabinetPanels.forEach(panel=>panel.hidden=true);
      menuNavs.forEach(a=>a.classList.toggle('active',a===e.currentTarget));
      if(homeNav)homeNav.classList.remove('active');
      menuPanel.scrollIntoView({behavior:'smooth',block:'start'});
