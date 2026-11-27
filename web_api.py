@@ -58,6 +58,11 @@ class MiniAppLogin(BaseModel):
     init_data: str = Field(min_length=1, max_length=16_384)
 
 
+class BrowserLoginStatus(BaseModel):
+    request_id: str = Field(min_length=1, max_length=64)
+    poll_secret: str = Field(min_length=1, max_length=128)
+
+
 def set_bot_id(value: int) -> None:
     """Set the numeric bot ID obtained from Telegram getMe at startup."""
     global BOT_ID
@@ -367,16 +372,15 @@ def browser_login_request(request: Request) -> dict:
     return create_browser_login_request()
 
 
-@app.get("/auth/browser/status")
+@app.post("/auth/browser/status")
 def browser_login_status(
+    payload: BrowserLoginStatus,
     request: Request,
     response: Response,
-    request_id: str,
-    poll_secret: str,
 ) -> dict:
     _check_origin(request)
-    if not request_id or len(request_id) > 64 or not poll_secret or len(poll_secret) > 128:
-        raise HTTPException(status_code=400, detail="Invalid login request")
+    request_id = payload.request_id
+    poll_secret = payload.poll_secret
     challenge_hash = hashlib.sha256(request_id.encode("ascii", errors="ignore")).digest()
     poll_hash = hashlib.sha256(poll_secret.encode("ascii", errors="ignore")).digest()
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
