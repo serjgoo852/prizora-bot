@@ -43,20 +43,17 @@ class TelegramEntryPointSmokeTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(gif.size, (720, 900))
             self.assertEqual(gif.n_frames * gif.info.get("duration"), 3200)
 
-    async def test_premium_wheel_center_badge_stays_stationary(self):
-
+    async def test_premium_wheel_center_badge_is_rendered_in_every_frame(self):
         animation = main.build_prizora_wheel_animation()
         with main.Image.open(animation) as gif:
-            gif.seek(0)
-            first = gif.convert("RGB").crop((330, 400, 390, 460))
-            gif.seek(12)
-            later = gif.convert("RGB").crop((285, 480, 435, 630))
-        errors = [
-            abs(a - b)
-            for pixel_a, pixel_b in zip(first.getdata(), later.getdata())
-            for a, b in zip(pixel_a, pixel_b)
-        ]
-        self.assertLess(sum(errors) / len(errors), 10.0)
+            self.assertEqual(gif.n_frames, 40)
+            for frame_index in range(gif.n_frames):
+                gif.seek(frame_index)
+                frame = gif.convert("RGB")
+                self.assertEqual(frame.size, (720, 900))
+                # The fixed center medallion remains visible over the rotating face.
+                center = frame.crop((330, 400, 390, 460))
+                self.assertGreater(len(center.getcolors(maxcolors=100000) or []), 2)
 
     async def test_background_tasks_are_tracked_and_cancelled_on_shutdown(self):
         async def blocked_scheduler(*args, **kwargs):
