@@ -330,10 +330,17 @@ def _current_user(request: Request) -> dict | None:
         return user
 
 
+def _ensure_account_access(user_id: int) -> None:
+    """Apply account-wide blocks consistently to every web login path."""
+    if admin.is_user_blocked(int(user_id), scope="account"):
+        raise HTTPException(status_code=403, detail="Account access is restricted")
+
+
 def _require_user(request: Request) -> dict:
     user = _current_user(request)
     if not user:
         raise HTTPException(status_code=401, detail="Authentication required")
+    _ensure_account_access(int(user["user_id"]))
     return user
 
 
@@ -353,6 +360,7 @@ def miniapp_login(payload: MiniAppLogin, request: Request, response: Response) -
         user = verify_init_data(payload.init_data)
     except ValueError as exc:
         raise HTTPException(status_code=401, detail=str(exc)) from exc
+    _ensure_account_access(int(user["id"]))
     raw_token = _issue_session(user)
     response.set_cookie(
         SESSION_COOKIE,
@@ -407,8 +415,7 @@ def browser_login_status(
         if cursor.rowcount != 1:
             return {"status": "expired"}
         user_id = int(row["telegram_user_id"])
-    if admin.is_user_blocked(user_id, scope="account"):
-        raise HTTPException(status_code=403, detail="Account access is restricted")
+    _ensure_account_access(user_id)
     with _connect() as db:
         profile = db.execute(
             "SELECT user_id, username, full_name FROM user_profiles WHERE user_id=?",
@@ -432,6 +439,12 @@ def browser_login_status(
 def auth_me(request: Request) -> dict:
     user = _current_user(request)
     if not user:
+        return {"authenticated": False, "user": None}
+    try:
+        _ensure_account_access(int(user["user_id"]))
+    except HTTPException as exc:
+        if exc.status_code != 403:
+            raise
         return {"authenticated": False, "user": None}
     return {"authenticated": True, "user": user}
 
