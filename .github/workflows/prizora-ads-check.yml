@@ -41,7 +41,7 @@ jobs:
       - name: Install runtime and test dependencies
         run: pip install -r requirements.txt
       - name: Compile Python files
-        run: python -m py_compile main.py ads.py security.py tests/test_telegram_smoke.py tests/test_secret_redaction.py
+        run: python -m py_compile main.py ads.py security.py participant_portal.py tests/test_telegram_smoke.py tests/test_secret_redaction.py tests/test_participant_portal.py
       - name: Smoke-test Telegram /start and main-menu handlers
         env:
           DATABASE_PATH: ${{ runner.temp }}/prizora-telegram-smoke.sqlite3
