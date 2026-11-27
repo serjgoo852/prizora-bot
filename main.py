@@ -3547,9 +3547,9 @@ async def prewarm_presentation_gifs():
 
 
 async def post_init(application):
-    # Start expensive image rendering in the background. Telegram polling must
-    # become available immediately instead of waiting for three GIF encodes.
-    # Identify the Telegram account bound to this deployment without logging credentials.
+    # Identify the Telegram account before exposing the HTTP API. Telegram's
+    # Ed25519 Mini App signature validation requires this numeric bot ID.
+    bot_identity_ready = False
     try:
         bot_identity = await application.bot.get_me()
         logging.info(
@@ -3560,8 +3560,18 @@ async def post_init(application):
         )
         if WEB_API_MODULE is not None:
             WEB_API_MODULE.set_bot_id(bot_identity.id)
+        bot_identity_ready = True
     except Exception:
         logging.exception("PRIZORA_BOT_IDENTITY_CHECK_FAILED")
+
+    # Start only after getMe supplied the ID used by signed Mini App payloads.
+    if bot_identity_ready:
+        start_web_api()
+    else:
+        logging.error("PRIZORA_WEB_API_NOT_STARTED: Telegram bot identity unavailable")
+
+    # Start expensive image rendering in the background. Telegram polling must
+    # become available immediately instead of waiting for three GIF encodes.
 
     # post_init runs before Application.start(), so Application.create_task()
     # would warn that these tasks are not tracked for graceful shutdown.
@@ -3577,6 +3587,16 @@ async def post_init(application):
 
 
 async def post_stop(application):
+    # Stop the optional HTTP server before the bot process exits.
+    server = WEB_API_SERVER
+    thread = WEB_API_THREAD
+    if server is not None:
+        server.should_exit = True
+    if thread is not None and thread.is_alive():
+        await asyncio.to_thread(thread.join, 10)
+        if thread.is_alive():
+            logging.warning("PRIZORA_WEB_API_SHUTDOWN_TIMEOUT")
+
     # Cancel and await our manually-created tasks during PTB's shutdown phase.
     tasks = application.bot_data.pop("prizora_background_tasks", [])
     for task in tasks:
@@ -3624,7 +3644,6 @@ def main():
     init_database()
     admin.init_admin_database(DATABASE_PATH)
     ads.init_ads_database()
-    start_web_api()
     application = Application.builder().token(BOT_TOKEN).post_init(post_init).post_stop(post_stop).build()
 
     application.add_handler(CommandHandler("start", start))
