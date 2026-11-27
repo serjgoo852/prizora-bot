@@ -54,11 +54,11 @@ out+='<div class="grid stats">'+stat("Мои розыгрыши",state.myContest
 }
 if(state.page==="advertiser"){
 out=head("РЕКЛАМОДАТЕЛЬ","Рекламный кабинет","Заявки на размещение, условия и тарифы.",button("＋ Новая заявка","ad-new"));
-out+='<div class="grid stats">'+stat("Заявки",state.ads.length,"Ваши обращения","▧")+stat("На модерации",state.ads.filter(a=>a.status==="pending_review").length,"Проверка заявок","◷")+stat("Активные",state.ads.filter(a=>a.status==="active").length,"Размещения","◉")+stat("Заявки",state.ads.length,"Всего рекламных заявок","▧")+'</div><div class="card"><div class="section-title"><h2>Мои рекламные заявки</h2><span class="pill gold">Данные PRIZORA</span></div>'+state.ads.map(a=>'<div class="rowitem"><div class="prizeicon">▧</div><div class="detail"><strong>'+esc(a.title)+'</strong><small>'+esc(a.period)+' · '+esc(a.price_label||"Стоимость уточняется")+'</small></div><span class="pill gold">'+esc(a.status)+'</span></div>').join("")+'<div class="notice">Статусы рекламных заявок загружаются из базы PRIZORA.</div></div>';
+out+='<div class="grid stats">'+stat("Заявки",state.ads.length,"Ваши обращения","▧")+stat("На модерации",state.ads.filter(a=>a.status==="pending_review").length,"Проверка заявок","◷")+stat("Активные",state.ads.filter(a=>a.status==="active").length,"Размещения","◉")+stat("Завершено",state.ads.filter(a=>a.status==="completed").length,"Заявки с завершённым сроком","▧")+'</div><div class="card"><div class="section-title"><h2>Мои рекламные заявки</h2><span class="pill gold">Данные PRIZORA</span></div>'+state.ads.map(a=>'<div class="rowitem"><div class="prizeicon">▧</div><div class="detail"><strong>'+esc(a.title)+'</strong><small>'+esc(a.period)+' · '+esc(a.price_label||"Стоимость уточняется")+'</small></div><span class="pill gold">'+esc(a.status)+'</span></div>').join("")+'<div class="notice">Статусы рекламных заявок загружаются из базы PRIZORA.</div></div>';
 }
 if(state.page==="profile"){
 out=head("АККАУНТ","Мой профиль","Данные подтверждённого Telegram-аккаунта.");
-out+='<div class="card" style="max-width:720px"><div class="formgrid"><div class="field"><label>Имя</label><input id="profileName" value="'+esc(state.name)+'" disabled></div><div class="field"><label>Telegram</label><input value="'+esc(state.telegramUsername||"Подключён")+'" disabled></div></div><div class="notice">Имя и Telegram-профиль получены из подтверждённого аккаунта.</div>+'</div>';
+out+='<div class="card" style="max-width:720px"><div class="formgrid"><div class="field"><label>Имя</label><input id="profileName" value="'+esc(state.name)+'" disabled></div><div class="field"><label>Telegram</label><input value="'+esc(state.telegramUsername||"Подключён")+'" disabled></div></div><div class="notice">Имя и Telegram-профиль получены из подтверждённого аккаунта.</div></div>';
 }
 if(state.page==="help"){
 out=head("ПОДДЕРЖКА","Помощь и условия","Информация для участника, организатора и рекламодателя.");
@@ -177,7 +177,7 @@ document.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>go(b.dataset.p
         id: campaign.campaign_id,
         title: campaign.title,
         period: Number(campaign.requested_days || 0) + " дней",
-        price: "—",
+        price_label: "Стоимость уточняется",
         status: campaign.status
       }));
       if (nameNode) nameNode.textContent = name;
