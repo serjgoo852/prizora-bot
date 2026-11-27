@@ -1,10 +1,15 @@
+import base64
 import hashlib
 import hmac
 import json
 from urllib.parse import urlencode
 
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
 import pytest
 
+import auth_service.main as auth_module
 from auth_service.main import _verify_mini_app_init_data
 
 
@@ -20,6 +25,57 @@ def make_init_data(user: dict, auth_date: int) -> str:
     secret_key = hmac.new(b"WebAppData", BOT_TOKEN.encode(), hashlib.sha256).digest()
     fields["hash"] = hmac.new(secret_key, check_string.encode(), hashlib.sha256).hexdigest()
     return urlencode(fields)
+
+
+def make_third_party_init_data(user: dict, auth_date: int, bot_id: str, private_key) -> str:
+    fields = {
+        "auth_date": str(auth_date),
+        "user": json.dumps(user, separators=(",", ":"), ensure_ascii=False),
+    }
+    check_string = f"{bot_id}:WebAppData\\n" + "\\n".join(
+        f"{key}={fields[key]}" for key in sorted(fields)
+    )
+    signature = private_key.sign(check_string.encode("utf-8"))
+    fields["hash"] = "0" * 64
+    fields["signature"] = base64.urlsafe_b64encode(signature).rstrip(b"=").decode("ascii")
+    return urlencode(fields)
+
+
+def test_valid_third_party_signature_does_not_need_bot_token(monkeypatch):
+    private_key = Ed25519PrivateKey.generate()
+    public_key = private_key.public_key().public_bytes(
+        encoding=serialization.Encoding.Raw,
+        format=serialization.PublicFormat.Raw,
+    )
+    monkeypatch.setattr(auth_module, "TELEGRAM_WEBAPP_PUBLIC_KEY", public_key)
+    bot_id = "123456789"
+    raw = make_third_party_init_data(
+        {"id": 123456789, "first_name": "Test", "username": "test_user"},
+        auth_date=1_700_000_000,
+        bot_id=bot_id,
+        private_key=private_key,
+    )
+    user = _verify_mini_app_init_data(raw, "", bot_id=bot_id, now=1_700_000_100)
+    assert user["telegram_id"] == 123456789
+    assert user["username"] == "test_user"
+
+
+def test_rejects_tampered_third_party_signature(monkeypatch):
+    private_key = Ed25519PrivateKey.generate()
+    public_key = private_key.public_key().public_bytes(
+        encoding=serialization.Encoding.Raw,
+        format=serialization.PublicFormat.Raw,
+    )
+    monkeypatch.setattr(auth_module, "TELEGRAM_WEBAPP_PUBLIC_KEY", public_key)
+    raw = make_third_party_init_data(
+        {"id": 123456789},
+        auth_date=1_700_000_000,
+        bot_id="123456789",
+        private_key=private_key,
+    )
+    raw = raw.replace("signature=", "signature=A", 1)
+    with pytest.raises(ValueError, match="signature"):
+        _verify_mini_app_init_data(raw, "", bot_id="123456789", now=1_700_000_100)
 
 
 def test_valid_signed_init_data_returns_telegram_identity():
