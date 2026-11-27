@@ -9,15 +9,17 @@ def test_miniapp_homepage_exposes_telegram_login_entry_point():
     assert 'id="prizora-auth-area"' in html
     assert 'https://telegram.org/js/telegram-web-app.js' in html
     assert 'src="/auth-client.js"' in html
+    assert 'name="prizora-auth-api-origin"' in html
 
 
 def test_auth_client_posts_raw_init_data_and_uses_server_session():
     client = (ROOT / "miniapp" / "auth-client.js").read_text(encoding="utf-8")
     assert 'telegram.initData' in client
     assert 'init_data: initData' in client
-    assert 'credentials: "same-origin"' in client
+    assert 'credentials: "include"' in client
     assert 'API + "/me"' in client
-    assert 'API + "/telegram/start"' in client
+    assert 'BOT_ENTRY_URL' in client
+    assert 'https://t.me/Prizora_GlobalBot?start=website' in client
     assert "initDataUnsafe" not in client
     assert "localStorage" not in client
     assert "sessionStorage" not in client
