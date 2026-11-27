@@ -1383,9 +1383,9 @@ def build_prizora_wheel_animation(language: str = "ru") -> BytesIO:
         font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 
     try:
-        brand_font = ImageFont.truetype(font_path, 32)
-        sub_font = ImageFont.truetype(font_path, 16)
-        prize_font = ImageFont.truetype(font_path, 20)
+        brand_font = ImageFont.truetype(font_path, 40)
+        sub_font = ImageFont.truetype(font_path, 25)
+        prize_font = ImageFont.truetype(font_path, 23)
     except OSError as exc:
         raise RuntimeError(
             "PRIZORA presentation font is unavailable; refusing to render "
@@ -1545,17 +1545,18 @@ def build_prizora_wheel_animation(language: str = "ru") -> BytesIO:
         frame.alpha_composite(face, (0, face_y))
         hub = ImageDraw.Draw(frame)
         hub_y = face_y + 215
-        hub.ellipse((center-94,hub_y-73,center+94,hub_y+73),
-                    fill=(0,0,0,220), outline=(92,63,25,255), width=12)
-        hub.ellipse((center-82,hub_y-63,center+82,hub_y+63),
-                    fill=(13,15,20,255), outline=bright_gold, width=4)
-        hub.arc((center-74,hub_y-56,center+74,hub_y+56),
-                205, 335, fill=(255,245,213,220), width=3)
-        hub.text((center,hub_y-9), "PRIZORA", font=brand_font,
-                 fill=bright_gold, anchor="mm", stroke_width=1,
+        hub.ellipse((center-116,hub_y-84,center+116,hub_y+84),
+                    fill=(0,0,0,220), outline=(92,63,25,255), width=14)
+        hub.ellipse((center-104,hub_y-72,center+104,hub_y+72),
+                    fill=(13,15,20,255), outline=bright_gold, width=5)
+        hub.arc((center-94,hub_y-64,center+94,hub_y+64),
+                205, 335, fill=(255,245,213,220), width=4)
+        hub.text((center,hub_y-13), "PRIZORA", font=brand_font,
+                 fill=bright_gold, anchor="mm", stroke_width=2,
                  stroke_fill=(92,59,20,255))
-        hub.text((center,hub_y+25), "GIVEAWAYS", font=sub_font,
-                 fill=ivory, anchor="mm")
+        hub.text((center,hub_y+35), "GIVEAWAYS", font=sub_font,
+                 fill=ivory, anchor="mm", stroke_width=1,
+                 stroke_fill=(0,0,0,220))
         # Fixed pointer above the face, independent of the rotating prizes.
         hub.polygon([(center,9),(center-25,61),(center+25,61)],
                     fill=(0,0,0,180))
@@ -1582,10 +1583,10 @@ def build_prizora_wheel_animation(language: str = "ru") -> BytesIO:
     }
     top_copy, bottom_copy = audience_copy.get(language, audience_copy["en"])
     banner_frames = []
-    banner_size = (720, 900)
+    banner_size = (720, 940)
     try:
-        panel_title_font = ImageFont.truetype(font_path, 30)
-        panel_sub_font = ImageFont.truetype(font_path, 20)
+        panel_title_font = ImageFont.truetype(font_path, 42)
+        panel_sub_font = ImageFont.truetype(font_path, 30)
     except OSError:
         panel_title_font = brand_font
         panel_sub_font = sub_font
@@ -1600,26 +1601,26 @@ def build_prizora_wheel_animation(language: str = "ru") -> BytesIO:
         bd.line((16, 886, 704, 886), fill=(108, 76, 31), width=2)
 
         title, subtitle = top_copy
-        bd.text((360, 43), title, font=panel_title_font,
+        bd.text((360, 42), title, font=panel_title_font,
                 fill=(255, 222, 155), anchor="mm", stroke_width=1,
                 stroke_fill=(92, 59, 20))
-        bd.text((360, 82), subtitle, font=panel_sub_font,
+        bd.text((360, 96), subtitle, font=panel_sub_font,
                 fill=(245, 240, 226), anchor="mm")
 
         # The wheel now occupies almost the full banner width.
         large_wheel = wheel_frame.convert("RGB").resize(
-            (700, 700), Image.Resampling.LANCZOS
+            (660, 660), Image.Resampling.LANCZOS
         )
-        banner.paste(large_wheel, (10, 100))
+        banner.paste(large_wheel, (30, 125))
 
         title, subtitle = bottom_copy
         bd = ImageDraw.Draw(banner)
-        bd.text((360, 813), title, font=panel_title_font,
+        bd.text((360, 842), title, font=panel_title_font,
                 fill=(255, 222, 155), anchor="mm", stroke_width=1,
                 stroke_fill=(92, 59, 20))
-        bd.text((360, 853), subtitle, font=panel_sub_font,
+        bd.text((360, 900), subtitle, font=panel_sub_font,
                 fill=(245, 240, 226), anchor="mm")
-        banner_frames.append(banner.convert("RGB").quantize(colors=255))
+        banner_frames.append(banner.convert("RGB").quantize(colors=255, dither=Image.Dither.NONE))
 
     frames = banner_frames
 
