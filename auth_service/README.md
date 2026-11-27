@@ -53,6 +53,6 @@ Review and apply \`schema.sql\` manually to the dedicated PostgreSQL database. T
 ## Security notes
 
 - The bot token and OIDC Client Secret are not included in this repository.
-- Do not log initData, authorization codes, ID tokens, cookies, or database URLs.
+- Do not log initData, authorization codes, ID tokens, cookies, or database URLs. The provided Docker command disables Uvicorn access logs; when adding the reverse proxy, ensure callback query strings are not written to ingress or proxy access logs.
 - Browser login currently accepts Telegram's default RS256 ID-token algorithm only.
 - The API does not include payment handling, wallet migration, organizer authorization rules, or bot database migration.
