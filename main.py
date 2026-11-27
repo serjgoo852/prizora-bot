@@ -7,10 +7,11 @@ import asyncio
 import json
 import random
 import math
+import threading
 from io import BytesIO
 from datetime import datetime, timedelta, timezone
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaAnimation
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaAnimation, WebAppInfo
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -25,6 +26,10 @@ import fontpkg
 
 import ads
 import admin
+
+WEB_API_MODULE = None
+WEB_API_SERVER = None
+WEB_API_THREAD = None
 
 from security import install_secret_redaction
 
@@ -1350,15 +1355,25 @@ def main_menu(language: str):
     return InlineKeyboardMarkup(keyboard)
 
 
-def presentation_menu(language: str):
+def presentation_menu(language: str, chat_type: str = "private"):
     labels = {
         "ru": ("🌐 Перейти на сайт PRIZORA", "🌍 Выбрать язык"),
         "en": ("🌐 Open PRIZORA website", "🌍 Choose language"),
         "de": ("🌐 PRIZORA-Website öffnen", "🌍 Sprache wählen"),
     }
     site_label, language_label = labels.get(language, labels["en"])
+    if chat_type == "private":
+        # A Web App button opens PRIZORA inside Telegram and supplies signed
+        # WebApp.initData, so the site can authenticate the user automatically.
+        site_button = InlineKeyboardButton(
+            site_label,
+            web_app=WebAppInfo(url=PRIZORA_SITE_URL),
+        )
+    else:
+        # Telegram Web App buttons are restricted to private chats.
+        site_button = InlineKeyboardButton(site_label, url=PRIZORA_SITE_URL)
     keyboard = [
-        [InlineKeyboardButton(site_label, url=PRIZORA_SITE_URL)],
+        [site_button],
         [InlineKeyboardButton(language_label, callback_data="language")],
     ]
     return InlineKeyboardMarkup(keyboard)
@@ -1688,7 +1703,7 @@ async def send_prizora_presentation(message, context, language: str):
     await message.reply_animation(
         animation=animation,
         caption=presentation_caption(language),
-        reply_markup=presentation_menu(language),
+        reply_markup=presentation_menu(language, getattr(getattr(message, "chat", None), "type", "private")),
     )
 
 
@@ -2192,7 +2207,7 @@ async def button_handler(
             animation.name = "prizora-premium-wheel.gif"
             await query.edit_message_media(
                 media=InputMediaAnimation(media=animation, caption=presentation_caption(language)),
-                reply_markup=presentation_menu(language),
+                reply_markup=presentation_menu(language, getattr(getattr(query.message, "chat", None), "type", "private")),
             )
         else:
             await query.message.delete()
@@ -3497,6 +3512,8 @@ async def post_init(application):
             bot_identity.username or "",
             bot_identity.first_name or "",
         )
+        if WEB_API_MODULE is not None:
+            WEB_API_MODULE.set_bot_id(bot_identity.id)
     except Exception:
         logging.exception("PRIZORA_BOT_IDENTITY_CHECK_FAILED")
 
@@ -3522,6 +3539,38 @@ async def post_stop(application):
         await asyncio.gather(*tasks, return_exceptions=True)
 
 
+def start_web_api():
+    """Start the optional same-database HTTP API without changing bot polling."""
+    global WEB_API_MODULE, WEB_API_SERVER, WEB_API_THREAD
+    enabled = os.getenv("PRIZORA_WEB_API_ENABLED", "").strip().lower()
+    if enabled not in {"1", "true", "yes"}:
+        return
+    try:
+        import uvicorn
+        import web_api
+
+        web_api.init_auth_database()
+        WEB_API_MODULE = web_api
+        config = uvicorn.Config(
+            web_api.app,
+            host="0.0.0.0",
+            port=int(os.getenv("PRIZORA_WEB_API_PORT", "8080")),
+            log_level="warning",
+            access_log=False,
+        )
+        WEB_API_SERVER = uvicorn.Server(config)
+        WEB_API_THREAD = threading.Thread(
+            target=WEB_API_SERVER.run,
+            name="prizora-web-api",
+            daemon=True,
+        )
+        WEB_API_THREAD.start()
+        logging.info("PRIZORA shared-database web API startup requested")
+    except Exception:
+        logging.exception("PRIZORA shared-database web API failed to start")
+        raise
+
+
 def main():
     if not BOT_TOKEN:
         raise RuntimeError("BOT_TOKEN environment variable is not set.")
@@ -3529,6 +3578,7 @@ def main():
     init_database()
     admin.init_admin_database(DATABASE_PATH)
     ads.init_ads_database()
+    start_web_api()
     application = Application.builder().token(BOT_TOKEN).post_init(post_init).post_stop(post_stop).build()
 
     application.add_handler(CommandHandler("start", start))
