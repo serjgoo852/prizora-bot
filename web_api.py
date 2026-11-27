@@ -233,11 +233,10 @@ def _current_user(request: Request) -> dict | None:
         ).fetchone()
         if not row:
             return None
-        db.execute(
-            "UPDATE web_auth_sessions SET created_at=created_at WHERE token_hash=?",
-            (token_hash,),
-        )
-        return dict(row)
+        user = dict(row)
+        user["telegram_id"] = user["user_id"]
+        user["display_name"] = user["full_name"]
+        return user
 
 
 def _require_user(request: Request) -> dict:
