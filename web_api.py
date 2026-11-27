@@ -325,7 +325,7 @@ def cabinet(request: Request) -> dict:
         joined_contests = db.execute(
             """
             SELECT c.contest_id, c.prize_name, c.contest_format, c.starts_at, c.ends_at,
-                   p.joined_at, c.drawn_at
+                   p.joined_at, c.drawn_at, c.winners_json
             FROM participants p
             JOIN contests c ON c.contest_id=p.contest_id
             WHERE p.user_id=?
