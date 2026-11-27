@@ -130,9 +130,16 @@
       const note = document.createElement("p");
       note.textContent = "Здесь отображается баланс из общей базы PRIZORA. Операции пополнения и оплаты через сайт пока не включены.";
       walletPanel.append(note);
+      const historyHeading = document.createElement("h3");
+      historyHeading.style.marginTop = "18px";
+      historyHeading.textContent = "Последние операции";
+      const history = document.createElement("div");
+      walletPanel.append(historyHeading, history);
       apiGet("/api/wallet/transactions?limit=10").then(result => {
-        renderList(walletPanel, result.transactions, "История операций пока пуста.", x => money(x.amount_kopecks) + " · " + (x.reason || "Операция"), x => "После операции: " + money(x.balance_after_kopecks) + " · " + (x.created_at || ""));
-      }).catch(() => {});
+        renderList(history, result.transactions, "История операций пока пуста.", x => money(x.amount_kopecks) + " · " + (x.reason || "Операция"), x => "После операции: " + money(x.balance_after_kopecks) + " · " + (x.created_at || ""));
+      }).catch(() => {
+        history.textContent = "Не удалось загрузить историю операций.";
+      });
     }
     if (adsPanel) {
       const existing = adsPanel.querySelector(".ad-cabinet-grid");
