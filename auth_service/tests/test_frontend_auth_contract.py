@@ -26,3 +26,11 @@ def test_auth_client_posts_raw_init_data_and_uses_server_session():
 def test_miniapp_docker_image_includes_auth_client():
     dockerfile = (ROOT / "miniapp" / "Dockerfile").read_text(encoding="utf-8")
     assert "COPY auth-client.js /usr/share/nginx/html/auth-client.js" in dockerfile
+
+def test_cabinet_preview_requires_shared_telegram_session():
+    cabinet = (ROOT / "cabinet-demo" / "index.html").read_text(encoding="utf-8")
+    assert 'id="prizora-cabinet-auth-gate"' in cabinet
+    assert 'credentials: "include"' in cabinet
+    assert 'AUTH_API + "/me"' in cabinet
+    assert 'telegramAccountLabel' in cabinet
+    assert 'localStorage' not in cabinet[cabinet.find('<script id="prizora-cabinet-auth">'):]
