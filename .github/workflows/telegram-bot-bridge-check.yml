@@ -1,0 +1,39 @@
+name: PRIZORA Telegram bot account bridge checks
+
+on:
+  push:
+    branches:
+      - "feature/telegram-bot-account-bridge-*"
+    paths:
+      - "auth_bridge.py"
+      - "main.py"
+      - "requirements.txt"
+      - "tests/test_auth_bridge.py"
+      - ".github/workflows/telegram-bot-bridge-check.yml"
+  pull_request:
+    paths:
+      - "auth_bridge.py"
+      - "main.py"
+      - "requirements.txt"
+      - "tests/test_auth_bridge.py"
+      - ".github/workflows/telegram-bot-bridge-check.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  bot-bridge-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install bot dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest
+      - name: Compile bot and bridge
+        run: python -m py_compile main.py admin.py auth_bridge.py
+      - name: Test optional shared-account bridge
+        run: pytest -q tests/test_auth_bridge.py
