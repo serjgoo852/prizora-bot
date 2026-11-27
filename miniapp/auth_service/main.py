@@ -157,7 +157,9 @@ def _verify_mini_app_init_data(
 
     # Backward-compatible first-party HMAC verification for clients that do
     # not include Telegram's third-party signature field.
-    elif bot_token and received_hash and re.fullmatch(r"[0-9a-fA-F]{64}", received_hash):
+    elif bot_token:
+        if not received_hash or not re.fullmatch(r"[0-9a-fA-F]{64}", received_hash):
+            raise ValueError("Missing or invalid initData hash")
         hmac_fields = {key: value for key, value in data.items() if key != "hash"}
         check_string = "\n".join(f"{key}={hmac_fields[key]}" for key in sorted(hmac_fields))
         secret_key = hmac.new(b"WebAppData", bot_token.encode("utf-8"), hashlib.sha256).digest()
