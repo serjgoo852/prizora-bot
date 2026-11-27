@@ -76,7 +76,7 @@ def _require_state_secret() -> None:
 
 def _check_origin(request: Request) -> None:
     origin = request.headers.get("origin")
-    if origin and settings.allowed_origins and origin.rstrip("/") not in settings.allowed_origins:
+    if origin and origin.rstrip("/") not in settings.allowed_origins:
         raise HTTPException(status_code=403, detail="Origin is not allowed")
 
 
@@ -147,12 +147,12 @@ def _db_upsert_user_and_session(user: dict[str, Any]) -> str:
                 (%(telegram_id)s, %(username)s, %(first_name)s, %(last_name)s, %(display_name)s,
                  %(photo_url)s, %(language_code)s, NOW(), NOW(), NOW())
             ON CONFLICT (telegram_id) DO UPDATE SET
-                username = EXCLUDED.username,
-                first_name = EXCLUDED.first_name,
-                last_name = EXCLUDED.last_name,
-                display_name = EXCLUDED.display_name,
-                photo_url = EXCLUDED.photo_url,
-                language_code = EXCLUDED.language_code,
+                username = COALESCE(EXCLUDED.username, users.username),
+                first_name = COALESCE(EXCLUDED.first_name, users.first_name),
+                last_name = COALESCE(EXCLUDED.last_name, users.last_name),
+                display_name = COALESCE(EXCLUDED.display_name, users.display_name),
+                photo_url = COALESCE(EXCLUDED.photo_url, users.photo_url),
+                language_code = COALESCE(EXCLUDED.language_code, users.language_code),
                 updated_at = NOW(),
                 last_seen_at = NOW()
             """,
