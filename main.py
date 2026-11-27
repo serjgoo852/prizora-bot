@@ -1641,17 +1641,24 @@ def build_prizora_wheel_animation(language: str = "ru") -> BytesIO:
 
 
 PRESENTATION_GIF_CACHE = {}
+PRESENTATION_GIF_LOCKS = {
+    language: asyncio.Lock() for language in SUPPORTED_LANGUAGES
+}
 
 
 async def get_prizora_presentation_gif(language: str) -> bytes:
-    # Cache immutable pre-rendered bytes; never render 40 GIF frames in a callback.
+    # Share one render per language if /start races with background prewarming.
     gif_bytes = PRESENTATION_GIF_CACHE.get(language)
-    if gif_bytes is None:
-        logging.warning("PRIZORA presentation cache miss for language=%s", language)
-        gif_bytes = await asyncio.to_thread(
-            lambda: build_prizora_wheel_animation(language).getvalue()
-        )
-        PRESENTATION_GIF_CACHE[language] = gif_bytes
+    if gif_bytes is not None:
+        return gif_bytes
+    async with PRESENTATION_GIF_LOCKS[language]:
+        gif_bytes = PRESENTATION_GIF_CACHE.get(language)
+        if gif_bytes is None:
+            logging.warning("PRIZORA presentation cache miss for language=%s", language)
+            gif_bytes = await asyncio.to_thread(
+                lambda: build_prizora_wheel_animation(language).getvalue()
+            )
+            PRESENTATION_GIF_CACHE[language] = gif_bytes
     return gif_bytes
 
 
@@ -3461,11 +3468,6 @@ async def prewarm_presentation_gifs():
 async def post_init(application):
     # Start expensive image rendering in the background. Telegram polling must
     # become available immediately instead of waiting for three GIF encodes.
-    asyncio.create_task(
-        prewarm_presentation_gifs(),
-        name="prizora-presentation-gif-prewarm",
-    )
-
     # Identify the Telegram account bound to this deployment without logging credentials.
     try:
         bot_identity = await application.bot.get_me()
@@ -3483,6 +3485,10 @@ async def post_init(application):
     tasks = [
         asyncio.create_task(contest_scheduler(application), name="prizora-contest-scheduler"),
         asyncio.create_task(ads_expiry_scheduler(), name="prizora-ads-expiry-scheduler"),
+        asyncio.create_task(
+            prewarm_presentation_gifs(),
+            name="prizora-presentation-gif-prewarm",
+        ),
     ]
     application.bot_data["prizora_background_tasks"] = tasks
 
