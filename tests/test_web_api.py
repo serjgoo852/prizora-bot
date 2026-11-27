@@ -180,3 +180,35 @@ def test_optional_web_api_start_failure_does_not_escape(monkeypatch):
 
     assert bot_main.WEB_API_SERVER is None
     assert bot_main.WEB_API_THREAD is None
+
+def test_account_block_is_enforced_by_shared_web_guard(monkeypatch):
+    monkeypatch.setattr(admin, "is_user_blocked", lambda user_id, scope: user_id == 7654321 and scope == "account")
+
+    try:
+        web_api._ensure_account_access(7654321)
+    except web_api.HTTPException as exc:
+        assert exc.status_code == 403
+        assert exc.detail == "Account access is restricted"
+    else:
+        raise AssertionError("blocked Telegram account must not receive web access")
+
+    monkeypatch.setattr(admin, "is_user_blocked", lambda user_id, scope: False)
+    web_api._ensure_account_access(7654321)
+
+
+def test_auth_me_hides_sessions_for_blocked_accounts(monkeypatch):
+    monkeypatch.setattr(
+        web_api,
+        "_current_user",
+        lambda request: {"user_id": 7654321, "telegram_id": 7654321},
+    )
+
+    def reject_blocked_account(user_id):
+        assert user_id == 7654321
+        raise web_api.HTTPException(status_code=403, detail="Account access is restricted")
+
+    monkeypatch.setattr(web_api, "_ensure_account_access", reject_blocked_account)
+    result = web_api.auth_me(SimpleNamespace(cookies={}))
+
+    assert result == {"authenticated": False, "user": None}
+
