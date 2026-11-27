@@ -1,25 +1,21 @@
-name: PRIZORA Telegram bot account bridge checks
+name: PRIZORA shared SQLite web API checks
 
 on:
   push:
     branches:
       - "feature/telegram-bot-account-bridge-*"
     paths:
-      - "auth_bridge.py"
       - "web_api.py"
       - "main.py"
       - "requirements.txt"
-      - "tests/test_auth_bridge.py"
       - "tests/test_web_api.py"
       - "tests/test_telegram_smoke.py"
       - ".github/workflows/telegram-bot-bridge-check.yml"
   pull_request:
     paths:
-      - "auth_bridge.py"
       - "web_api.py"
       - "main.py"
       - "requirements.txt"
-      - "tests/test_auth_bridge.py"
       - "tests/test_web_api.py"
       - "tests/test_telegram_smoke.py"
       - ".github/workflows/telegram-bot-bridge-check.yml"
@@ -28,7 +24,7 @@ permissions:
   contents: read
 
 jobs:
-  bot-bridge-tests:
+  shared-sqlite-api-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -40,6 +36,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt pytest
       - name: Compile bot and bridge
-        run: python -m py_compile main.py admin.py auth_bridge.py web_api.py
+        run: python -m py_compile main.py admin.py web_api.py
       - name: Test optional shared-account bridge and Telegram entry flows
-        run: pytest -q tests/test_auth_bridge.py tests/test_telegram_smoke.py tests/test_web_api.py
+        run: pytest -q tests/test_telegram_smoke.py tests/test_web_api.py
