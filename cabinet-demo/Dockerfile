@@ -1,4 +1,4 @@
 FROM nginx:1.27-alpine
 COPY index.html /usr/share/nginx/html/index.html
-RUN sed -i -E 's/listen[[:space:]]+80;/listen 8080;/; s/listen[[:space:]]+\[::\]:80;/listen [::]:8080;/' /etc/nginx/conf.d/default.conf
+RUN printf 'server {\\n listen 8080;\\n listen [::]:8080;\\n server_name _;\\n root /usr/share/nginx/html;\\n index index.html;\\n location / { try_files $uri $uri/ =404; }\\n}\\n' > /etc/nginx/conf.d/default.conf
 EXPOSE 8080
