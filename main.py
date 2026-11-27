@@ -1638,10 +1638,9 @@ def build_prizora_wheel_animation(language: str = "ru") -> BytesIO:
     frames = banner_frames
 
     output = BytesIO()
-    palette_frame = frames[0]
-    palette_frames = [palette_frame]
-    for frame in frames[1:]:
-        palette_frames.append(frame.quantize(palette=palette_frame))
+    # Every banner frame is already converted to an adaptive P palette above.
+    # Do not quantize P-mode frames again: Pillow only accepts RGB/L as input.
+    palette_frames = frames
     palette_frames[0].save(
         output, format="GIF", save_all=True, append_images=palette_frames[1:],
         duration=85, loop=0, optimize=False, disposal=2,
