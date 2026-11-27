@@ -1,11 +1,15 @@
 """Network-free smoke tests for the Telegram presentation banner."""
 import asyncio
 import os
+import sys
+from pathlib import Path
 import tempfile
 import unittest
 from io import BytesIO
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from PIL import ImageChops, ImageStat
 
