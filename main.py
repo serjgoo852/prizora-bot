@@ -3558,15 +3558,13 @@ async def post_init(application):
             bot_identity.username or "",
             bot_identity.first_name or "",
         )
-        if WEB_API_MODULE is not None:
-            WEB_API_MODULE.set_bot_id(bot_identity.id)
         bot_identity_ready = True
     except Exception:
         logging.exception("PRIZORA_BOT_IDENTITY_CHECK_FAILED")
 
     # Start only after getMe supplied the ID used by signed Mini App payloads.
     if bot_identity_ready:
-        start_web_api()
+        start_web_api(bot_identity.id)
     else:
         logging.error("PRIZORA_WEB_API_NOT_STARTED: Telegram bot identity unavailable")
 
@@ -3605,7 +3603,7 @@ async def post_stop(application):
         await asyncio.gather(*tasks, return_exceptions=True)
 
 
-def start_web_api():
+def start_web_api(bot_id: int | None = None):
     """Start the optional same-database HTTP API without changing bot polling."""
     global WEB_API_MODULE, WEB_API_SERVER, WEB_API_THREAD
     enabled = os.getenv("PRIZORA_WEB_API_ENABLED", "").strip().lower()
@@ -3615,6 +3613,8 @@ def start_web_api():
         import uvicorn
         import web_api
 
+        if bot_id is not None:
+            web_api.set_bot_id(bot_id)
         web_api.init_auth_database()
         WEB_API_MODULE = web_api
         config = uvicorn.Config(
