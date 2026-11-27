@@ -69,6 +69,16 @@ def test_web_session_reuses_existing_profile_and_wallet(tmp_path, monkeypatch):
     database = str(tmp_path / "prizora.sqlite3")
     monkeypatch.setattr(web_api, "DATABASE_PATH", database)
     monkeypatch.setattr(admin, "DATABASE_PATH", database)
+    with sqlite3.connect(database) as db:
+        db.execute("""
+            CREATE TABLE participants (
+                contest_id TEXT NOT NULL,
+                user_id INTEGER NOT NULL,
+                username TEXT,
+                full_name TEXT NOT NULL,
+                joined_at TEXT NOT NULL
+            )
+        """)
     admin.init_admin_database(database)
     web_api.init_auth_database()
     admin.register_user(
