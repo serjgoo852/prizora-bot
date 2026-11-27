@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import admin
 import web_api
+import main as bot_main
 
 
 def _signed_hmac_init_data(user_id: int, bot_token: str, auth_date: int) -> str:
@@ -160,3 +161,22 @@ def test_browser_login_requires_telegram_approval_and_is_one_time(tmp_path, monk
     assert row[0] == 9876543
     assert row[1] is not None
     assert row[2] is None
+
+
+
+def test_optional_web_api_start_failure_does_not_escape(monkeypatch):
+    monkeypatch.setenv("PRIZORA_WEB_API_ENABLED", "1")
+
+    def fail_database_init():
+        raise RuntimeError("simulated optional API startup failure")
+
+    monkeypatch.setattr(web_api, "init_auth_database", fail_database_init)
+    monkeypatch.setattr(bot_main, "WEB_API_MODULE", None)
+    monkeypatch.setattr(bot_main, "WEB_API_SERVER", None)
+    monkeypatch.setattr(bot_main, "WEB_API_THREAD", None)
+
+    # The Telegram process must survive a failure in the optional HTTP service.
+    bot_main.start_web_api(bot_id=9262343933)
+
+    assert bot_main.WEB_API_SERVER is None
+    assert bot_main.WEB_API_THREAD is None
