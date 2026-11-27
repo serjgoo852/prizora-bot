@@ -9,6 +9,7 @@ on:
       - "main.py"
       - "requirements.txt"
       - "tests/test_auth_bridge.py"
+      - "tests/test_telegram_smoke.py"
       - ".github/workflows/telegram-bot-bridge-check.yml"
   pull_request:
     paths:
@@ -16,6 +17,7 @@ on:
       - "main.py"
       - "requirements.txt"
       - "tests/test_auth_bridge.py"
+      - "tests/test_telegram_smoke.py"
       - ".github/workflows/telegram-bot-bridge-check.yml"
 
 permissions:
