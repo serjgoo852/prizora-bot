@@ -1662,12 +1662,32 @@ async def get_prizora_presentation_gif(language: str) -> bytes:
     return gif_bytes
 
 
+def presentation_caption(language: str) -> str:
+    """Keep a readable localized description below the animated presentation."""
+    captions = {
+        "ru": (
+            "👑 PRIZORA — премиальная платформа конкурсов и розыгрышей.\n"
+            "🎁 Участвуй в розыгрышах или создавай собственные конкурсы."
+        ),
+        "en": (
+            "👑 PRIZORA — a premium platform for contests and giveaways.\n"
+            "🎁 Join giveaways or create your own contests."
+        ),
+        "de": (
+            "👑 PRIZORA — eine Premium-Plattform für Wettbewerbe und Gewinnspiele.\n"
+            "🎁 Nimm teil oder erstelle deine eigenen Wettbewerbe."
+        ),
+    }
+    return captions.get(language, captions["en"])
+
+
 async def send_prizora_presentation(message, context, language: str):
     gif_bytes = await get_prizora_presentation_gif(language)
     animation = BytesIO(gif_bytes)
     animation.name = "prizora-premium-wheel.gif"
     await message.reply_animation(
         animation=animation,
+        caption=presentation_caption(language),
         reply_markup=presentation_menu(language),
     )
 
@@ -2171,7 +2191,7 @@ async def button_handler(
             animation = BytesIO(gif_bytes)
             animation.name = "prizora-premium-wheel.gif"
             await query.edit_message_media(
-                media=InputMediaAnimation(media=animation, caption=""),
+                media=InputMediaAnimation(media=animation, caption=presentation_caption(language)),
                 reply_markup=presentation_menu(language),
             )
         else:
