@@ -37,6 +37,7 @@ CLOCK_SKEW_SECONDS = 30
 class Settings:
     database_url = os.getenv("DATABASE_URL", "")
     bot_token = os.getenv("TELEGRAM_BOT_TOKEN", "")
+    bot_sync_secret = os.getenv("BOT_SYNC_SECRET", "")
     oidc_client_id = os.getenv("TELEGRAM_OIDC_CLIENT_ID", "")
     oidc_client_secret = os.getenv("TELEGRAM_OIDC_CLIENT_SECRET", "")
     public_origin = os.getenv("PUBLIC_ORIGIN", "").rstrip("/")
@@ -65,6 +66,15 @@ class MiniAppLogin(BaseModel):
     init_data: str = Field(min_length=1, max_length=16_384)
 
 
+class BotUserSync(BaseModel):
+    telegram_id: int = Field(gt=0)
+    username: str | None = Field(default=None, max_length=64)
+    first_name: str | None = Field(default=None, max_length=128)
+    last_name: str | None = Field(default=None, max_length=128)
+    display_name: str | None = Field(default=None, max_length=160)
+    language_code: str | None = Field(default=None, max_length=16)
+
+
 def _require_database() -> None:
     if not settings.database_url:
         raise HTTPException(status_code=503, detail="Authentication database is not configured")
@@ -81,6 +91,17 @@ def _check_origin(request: Request) -> None:
     origin = request.headers.get("origin")
     if not origin or origin.rstrip("/") not in settings.allowed_origins:
         raise HTTPException(status_code=403, detail="Origin is not allowed")
+
+
+def _require_bot_sync_secret(request: Request) -> None:
+    if len(settings.bot_sync_secret) < 32:
+        raise HTTPException(status_code=503, detail="Bot account sync is not configured")
+    authorization = request.headers.get("authorization", "")
+    scheme, _, supplied = authorization.partition(" ")
+    if scheme.lower() != "bearer" or not supplied or not hmac.compare_digest(
+        supplied, settings.bot_sync_secret
+    ):
+        raise HTTPException(status_code=401, detail="Bot account sync is unauthorized")
 
 
 def _verify_mini_app_init_data(raw: str, bot_token: str, now: int | None = None) -> dict[str, Any]:
@@ -208,6 +229,43 @@ def _current_user(request: Request) -> dict[str, Any] | None:
 @app.get("/healthz")
 def healthz() -> dict[str, str]:
     return {"status": "ok", "service": "prizora-auth"}
+
+
+@app.post("/auth/internal/bot-user")
+def sync_bot_user(payload: BotUserSync, request: Request) -> dict[str, bool]:
+    """Accept a trusted bot-side profile update; never creates a browser session."""
+    _require_bot_sync_secret(request)
+    _require_database()
+    user = {
+        "telegram_id": payload.telegram_id,
+        "username": payload.username,
+        "first_name": payload.first_name,
+        "last_name": payload.last_name,
+        "display_name": payload.display_name,
+        "photo_url": None,
+        "language_code": payload.language_code,
+    }
+    with psycopg.connect(settings.database_url) as conn:
+        conn.execute(
+            """
+            INSERT INTO users
+                (telegram_id, username, first_name, last_name, display_name, photo_url, language_code,
+                 created_at, updated_at, last_seen_at)
+            VALUES
+                (%(telegram_id)s, %(username)s, %(first_name)s, %(last_name)s, %(display_name)s,
+                 %(photo_url)s, %(language_code)s, NOW(), NOW(), NOW())
+            ON CONFLICT (telegram_id) DO UPDATE SET
+                username = COALESCE(EXCLUDED.username, users.username),
+                first_name = COALESCE(EXCLUDED.first_name, users.first_name),
+                last_name = COALESCE(EXCLUDED.last_name, users.last_name),
+                display_name = COALESCE(EXCLUDED.display_name, users.display_name),
+                language_code = COALESCE(EXCLUDED.language_code, users.language_code),
+                updated_at = NOW(),
+                last_seen_at = NOW()
+            """,
+            user,
+        )
+    return {"ok": True}
 
 
 @app.post("/auth/telegram/miniapp")
