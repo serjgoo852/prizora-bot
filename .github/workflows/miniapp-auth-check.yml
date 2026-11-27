@@ -42,12 +42,15 @@ jobs:
               'id="prizora-auth-area"',
               'src="/auth-client.js"',
               'name="prizora-auth-api-origin"',
+              'content="https://prizora-bot-56941e.apps.dada-tuda.ru"',
           ]
           required_js = [
               '"/browser/request"',
               '"/browser/status"',
               '"/telegram/miniapp"',
               '"/me"',
+              '"/api/cabinet"',
+              '"/api/wallet/transactions?limit=10"',
               "poll_secret",
               "credentials: \"include\"",
           ]
@@ -58,3 +61,17 @@ jobs:
               raise SystemExit("Missing frontend auth contract: " + ", ".join(missing))
           print("Frontend auth integration contract: OK")
           PY
+      - name: Build static Mini App container
+        run: docker build -t prizora-mini-auth-check ./miniapp
+      - name: Smoke-test static Mini App container
+        run: |
+          docker run -d --name prizora-mini-auth-smoke -p 127.0.0.1:8080:8080 prizora-mini-auth-check
+          trap 'docker rm -f prizora-mini-auth-smoke >/dev/null 2>&1 || true' EXIT
+          for attempt in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:8080/healthz >/dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8080/healthz | grep -qx 'ok'
+          curl -fsS http://127.0.0.1:8080/ | grep -q 'PRIZORA'
+          curl -fsS http://127.0.0.1:8080/ | grep -q 'https://prizora-bot-56941e.apps.dada-tuda.ru'
+          curl -fsS http://127.0.0.1:8080/auth-client.js | grep -q 'startBrowserLogin'
