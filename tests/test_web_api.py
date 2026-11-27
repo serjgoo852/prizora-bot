@@ -119,3 +119,44 @@ def test_web_session_reuses_existing_profile_and_wallet(tmp_path, monkeypatch):
     assert profile == ("new_username", "Updated User")
     assert wallet == (12345,)
     assert session == (7654321, None)
+
+
+
+def test_browser_login_requires_telegram_approval_and_is_one_time(tmp_path, monkeypatch):
+    database = str(tmp_path / "prizora.sqlite3")
+    monkeypatch.setattr(web_api, "DATABASE_PATH", database)
+    monkeypatch.setattr(admin, "DATABASE_PATH", database)
+    with sqlite3.connect(database) as db:
+        db.execute("""
+            CREATE TABLE participants (
+                contest_id TEXT NOT NULL,
+                user_id INTEGER NOT NULL,
+                username TEXT,
+                full_name TEXT NOT NULL,
+                joined_at TEXT NOT NULL
+            )
+        """)
+    admin.init_admin_database(database)
+    web_api.init_auth_database()
+
+    request = web_api.create_browser_login_request()
+    challenge = request["request_id"]
+    assert web_api.get_browser_login_request(challenge) is True
+    assert web_api.approve_browser_login(
+        challenge,
+        {"id": 9876543, "username": "browser_user", "full_name": "Browser User"},
+    ) is True
+    assert web_api.approve_browser_login(
+        challenge,
+        {"id": 1234567, "username": "other_user", "full_name": "Other User"},
+    ) is False
+
+    with sqlite3.connect(database) as db:
+        row = db.execute(
+            "SELECT telegram_user_id, approved_at, consumed_at "
+            "FROM browser_login_requests WHERE challenge_hash=?",
+            (hashlib.sha256(challenge.encode("ascii")).digest(),),
+        ).fetchone()
+    assert row[0] == 9876543
+    assert row[1] is not None
+    assert row[2] is None

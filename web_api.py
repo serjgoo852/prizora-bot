@@ -28,6 +28,8 @@ import admin
 DATABASE_PATH = os.getenv("DATABASE_PATH", "/data/prizora.sqlite3")
 SESSION_COOKIE = "prizora_session"
 SESSION_TTL_SECONDS = 30 * 24 * 60 * 60
+BROWSER_LOGIN_TTL_SECONDS = 5 * 60
+BROWSER_LOGIN_BOT_USERNAME = os.getenv("PRIZORA_BOT_USERNAME", "Prizora_GlobalBot").lstrip("@")
 INIT_DATA_MAX_AGE_SECONDS = 300
 CLOCK_SKEW_SECONDS = 30
 TELEGRAM_WEBAPP_PUBLIC_KEY = bytes.fromhex(
@@ -54,6 +56,11 @@ if ALLOWED_ORIGINS:
 
 class MiniAppLogin(BaseModel):
     init_data: str = Field(min_length=1, max_length=16_384)
+
+
+class BrowserLoginStatus(BaseModel):
+    request_id: str = Field(min_length=1, max_length=64)
+    poll_secret: str = Field(min_length=1, max_length=128)
 
 
 def set_bot_id(value: int) -> None:
@@ -90,6 +97,23 @@ def init_auth_database() -> None:
         db.execute(
             "CREATE INDEX IF NOT EXISTS idx_web_auth_sessions_expiry "
             "ON web_auth_sessions(expires_at)"
+        )
+        db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS browser_login_requests (
+                challenge_hash BLOB PRIMARY KEY,
+                poll_secret_hash BLOB NOT NULL,
+                created_at TEXT NOT NULL,
+                expires_at TEXT NOT NULL,
+                telegram_user_id INTEGER,
+                approved_at TEXT,
+                consumed_at TEXT
+            )
+            """
+        )
+        db.execute(
+            "CREATE INDEX IF NOT EXISTS idx_browser_login_expiry "
+            "ON browser_login_requests(expires_at)"
         )
 
 
@@ -213,6 +237,73 @@ def _issue_session(user: dict) -> str:
     return raw_token
 
 
+def create_browser_login_request() -> dict:
+    """Create a short-lived browser login challenge and a separate polling secret."""
+    challenge = secrets.token_urlsafe(18)
+    poll_secret = secrets.token_urlsafe(32)
+    now = datetime.now(timezone.utc)
+    with _connect() as db:
+        db.execute(
+            """
+            INSERT INTO browser_login_requests
+                (challenge_hash, poll_secret_hash, created_at, expires_at)
+            VALUES (?, ?, ?, ?)
+            """,
+            (
+                hashlib.sha256(challenge.encode("ascii")).digest(),
+                hashlib.sha256(poll_secret.encode("ascii")).digest(),
+                now.isoformat(timespec="seconds"),
+                (now + timedelta(seconds=BROWSER_LOGIN_TTL_SECONDS)).isoformat(timespec="seconds"),
+            ),
+        )
+    return {
+        "request_id": challenge,
+        "poll_secret": poll_secret,
+        "telegram_url": f"https://t.me/{BROWSER_LOGIN_BOT_USERNAME}?start=web_login_{challenge}",
+        "expires_in": BROWSER_LOGIN_TTL_SECONDS,
+    }
+
+
+def get_browser_login_request(challenge: str) -> bool:
+    """Return whether a browser challenge is still pending and valid."""
+    if not challenge or len(challenge) > 64:
+        return False
+    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    digest = hashlib.sha256(challenge.encode("ascii", errors="ignore")).digest()
+    with _connect() as db:
+        row = db.execute(
+            """
+            SELECT 1 FROM browser_login_requests
+            WHERE challenge_hash=? AND approved_at IS NULL
+              AND consumed_at IS NULL AND expires_at > ?
+            """,
+            (digest, now),
+        ).fetchone()
+    return row is not None
+
+
+def approve_browser_login(challenge: str, telegram_user: dict) -> bool:
+    """Bind a pending browser request to the Telegram account that confirmed it."""
+    if not challenge or len(challenge) > 64:
+        return False
+    user_id = telegram_user.get("id")
+    if isinstance(user_id, bool) or not isinstance(user_id, int) or user_id <= 0:
+        return False
+    digest = hashlib.sha256(challenge.encode("ascii", errors="ignore")).digest()
+    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    with _connect() as db:
+        cursor = db.execute(
+            """
+            UPDATE browser_login_requests
+            SET telegram_user_id=?, approved_at=?
+            WHERE challenge_hash=? AND approved_at IS NULL
+              AND consumed_at IS NULL AND expires_at > ?
+            """,
+            (user_id, now, digest, now),
+        )
+        return cursor.rowcount == 1
+
+
 def _current_user(request: Request) -> dict | None:
     raw_token = request.cookies.get(SESSION_COOKIE)
     if not raw_token:
@@ -273,6 +364,68 @@ def miniapp_login(payload: MiniAppLogin, request: Request, response: Response) -
         path="/",
     )
     return {"ok": True, "authenticated": True}
+
+
+@app.post("/auth/browser/request")
+def browser_login_request(request: Request) -> dict:
+    _check_origin(request)
+    return create_browser_login_request()
+
+
+@app.post("/auth/browser/status")
+def browser_login_status(
+    payload: BrowserLoginStatus,
+    request: Request,
+    response: Response,
+) -> dict:
+    _check_origin(request)
+    request_id = payload.request_id
+    poll_secret = payload.poll_secret
+    challenge_hash = hashlib.sha256(request_id.encode("ascii", errors="ignore")).digest()
+    poll_hash = hashlib.sha256(poll_secret.encode("ascii", errors="ignore")).digest()
+    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    with _connect() as db:
+        row = db.execute(
+            """
+            SELECT telegram_user_id, approved_at, consumed_at, expires_at
+            FROM browser_login_requests
+            WHERE challenge_hash=? AND poll_secret_hash=?
+            """,
+            (challenge_hash, poll_hash),
+        ).fetchone()
+        if not row or row["expires_at"] <= now or row["consumed_at"] is not None:
+            return {"status": "expired"}
+        if row["approved_at"] is None or row["telegram_user_id"] is None:
+            return {"status": "pending"}
+        cursor = db.execute(
+            """
+            UPDATE browser_login_requests SET consumed_at=?
+            WHERE challenge_hash=? AND consumed_at IS NULL
+            """,
+            (now, challenge_hash),
+        )
+        if cursor.rowcount != 1:
+            return {"status": "expired"}
+        user_id = int(row["telegram_user_id"])
+    if admin.is_user_blocked(user_id, scope="account"):
+        raise HTTPException(status_code=403, detail="Account access is restricted")
+    with _connect() as db:
+        profile = db.execute(
+            "SELECT user_id, username, full_name FROM user_profiles WHERE user_id=?",
+            (user_id,),
+        ).fetchone()
+    if not profile:
+        raise HTTPException(status_code=401, detail="Telegram profile not found")
+    raw_token = _issue_session({
+        "id": user_id,
+        "username": profile["username"],
+        "full_name": profile["full_name"],
+    })
+    response.set_cookie(
+        SESSION_COOKIE, raw_token, max_age=SESSION_TTL_SECONDS,
+        httponly=True, secure=True, samesite="none", path="/",
+    )
+    return {"status": "authenticated"}
 
 
 @app.get("/auth/me")
