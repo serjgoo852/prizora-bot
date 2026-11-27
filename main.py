@@ -1947,6 +1947,7 @@ def register_participant(contest_id: str, user) -> str:
 
 async def handle_join_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     admin.register_user(update.effective_user)
+    await auth_bridge.sync_telegram_user(update.effective_user)
     if admin.is_user_blocked(update.effective_user.id, scope="participation"):
         await update.message.reply_text("⛔ Доступ к PRIZORA ограничен. Если считаешь это ошибкой, обратись к администратору.")
         return
