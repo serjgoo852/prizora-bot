@@ -18,7 +18,7 @@
   action.href = BOT_ENTRY_URL;
   action.target = "_blank";
   action.rel = "noopener noreferrer";
-  action.textContent = "Открыть PRIZORA в Telegram";
+  action.textContent = "Войти через Telegram";
   action.hidden = true;
 
   root.append(status, action);
@@ -26,6 +26,76 @@
   const setStatus = (message) => { status.textContent = message; };
   const showLogin = () => { action.hidden = false; };
   const hideLogin = () => { action.hidden = true; };
+
+  let browserLoginInProgress = false;
+  const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
+
+  async function startBrowserLogin(event) {
+    event.preventDefault();
+    if (browserLoginInProgress) return;
+
+    // Open synchronously from the click to avoid popup blocking.
+    const telegramTab = window.open("about:blank", "_blank");
+    if (!telegramTab) {
+      setStatus("Разрешите всплывающие окна, чтобы подтвердить вход через Telegram.");
+      return;
+    }
+
+    browserLoginInProgress = true;
+    action.setAttribute("aria-disabled", "true");
+    setStatus("Создаём защищённый запрос на вход…");
+    try {
+      const createResponse = await fetch(API + "/browser/request", {
+        method: "POST", credentials: "include", cache: "no-store",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: "{}"
+      });
+      if (!createResponse.ok) throw new Error("browser_login_request_failed");
+      const challenge = await createResponse.json();
+      if (!challenge || !challenge.telegram_url || !challenge.request_id || !challenge.poll_secret) {
+        throw new Error("invalid_browser_login_response");
+      }
+      telegramTab.location.href = challenge.telegram_url;
+      setStatus("Подтвердите вход в открывшемся чате PRIZORA в Telegram. Ожидаем подтверждение…");
+
+      const timeoutMs = Math.max(30, Number(challenge.expires_in) || 300) * 1000;
+      const deadline = Date.now() + timeoutMs;
+      while (Date.now() < deadline) {
+        await wait(2000);
+        const statusResponse = await fetch(API + "/browser/status", {
+          method: "POST", credentials: "include", cache: "no-store",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify({ request_id: challenge.request_id, poll_secret: challenge.poll_secret })
+        });
+        if (!statusResponse.ok) throw new Error("browser_login_status_failed");
+        const result = await statusResponse.json();
+        if (result.status === "authenticated") {
+          const session = await getCurrentSession();
+          if (session && session.authenticated && session.user) {
+            displayAuthenticatedUser(session.user);
+            return;
+          }
+          throw new Error("browser_login_session_missing");
+        }
+        if (result.status === "expired") {
+          setStatus("Срок запроса истёк. Нажмите кнопку, чтобы начать вход заново.");
+          showLogin();
+          return;
+        }
+      }
+      setStatus("Время подтверждения истекло. Начните вход заново.");
+      showLogin();
+    } catch (_) {
+      try { telegramTab.close(); } catch (_) {}
+      setStatus("Не удалось выполнить вход через Telegram. Проверьте соединение и попробуйте ещё раз.");
+      showLogin();
+    } finally {
+      browserLoginInProgress = false;
+      action.removeAttribute("aria-disabled");
+    }
+  }
+
+  action.addEventListener("click", startBrowserLogin);
 
   async function getCurrentSession() {
     const response = await fetch(API + "/me", {
