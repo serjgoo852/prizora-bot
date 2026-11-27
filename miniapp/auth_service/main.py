@@ -20,12 +20,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from psycopg.rows import dict_row
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from pydantic import BaseModel, Field
 
 TELEGRAM_ISSUER = "https://oauth.telegram.org"
 TELEGRAM_AUTH_URL = f"{TELEGRAM_ISSUER}/auth"
 TELEGRAM_TOKEN_URL = f"{TELEGRAM_ISSUER}/token"
 TELEGRAM_JWKS_URL = f"{TELEGRAM_ISSUER}/.well-known/jwks.json"
+TELEGRAM_WEBAPP_PUBLIC_KEY = bytes.fromhex("e7bf03a2fa4602af4580703d88dda5bb59f32ed8b02a56c187fe7d34caed242d")
 SESSION_COOKIE = "prizora_session"
 OIDC_STATE_COOKIE = "prizora_oidc_state"
 SESSION_TTL_SECONDS = 30 * 24 * 60 * 60
@@ -37,6 +39,7 @@ CLOCK_SKEW_SECONDS = 30
 class Settings:
     database_url = os.getenv("DATABASE_URL", "")
     bot_token = os.getenv("TELEGRAM_BOT_TOKEN", "")
+    bot_id = os.getenv("TELEGRAM_BOT_ID", "").strip()
     bot_sync_secret = os.getenv("BOT_SYNC_SECRET", "")
     oidc_client_id = os.getenv("TELEGRAM_OIDC_CLIENT_ID", "")
     oidc_client_secret = os.getenv("TELEGRAM_OIDC_CLIENT_SECRET", "")
@@ -104,23 +107,68 @@ def _require_bot_sync_secret(request: Request) -> None:
         raise HTTPException(status_code=401, detail="Bot account sync is unauthorized")
 
 
-def _verify_mini_app_init_data(raw: str, bot_token: str, now: int | None = None) -> dict[str, Any]:
-    if not bot_token:
-        raise ValueError("Mini App verification is not configured")
+def _verify_mini_app_init_data(
+    raw: str,
+    bot_token: str,
+    bot_id: str = "",
+    now: int | None = None,
+) -> dict[str, Any]:
     pairs = parse_qsl(raw, keep_blank_values=True, strict_parsing=True)
     data: dict[str, str] = {}
     for key, value in pairs:
         if key in data:
             raise ValueError("Duplicate initData field")
         data[key] = value
-    received_hash = data.pop("hash", None)
-    if not received_hash or not re.fullmatch(r"[0-9a-fA-F]{64}", received_hash):
-        raise ValueError("Missing or invalid initData hash")
-    check_string = "\n".join(f"{key}={data[key]}" for key in sorted(data))
-    secret_key = hmac.new(b"WebAppData", bot_token.encode("utf-8"), hashlib.sha256).digest()
-    calculated_hash = hmac.new(secret_key, check_string.encode("utf-8"), hashlib.sha256).hexdigest()
-    if not hmac.compare_digest(calculated_hash, received_hash.lower()):
-        raise ValueError("Invalid Telegram initData signature")
+
+    received_hash = data.get("hash", "")
+    received_signature = data.get("signature", "")
+    verified = False
+
+    # Telegram's third-party Ed25519 validation lets this separate auth service
+    # verify Mini App data without storing or copying the bot's private token.
+    if received_signature and bot_id:
+        if not re.fullmatch(r"[0-9]+", bot_id):
+            raise ValueError("Telegram bot ID is invalid")
+        if not re.fullmatch(r"[A-Za-z0-9_-]+", received_signature):
+            raise ValueError("Telegram initData signature encoding is invalid")
+        try:
+            signature_bytes = base64.urlsafe_b64decode(
+                received_signature + "=" * (-len(received_signature) % 4)
+            )
+        except Exception as exc:
+            raise ValueError("Telegram initData signature encoding is invalid") from exc
+        if len(signature_bytes) != 64:
+            raise ValueError("Telegram initData signature length is invalid")
+        third_party_fields = {
+            key: value for key, value in data.items()
+            if key not in {"hash", "signature"}
+        }
+        check_string = (
+            f"{bot_id}:WebAppData\n"
+            + "\n".join(f"{key}={third_party_fields[key]}" for key in sorted(third_party_fields))
+        )
+        try:
+            Ed25519PublicKey.from_public_bytes(TELEGRAM_WEBAPP_PUBLIC_KEY).verify(
+                signature_bytes, check_string.encode("utf-8")
+            )
+        except Exception as exc:
+            raise ValueError("Invalid Telegram initData signature") from exc
+        verified = True
+
+    # Backward-compatible first-party HMAC verification for clients that do
+    # not include Telegram's third-party signature field.
+    elif bot_token and received_hash and re.fullmatch(r"[0-9a-fA-F]{64}", received_hash):
+        hmac_fields = {key: value for key, value in data.items() if key != "hash"}
+        check_string = "\n".join(f"{key}={hmac_fields[key]}" for key in sorted(hmac_fields))
+        secret_key = hmac.new(b"WebAppData", bot_token.encode("utf-8"), hashlib.sha256).digest()
+        calculated_hash = hmac.new(secret_key, check_string.encode("utf-8"), hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(calculated_hash, received_hash.lower()):
+            raise ValueError("Invalid Telegram initData signature")
+        verified = True
+
+    if not verified:
+        raise ValueError("Mini App verification is not configured or signed data is missing")
+
     try:
         auth_date = int(data["auth_date"])
         user = json.loads(data["user"])
@@ -273,7 +321,7 @@ def miniapp_login(payload: MiniAppLogin, request: Request, response: Response) -
     _check_origin(request)
     _require_database()
     try:
-        user = _verify_mini_app_init_data(payload.init_data, settings.bot_token)
+        user = _verify_mini_app_init_data(payload.init_data, settings.bot_token, settings.bot_id)
     except ValueError as exc:
         raise HTTPException(status_code=401, detail=str(exc)) from exc
     raw_session = _db_upsert_user_and_session(user)
