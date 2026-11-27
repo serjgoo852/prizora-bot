@@ -16,8 +16,8 @@ def test_auth_client_posts_raw_init_data_and_uses_server_session():
     assert 'telegram.initData' in client
     assert 'init_data: initData' in client
     assert 'credentials: "same-origin"' in client
-    assert '"/auth/me"' in client
-    assert '"/auth/telegram/start"' in client
+    assert 'API + "/me"' in client
+    assert 'API + "/telegram/start"' in client
     assert "initDataUnsafe" not in client
     assert "localStorage" not in client
     assert "sessionStorage" not in client
