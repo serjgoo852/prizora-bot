@@ -2070,6 +2070,28 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     restore_user_language(update.effective_user, context)
+    if context.args and context.args[0].startswith("web_login_"):
+        challenge = context.args[0][len("web_login_"):]
+        if WEB_API_MODULE is None or not WEB_API_MODULE.get_browser_login_request(challenge):
+            await update.message.reply_text(
+                "Ссылка для входа недействительна или срок её действия истёк. "
+                "Вернись на сайт PRIZORA и начни вход заново."
+            )
+            return
+        keyboard = InlineKeyboardMarkup([[
+            InlineKeyboardButton(
+                "Подтвердить вход на сайте PRIZORA",
+                callback_data=f"web_login:approve:{challenge}",
+            )
+        ]])
+        await update.message.reply_text(
+            "🔐 Запрошен вход в PRIZORA через браузер.\n\n"
+            "Если ты сам начал вход на официальном сайте PRIZORA, подтверди его кнопкой ниже. "
+            "Если запрос не твой — ничего не нажимай.",
+            reply_markup=keyboard,
+        )
+        return
+
     if context.args and context.args[0].startswith("join_"):
         # Preserve existing contest deep links and participant registration.
         await handle_join_start(update, context)
@@ -2125,6 +2147,30 @@ async def button_handler(
         return
     if admin.is_user_blocked(query.from_user.id, scope="account"):
         await query.answer("⛔ Доступ к PRIZORA ограничен.", show_alert=True)
+        return
+    if data.startswith("web_login:approve:"):
+        challenge = data.split(":", 2)[2]
+        approved = (
+            WEB_API_MODULE is not None
+            and WEB_API_MODULE.approve_browser_login(
+                challenge,
+                {
+                    "id": query.from_user.id,
+                    "username": query.from_user.username,
+                    "full_name": query.from_user.full_name,
+                },
+            )
+        )
+        if approved:
+            await query.answer("Вход подтверждён.")
+            await query.edit_message_text(
+                "✅ Вход подтверждён. Вернись в браузер — PRIZORA завершит авторизацию."
+            )
+        else:
+            await query.answer(
+                "Запрос уже использован или срок его действия истёк. Начни вход на сайте заново.",
+                show_alert=True,
+            )
         return
     await query.answer()
     language = current_language(context)
