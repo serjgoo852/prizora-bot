@@ -1633,7 +1633,7 @@ def build_prizora_wheel_animation(language: str = "ru") -> BytesIO:
 
         draw_audience_panel(14, left_copy)
         draw_audience_panel(814, right_copy)
-        banner_frames.append(banner.quantize(colors=255))
+        banner_frames.append(banner.convert("RGB").quantize(colors=255))
 
     frames = banner_frames
 
