@@ -37,5 +37,5 @@ jobs:
           pip install -r requirements.txt pytest
       - name: Compile bot and bridge
         run: python -m py_compile main.py admin.py web_api.py
-      - name: Test optional shared-account bridge and Telegram entry flows
+      - name: Test shared SQLite authentication and Telegram entry flows
         run: pytest -q tests/test_telegram_smoke.py tests/test_web_api.py
