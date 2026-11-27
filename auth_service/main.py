@@ -76,8 +76,10 @@ def _require_state_secret() -> None:
 
 
 def _check_origin(request: Request) -> None:
+    # POST endpoints must carry an exact allowlisted Origin. Reject missing
+    # Origin too, rather than treating it as permission to bypass CSRF checks.
     origin = request.headers.get("origin")
-    if origin and origin.rstrip("/") not in settings.allowed_origins:
+    if not origin or origin.rstrip("/") not in settings.allowed_origins:
         raise HTTPException(status_code=403, detail="Origin is not allowed")
 
 
