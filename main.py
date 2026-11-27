@@ -3409,6 +3409,18 @@ async def ads_expiry_scheduler():
 
 
 async def post_init(application):
+    # Identify the Telegram account bound to this deployment without logging credentials.
+    try:
+        bot_identity = await application.bot.get_me()
+        logging.info(
+            "PRIZORA_BOT_IDENTITY: id=%s username=@%s first_name=%s",
+            bot_identity.id,
+            bot_identity.username or "",
+            bot_identity.first_name or "",
+        )
+    except Exception:
+        logging.exception("PRIZORA_BOT_IDENTITY_CHECK_FAILED")
+
     # post_init runs before Application.start(), so Application.create_task()
     # would warn that these tasks are not tracked for graceful shutdown.
     tasks = [
