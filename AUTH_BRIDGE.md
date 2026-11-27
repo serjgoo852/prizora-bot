@@ -13,7 +13,7 @@ The secret must not be committed to Git or sent to the browser. The bot request 
 
 ## Behavior
 
-- On `/start` and ordinary text interaction, the bot keeps calling its existing `admin.register_user` and then makes a best-effort profile sync to the shared auth API.
+- On `/start`, contest deep-link entry (`/start join_…`) and ordinary text interaction, the bot keeps calling its existing `admin.register_user` and then makes a best-effort profile sync to the shared auth API.
 - In private chats, the presentation banner's site button opens PRIZORA as a Telegram Mini App (`web_app`), which supplies signed `Telegram.WebApp.initData` for automatic login. In groups, Telegram restricts this button type, so the bot keeps a normal website link; users there can use the website's Telegram Login button.
 - If the bridge variables are absent, the bot skips remote sync and behaves exactly as before.
 - If the API is unavailable, the bot logs a generic warning and continues using its local SQLite database.
