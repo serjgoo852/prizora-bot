@@ -25,6 +25,7 @@ import fontpkg
 
 import ads
 import admin
+import auth_bridge
 
 from security import install_secret_redaction
 
@@ -2050,6 +2051,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # need to type the command. Read the saved language before registration.
     saved_language = admin.get_user_language(update.effective_user.id)
     admin.register_user(update.effective_user)
+    await auth_bridge.sync_telegram_user(update.effective_user)
     if admin.is_user_blocked(update.effective_user.id, scope="account"):
         await update.message.reply_text("⛔ Доступ к PRIZORA ограничен. Если считаешь это ошибкой, обратись к администратору.")
         return
@@ -2991,6 +2993,7 @@ async def prize_text_handler(
         await update.message.reply_text("⛔ Доступ к PRIZORA ограничен. Если считаешь это ошибкой, обратись к администратору.")
         return
     admin.register_user(update.effective_user)
+    await auth_bridge.sync_telegram_user(update.effective_user)
     message_text = (update.message.text or "").strip()
 
     ads_step = context.user_data.get("ads_step")
