@@ -7,6 +7,7 @@ The working branch contains the authentication API, a browser/Mini App login cli
 ## Architecture prepared in this branch
 
 - The existing `prizora-mini` site remains the public entry point.
+- The bot's private-chat site button is updated separately in PR #28 to open this URL as a Telegram Mini App, providing signed `Telegram.WebApp.initData` for automatic login. A normal browser visit uses Telegram OIDC.
 - The Mini App Docker build context remains `miniapp/`.
 - One container runs Nginx and FastAPI together under Supervisor.
 - Nginx serves the static homepage and proxies same-origin `/auth/*` requests to Uvicorn on `127.0.0.1:8000`; only port `8080` is exposed.
