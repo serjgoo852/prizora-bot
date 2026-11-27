@@ -1369,7 +1369,7 @@ def build_prizora_wheel_animation(language: str = "ru") -> BytesIO:
     """Render a polished gold-and-obsidian 3D-style prize wheel GIF for Telegram."""
     size = 560
     center = size // 2
-    radius = 218
+    radius = 245
     gold = (232, 187, 91, 255)
     bright_gold = (255, 226, 157, 255)
     dark_gold = (111, 72, 25, 255)
@@ -1383,9 +1383,9 @@ def build_prizora_wheel_animation(language: str = "ru") -> BytesIO:
         font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 
     try:
-        brand_font = ImageFont.truetype(font_path, 29)
-        sub_font = ImageFont.truetype(font_path, 12)
-        prize_font = ImageFont.truetype(font_path, 16)
+        brand_font = ImageFont.truetype(font_path, 32)
+        sub_font = ImageFont.truetype(font_path, 16)
+        prize_font = ImageFont.truetype(font_path, 20)
     except OSError as exc:
         raise RuntimeError(
             "PRIZORA presentation font is unavailable; refusing to render "
@@ -1428,14 +1428,14 @@ def build_prizora_wheel_animation(language: str = "ru") -> BytesIO:
                    outline=(213, 165, 75, 255), width=3)
         # Fine radial bevel line and a gold inset around each prize.
         angle = math.radians(a0 + 22.5)
-        x = center + math.cos(angle) * 151
-        y = center + math.sin(angle) * 151
-        d.ellipse((x-47, y-47, x+47, y+47),
+        x = center + math.cos(angle) * 166
+        y = center + math.sin(angle) * 166
+        d.ellipse((x-54, y-54, x+54, y+54),
                   fill=(9, 11, 16, 255), outline=(113, 81, 37, 255), width=3)
-        d.ellipse((x-42, y-42, x+42, y+42),
+        d.ellipse((x-48, y-48, x+48, y+48),
                   outline=(242, 204, 126, 255), width=2)
         # Gloss highlight makes the medallion look like polished glass.
-        d.arc((x-36, y-36, x+36, y+36), 198, 326,
+        d.arc((x-42, y-42, x+42, y+42), 198, 326,
               fill=(255, 245, 213, 190), width=2)
 
         ink = (255, 239, 199, 255)
@@ -1502,8 +1502,8 @@ def build_prizora_wheel_animation(language: str = "ru") -> BytesIO:
                         outline=ink, width=2)
 
         # Short labels sit on the outer part of each sector, not over the prize.
-        tx = center + math.cos(angle) * 202
-        ty = center + math.sin(angle) * 202
+        tx = center + math.cos(angle) * 222
+        ty = center + math.sin(angle) * 222
         d.text((tx, ty), label, font=prize_font, fill=ivory, anchor="mm",
                stroke_width=1, stroke_fill=(0,0,0,220))
 
@@ -1608,9 +1608,9 @@ def build_prizora_wheel_animation(language: str = "ru") -> BytesIO:
 
         # The wheel now occupies almost the full banner width.
         large_wheel = wheel_frame.convert("RGB").resize(
-            (660, 660), Image.Resampling.LANCZOS
+            (700, 700), Image.Resampling.LANCZOS
         )
-        banner.paste(large_wheel, (30, 120))
+        banner.paste(large_wheel, (10, 100))
 
         title, subtitle = bottom_copy
         bd = ImageDraw.Draw(banner)
@@ -1636,8 +1636,20 @@ def build_prizora_wheel_animation(language: str = "ru") -> BytesIO:
     return output
 
 
+PRESENTATION_GIF_CACHE = {}
+
+
 async def send_prizora_presentation(message, context, language: str):
-    animation = build_prizora_wheel_animation(language)
+    # Send immutable pre-rendered bytes; never render 40 GIF frames during /start.
+    gif_bytes = PRESENTATION_GIF_CACHE.get(language)
+    if gif_bytes is None:
+        logging.warning("PRIZORA presentation cache miss for language=%s", language)
+        gif_bytes = await asyncio.to_thread(
+            lambda: build_prizora_wheel_animation(language).getvalue()
+        )
+        PRESENTATION_GIF_CACHE[language] = gif_bytes
+    animation = BytesIO(gif_bytes)
+    animation.name = "prizora-premium-wheel.gif"
     await message.reply_animation(
         animation=animation,
         reply_markup=presentation_menu(language),
@@ -3394,6 +3406,25 @@ async def ads_expiry_scheduler():
 
 
 async def post_init(application):
+    # Pre-render all welcome GIFs before polling starts so /start never waits
+    # for CPU-heavy Pillow drawing and GIF encoding.
+    for presentation_language in SUPPORTED_LANGUAGES:
+        try:
+            gif = await asyncio.to_thread(
+                build_prizora_wheel_animation, presentation_language
+            )
+            PRESENTATION_GIF_CACHE[presentation_language] = gif.getvalue()
+            logging.info(
+                "PRIZORA presentation GIF cached: language=%s bytes=%s",
+                presentation_language,
+                len(PRESENTATION_GIF_CACHE[presentation_language]),
+            )
+        except Exception:
+            logging.exception(
+                "PRIZORA presentation GIF pre-render failed: language=%s",
+                presentation_language,
+            )
+
     # Identify the Telegram account bound to this deployment without logging credentials.
     try:
         bot_identity = await application.bot.get_me()
