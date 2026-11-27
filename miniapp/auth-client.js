@@ -67,16 +67,8 @@
       } catch (_) {}
     }
 
-    try {
-      const session = await getCurrentSession();
-      if (session && session.authenticated && session.user) {
-        displayAuthenticatedUser(session.user);
-        return;
-      }
-    } catch (_) {
-      // The public page remains usable if the auth API is not deployed yet.
-    }
-
+    // In a Mini App, always validate the current launch payload first. This
+    // prevents a stale browser cookie from masking a Telegram account switch.
     const initData = telegram && typeof telegram.initData === "string"
       ? telegram.initData
       : "";
@@ -98,6 +90,16 @@
         showLogin();
       }
       return;
+    }
+
+    try {
+      const session = await getCurrentSession();
+      if (session && session.authenticated && session.user) {
+        displayAuthenticatedUser(session.user);
+        return;
+      }
+    } catch (_) {
+      // The public page remains usable if the auth API is not deployed yet.
     }
 
     setStatus("Войдите через Telegram, чтобы использовать единый аккаунт PRIZORA.");
