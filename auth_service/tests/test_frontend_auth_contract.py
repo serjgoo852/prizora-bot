@@ -34,3 +34,21 @@ def test_cabinet_preview_requires_shared_telegram_session():
     assert 'AUTH_API + "/me"' in cabinet
     assert 'telegramAccountLabel' in cabinet
     assert 'localStorage' not in cabinet[cabinet.find('<script id="prizora-cabinet-auth">'):]
+
+def test_miniapp_docker_bundle_matches_canonical_auth_service():
+    for name in ("main.py", "requirements.txt", "schema.sql", "__init__.py"):
+        canonical = (ROOT / "auth_service" / name).read_bytes()
+        bundled = (ROOT / "miniapp" / "auth_service" / name).read_bytes()
+        assert bundled == canonical, f"Mini App auth bundle is stale: {name}"
+
+
+def test_miniapp_container_runs_api_and_proxies_auth_routes():
+    dockerfile = (ROOT / "miniapp" / "Dockerfile").read_text(encoding="utf-8")
+    nginx = (ROOT / "miniapp" / "nginx.conf").read_text(encoding="utf-8")
+    supervisor = (ROOT / "miniapp" / "supervisord.conf").read_text(encoding="utf-8")
+    assert "COPY auth_service /app/auth_service" in dockerfile
+    assert "supervisord" in dockerfile
+    assert "uvicorn auth_service.main:app" in supervisor
+    assert "location ^~ /auth/" in nginx
+    assert "proxy_pass http://127.0.0.1:8000;" in nginx
+    assert "location = /healthz" in nginx
