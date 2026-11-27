@@ -1,0 +1,54 @@
+name: PRIZORA browser auth frontend checks
+
+on:
+  push:
+    branches:
+      - feature/browser-login-ui-2026-11-28
+  pull_request:
+    branches:
+      - feature/telegram-unified-auth-2026-11-27
+    paths:
+      - "miniapp/auth-client.js"
+      - "miniapp/index.html"
+      - ".github/workflows/miniapp-auth-check.yml"
+
+jobs:
+  frontend-auth:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check JavaScript syntax
+        run: node --check miniapp/auth-client.js
+      - name: Check frontend integration contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          html = Path("miniapp/index.html").read_text(encoding="utf-8")
+          js = Path("miniapp/auth-client.js").read_text(encoding="utf-8")
+
+          required_html = [
+              'id="prizora-auth-area"',
+              'src="/auth-client.js"',
+              'name="prizora-auth-api-origin"',
+          ]
+          required_js = [
+              '"/browser/request"',
+              '"/browser/status"',
+              '"/telegram/miniapp"',
+              '"/me"',
+              "poll_secret",
+              "credentials: \"include\"",
+          ]
+
+          missing = [item for item in required_html if item not in html]
+          missing += [item for item in required_js if item not in js]
+          if missing:
+              raise SystemExit("Missing frontend auth contract: " + ", ".join(missing))
+          print("Frontend auth integration contract: OK")
+          PY
