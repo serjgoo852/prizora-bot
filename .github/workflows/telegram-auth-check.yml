@@ -35,6 +35,16 @@ jobs:
         run: pytest -q auth_service/tests
       - name: Build integrated Mini App and auth API container
         run: docker build -t prizora-mini-auth-check ./miniapp
+      - name: Smoke-test integrated container routes
+        run: |
+          docker run -d --name prizora-auth-smoke -p 127.0.0.1:8080:8080 prizora-mini-auth-check
+          trap 'docker rm -f prizora-auth-smoke >/dev/null 2>&1 || true' EXIT
+          for attempt in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:8080/healthz >/dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8080/healthz
+          curl -fsS http://127.0.0.1:8080/auth/me | grep -q '"authenticated":false'
       - name: Check browser authentication JavaScript
         run: |
           node --check miniapp/auth-client.js
