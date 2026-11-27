@@ -1615,10 +1615,13 @@ def build_prizora_wheel_animation(language: str = "ru") -> BytesIO:
 
         title, subtitle = bottom_copy
         bd = ImageDraw.Draw(banner)
-        bd.text((360, 842), title, font=panel_title_font,
+        # Keep the footer comfortably inside the GIF's visible area.
+        # Telegram places inline buttons immediately below the media; the
+        # previous near-edge footer looked clipped/covered on some clients.
+        bd.text((360, 805), title, font=panel_title_font,
                 fill=(255, 222, 155), anchor="mm", stroke_width=1,
                 stroke_fill=(92, 59, 20))
-        bd.text((360, 900), subtitle, font=panel_sub_font,
+        bd.text((360, 858), subtitle, font=panel_sub_font,
                 fill=(245, 240, 226), anchor="mm")
         banner_frames.append(banner.convert("RGB").quantize(colors=255, dither=Image.Dither.NONE))
 
@@ -1638,17 +1641,24 @@ def build_prizora_wheel_animation(language: str = "ru") -> BytesIO:
 
 
 PRESENTATION_GIF_CACHE = {}
+PRESENTATION_GIF_LOCKS = {
+    language: asyncio.Lock() for language in SUPPORTED_LANGUAGES
+}
 
 
 async def get_prizora_presentation_gif(language: str) -> bytes:
-    # Cache immutable pre-rendered bytes; never render 40 GIF frames in a callback.
+    # Share one render per language if /start races with background prewarming.
     gif_bytes = PRESENTATION_GIF_CACHE.get(language)
-    if gif_bytes is None:
-        logging.warning("PRIZORA presentation cache miss for language=%s", language)
-        gif_bytes = await asyncio.to_thread(
-            lambda: build_prizora_wheel_animation(language).getvalue()
-        )
-        PRESENTATION_GIF_CACHE[language] = gif_bytes
+    if gif_bytes is not None:
+        return gif_bytes
+    async with PRESENTATION_GIF_LOCKS[language]:
+        gif_bytes = PRESENTATION_GIF_CACHE.get(language)
+        if gif_bytes is None:
+            logging.warning("PRIZORA presentation cache miss for language=%s", language)
+            gif_bytes = await asyncio.to_thread(
+                lambda: build_prizora_wheel_animation(language).getvalue()
+            )
+            PRESENTATION_GIF_CACHE[language] = gif_bytes
     return gif_bytes
 
 
@@ -2041,9 +2051,25 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["suggested_language"] = language
     admin.set_user_language(update.effective_user.id, language)
 
-    # First visit and every later visit open the same presentation directly.
-    # Telegram itself supplies the one-time native Start button for new users.
-    await send_prizora_presentation(update.message, context, language)
+    # Acknowledge /start immediately. GIF rendering/upload may take several
+    # seconds on a cold start, so never leave the user staring at a silent bot.
+    loading_text = {
+        "ru": "⏳ PRIZORA запускается. Сейчас открою презентацию…",
+        "en": "⏳ PRIZORA is starting. Opening the presentation…",
+        "de": "⏳ PRIZORA startet. Die Präsentation wird geöffnet…",
+    }.get(language, "⏳ PRIZORA is starting…")
+    loading_message = await update.message.reply_text(loading_text)
+    try:
+        await send_prizora_presentation(update.message, context, language)
+        await loading_message.delete()
+    except Exception:
+        logging.exception("Could not send PRIZORA presentation after /start")
+        retry_text = {
+            "ru": "Не удалось загрузить баннер. Нажми /start ещё раз.",
+            "en": "The banner could not be loaded. Please tap /start again.",
+            "de": "Das Banner konnte nicht geladen werden. Bitte /start erneut senden.",
+        }.get(language, "The banner could not be loaded. Please try /start again.")
+        await loading_message.edit_text(retry_text)
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if admin.is_user_blocked(update.effective_user.id, scope="account"):
@@ -3417,10 +3443,11 @@ async def ads_expiry_scheduler():
         await asyncio.sleep(60)
 
 
-async def post_init(application):
-    # Pre-render all welcome GIFs before polling starts so /start never waits
-    # for CPU-heavy Pillow drawing and GIF encoding.
+async def prewarm_presentation_gifs():
+    """Warm language-specific GIFs after polling starts, never delaying bot startup."""
     for presentation_language in SUPPORTED_LANGUAGES:
+        if presentation_language in PRESENTATION_GIF_CACHE:
+            continue
         try:
             gif = await asyncio.to_thread(
                 build_prizora_wheel_animation, presentation_language
@@ -3437,6 +3464,10 @@ async def post_init(application):
                 presentation_language,
             )
 
+
+async def post_init(application):
+    # Start expensive image rendering in the background. Telegram polling must
+    # become available immediately instead of waiting for three GIF encodes.
     # Identify the Telegram account bound to this deployment without logging credentials.
     try:
         bot_identity = await application.bot.get_me()
@@ -3454,6 +3485,10 @@ async def post_init(application):
     tasks = [
         asyncio.create_task(contest_scheduler(application), name="prizora-contest-scheduler"),
         asyncio.create_task(ads_expiry_scheduler(), name="prizora-ads-expiry-scheduler"),
+        asyncio.create_task(
+            prewarm_presentation_gifs(),
+            name="prizora-presentation-gif-prewarm",
+        ),
     ]
     application.bot_data["prizora_background_tasks"] = tasks
 
