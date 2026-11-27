@@ -21,6 +21,7 @@ from telegram.ext import (
 )
 from telegram.error import TelegramError
 from PIL import Image, ImageDraw, ImageFont
+import fontpkg
 
 import ads
 import admin
@@ -1374,15 +1375,22 @@ def build_prizora_wheel_animation(language: str = "ru") -> BytesIO:
     dark_gold = (111, 72, 25, 255)
     ivory = (255, 245, 220, 255)
 
-    font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+    # Use the bundled Roboto font package so Cyrillic, English and German
+    # glyphs are available even in minimal containers without OS font packages.
+    try:
+        font_path = str(fontpkg.path("Roboto", weight=700))
+    except Exception:
+        font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+
     try:
         brand_font = ImageFont.truetype(font_path, 29)
         sub_font = ImageFont.truetype(font_path, 12)
         prize_font = ImageFont.truetype(font_path, 16)
-    except OSError:
-        brand_font = ImageFont.load_default()
-        sub_font = brand_font
-        prize_font = brand_font
+    except OSError as exc:
+        raise RuntimeError(
+            "PRIZORA presentation font is unavailable; refusing to render "
+            "text with a font that may not support Cyrillic."
+        ) from exc
 
     # Rich dark radial backdrop with a soft spotlight behind the wheel.
     background = Image.new("RGB", (size, size))
