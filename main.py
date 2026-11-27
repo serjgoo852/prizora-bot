@@ -2488,15 +2488,15 @@ async def button_handler(
             }
             title, participant_label, telegram_label, since_label, entries_label, wins_label, history_label, empty_label = labels.get(lang, labels["en"])
             body = (
-                f"{title}\\n━━━━━━━━━━━━━━━━━━\\n"
-                f"{participant_label}: {name}\\n"
-                f"{telegram_label}: {username}\\n"
-                f"{since_label}: {joined}\\n\\n"
-                f"🎟 {entries_label}: {overview['participations']}\\n"
+                f"{title}\n━━━━━━━━━━━━━━━━━━\n"
+                f"{participant_label}: {name}\n"
+                f"{telegram_label}: {username}\n"
+                f"{since_label}: {joined}\n\n"
+                f"🎟 {entries_label}: {overview['participations']}\n"
                 f"🏆 {wins_label}: {overview['wins']}"
             )
             if not overview["profile"]:
-                body += "\\n\\nПрофиль будет создан при следующем запуске PRIZORA."
+                body += "\n\nПрофиль будет создан при следующем запуске PRIZORA."
             keyboard = [[InlineKeyboardButton(history_label, callback_data="participant:history")],
                         [InlineKeyboardButton(tr(context, "back_home"), callback_data="home")]]
             await query.edit_message_text(body, reply_markup=InlineKeyboardMarkup(keyboard))
@@ -2525,12 +2525,12 @@ async def button_handler(
                         status = lost_label
                     else:
                         status = active_label
-                    lines.append(f"{index}. 🎁 {item['prize_name'][:70]}\\n   {item['destination_title'][:55]}\\n   {status}")
+                    lines.append(f"{index}. 🎁 {item['prize_name'][:70]}\n   {item['destination_title'][:55]}\n   {status}")
             keyboard = [
                 [InlineKeyboardButton({"ru": "‹ В личный кабинет", "en": "‹ Participant account", "de": "‹ Teilnehmerkonto"}.get(lang, "‹ Participant account"), callback_data="participant:home")],
                 [InlineKeyboardButton(tr(context, "back_home"), callback_data="home")],
             ]
-            await query.edit_message_text("\\n\\n".join(lines), reply_markup=InlineKeyboardMarkup(keyboard))
+            await query.edit_message_text("\n\n".join(lines), reply_markup=InlineKeyboardMarkup(keyboard))
         except sqlite3.Error:
             logging.exception("Participant history lookup failed")
             await query.edit_message_text(tr(context, "contest_not_found"))
