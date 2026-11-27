@@ -48,8 +48,9 @@ Review and apply \`schema.sql\` manually to the dedicated PostgreSQL database. T
 6. Add the visible “Войти через Telegram” button to the ordinary browser landing page and call \`/auth/telegram/start\`.
 7. Connect the cabinet using \`/auth/me\`; preserve the agreed behavior that successful login returns to the main page, not directly to the cabinet.
 8. Add automated tests, security review, rate limiting, operational monitoring and session cleanup before production.
-9. Bridge the existing bot SQLite profile/wallet records by Telegram ID in a staged migration. Do not replace or discard existing bot data.
-10. The cabinet preview still displays sample contest, wallet and advertising data after authentication; it is not connected to real bot records or payment operations.
+9. The API now has a private bot profile-sync endpoint. Add the matching optional client to the bot in its own branch, configure the same `BOT_SYNC_SECRET` on both services, then verify profile sync in a test deployment.
+10. This bridge synchronizes identity/profile only. Existing bot SQLite profiles, wallets, contest and advertising records remain in SQLite; no balances or business data are migrated.
+11. The cabinet preview still displays sample contest, wallet and advertising data after authentication; it is not connected to real bot records or payment operations.
 
 ## Security notes
 
