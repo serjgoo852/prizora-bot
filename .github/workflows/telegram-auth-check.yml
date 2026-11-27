@@ -33,3 +33,16 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: pytest -q auth_service/tests
+      - name: Check browser authentication JavaScript
+        run: |
+          node --check miniapp/auth-client.js
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          html = Path("cabinet-demo/index.html").read_text(encoding="utf-8")
+          match = re.search(r'<script id="prizora-cabinet-auth">(.*?)</script>', html, re.S)
+          if not match:
+              raise SystemExit("Cabinet auth script was not found")
+          Path("/tmp/prizora-cabinet-auth.js").write_text(match.group(1), encoding="utf-8")
+          PY
+          node --check /tmp/prizora-cabinet-auth.js
