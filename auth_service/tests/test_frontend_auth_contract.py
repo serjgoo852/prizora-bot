@@ -37,28 +37,20 @@ def test_cabinet_preview_requires_shared_telegram_session():
     assert 'telegramAccountLabel' in cabinet
     assert 'localStorage' not in cabinet[cabinet.find('<script id="prizora-cabinet-auth">'):]
 
-def test_miniapp_docker_bundle_matches_canonical_auth_service():
-    for name in ("main.py", "requirements.txt", "schema.sql", "__init__.py"):
-        canonical = (ROOT / "auth_service" / name).read_bytes()
-        bundled = (ROOT / "miniapp" / "auth_service" / name).read_bytes()
-        assert bundled == canonical, f"Mini App auth bundle is stale: {name}"
+def test_homepage_container_does_not_bundle_a_second_auth_database():
+    dockerfile = (ROOT / "miniapp" / "Dockerfile").read_text(encoding="utf-8")
+    assert "COPY auth_service" not in dockerfile
+    assert "DATABASE_URL" not in dockerfile
 
 
-def test_miniapp_container_runs_api_and_proxies_auth_routes():
+def test_homepage_container_is_static_and_healthcheck_is_local():
     dockerfile = (ROOT / "miniapp" / "Dockerfile").read_text(encoding="utf-8")
     nginx = (ROOT / "miniapp" / "nginx.conf").read_text(encoding="utf-8")
-    supervisor = (ROOT / "miniapp" / "supervisord.conf").read_text(encoding="utf-8")
-    assert "COPY auth_service /app/auth_service" in dockerfile
-    assert "supervisord" in dockerfile
-    assert "uvicorn auth_service.main:app" in supervisor
-    assert "location ^~ /auth/" in nginx
-    assert "proxy_pass http://127.0.0.1:8000;" in nginx
+    assert "FROM nginx:" in dockerfile
+    assert "nginx -g" in dockerfile
     assert "location = /healthz" in nginx
-
-def test_auth_proxy_does_not_log_oidc_callback_urls():
-    nginx = (ROOT / "miniapp" / "nginx.conf").read_text(encoding="utf-8")
-    auth_location = nginx.split("location ^~ /auth/", 1)[1].split("}", 1)[0]
-    assert "access_log off;" in auth_location
+    assert 'return 200 "ok";' in nginx
+    assert "location ^~ /auth/" not in nginx
 
 def test_cabinet_profile_uses_verified_telegram_identity_not_demo_ids():
     cabinet = (ROOT / "cabinet-demo" / "index.html").read_text(encoding="utf-8")
