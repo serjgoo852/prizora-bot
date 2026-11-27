@@ -131,9 +131,14 @@ def _verify_mini_app_init_data(
             raise ValueError("Telegram bot ID is invalid")
         if not re.fullmatch(r"[A-Za-z0-9_-]+", received_signature):
             raise ValueError("Telegram initData signature encoding is invalid")
-        signature_bytes = base64.urlsafe_b64decode(
-            received_signature + "=" * (-len(received_signature) % 4)
-        )
+        try:
+            signature_bytes = base64.urlsafe_b64decode(
+                received_signature + "=" * (-len(received_signature) % 4)
+            )
+        except Exception as exc:
+            raise ValueError("Telegram initData signature encoding is invalid") from exc
+        if len(signature_bytes) != 64:
+            raise ValueError("Telegram initData signature length is invalid")
         third_party_fields = {
             key: value for key, value in data.items()
             if key not in {"hash", "signature"}
