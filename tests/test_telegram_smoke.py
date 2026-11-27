@@ -91,7 +91,7 @@ class TelegramPresentationSmokeTests(unittest.IsolatedAsyncioTestCase):
         edit_message_media.assert_awaited_once()
         media = edit_message_media.await_args.kwargs["media"]
         self.assertIsInstance(media, main.InputMediaAnimation)
-        self.assertEqual(media.media.input_file_content.getvalue(), b"english-gif")
+        self.assertEqual(media.media.input_file_content, b"english-gif")
         self.assertEqual(media.caption, "")
         self.assertEqual(context.user_data["language"], "en")
         self.assertEqual(main.admin.get_user_language(111), "en")
