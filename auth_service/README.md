@@ -32,7 +32,7 @@ Both login methods upsert the same PostgreSQL `users` row and issue a random opa
 These values belong only in the Dada Cloud secret/environment manager. Do not commit credentials to Git or put them in browser code.
 
 - `DATABASE_URL`: dedicated PostgreSQL connection URL.
-- `TELEGRAM_BOT_ID`: numeric Telegram bot ID. The auth API uses Telegram's official Ed25519 third-party signature validation, so the existing bot token does not need to be copied into the website service.
+- `TELEGRAM_BOT_ID`: optional numeric bot ID override. If omitted, the service reuses `TELEGRAM_OIDC_CLIENT_ID`. The auth API uses Telegram's official Ed25519 third-party signature validation, so the existing bot token does not need to be copied into the website service.
 - `TELEGRAM_BOT_TOKEN`: optional server-side fallback for legacy Mini App payloads that contain the HMAC `hash` but no Ed25519 `signature`.
 - `TELEGRAM_OIDC_CLIENT_ID` and `TELEGRAM_OIDC_CLIENT_SECRET`: credentials issued by Telegram Login setup in @BotFather.
 - `TELEGRAM_OIDC_REDIRECT_URI`: exact callback URL, `https://prizora-mini-960242.apps.dada-tuda.ru/auth/telegram/callback`.
