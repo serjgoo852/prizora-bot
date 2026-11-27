@@ -2745,9 +2745,18 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 })();
 </script>
 
+<style id="prizora-unified-auth-styles">
+.prizora-auth-area{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px;margin:0 auto 18px;padding:11px 14px;max-width:760px;border:1px solid #6f5122;border-radius:15px;background:linear-gradient(120deg,#1d160b,#0d0b08);color:#e9d7ad;text-align:center}
+.prizora-auth-status{margin:0;color:#d9c79e;font-size:13px;line-height:1.4}
+.prizora-auth-button{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:9px 16px;border:1px solid #f1c45d;border-radius:99px;background:linear-gradient(120deg,#ffe39a,#d9941e);color:#211503;font-size:13px;font-weight:800;text-decoration:none;box-shadow:0 4px 15px #d9941e33}
+.prizora-auth-button[hidden]{display:none!important}
+.prizora-auth-button:focus-visible{outline:3px solid #fff1a8;outline-offset:3px}
+</style>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head><body><div id="prizora-splash" aria-label="PRIZORA"><div class="ps-aura"></div><div class="ps-ring ps-ring-one"></div><div class="ps-ring ps-ring-two"></div><div class="ps-burst"></div><div class="ps-spark ps-one"></div><div class="ps-spark ps-two"></div><div class="ps-spark ps-three"></div><div class="ps-wordmark">PRIZORA</div><div class="ps-rule"></div><div class="ps-tagline">ТВОЙ ШАНС ВЫИГРАТЬ ПРИЗ!</div><div class="ps-organizer">СОЗДАВАЙ СВОИ РОЗЫГРЫШИ В TELEGRAM!</div></div><main class="wrap">
 <section class="prizora-launch-banner" role="status" aria-label="Статус запуска PRIZORA"><div class="plb-mark" aria-hidden="true">✦</div><div class="plb-copy"><strong>PRIZORA — СКОРО ОТКРЫТИЕ</strong><p>Платформа находится в разработке. Приём заявок и участие в розыгрышах пока не запущены. О дате старта сообщим отдельно.</p></div><span class="plb-state">В РАЗРАБОТКЕ</span></section>
 <header class="top"><div class="brand"><img alt="PRIZORA" src="https://raw.githubusercontent.com/serjgoo852/prizora-bot/prizora-mini-safe-repair/screenshots/prizora-logo-transparent%281%29.png"/><div><strong>PRIZORA</strong><small>розыгрыши · доверие · победа</small></div></div><span class="pill">✦ ПРЕМИУМ</span></header>
+<section id="prizora-auth-area" class="prizora-auth-area" aria-label="Аккаунт PRIZORA"></section>
 <section class="approved-hero" aria-label="PRIZORA — реальные призы и честные розыгрыши">
   <img src="https://raw.githubusercontent.com/serjgoo852/prizora-bot/prizora-mini-safe-repair/a_clean_high_resolution_promotional_cutout_on_a_t%281%29.png" alt="PRIZORA: улыбающийся ведущий в чёрно-золотом костюме указывает на кнопку «Принять участие»" loading="lazy" decoding="async" fetchpriority="low">
   <span class="approved-hero-hit" aria-disabled="true" aria-hidden="true"></span>
