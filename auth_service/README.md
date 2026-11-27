@@ -1,6 +1,6 @@
 # PRIZORA shared Telegram Auth API (pre-production)
 
-This is an isolated authentication service scaffold. It is intentionally not wired into the production site, demo cabinet, bot, or DADA Cloud deployment.
+This is a pre-production authentication service scaffold. The working branch now includes a Mini App/browser login client and a cabinet session gate, but neither frontend is deployed against a live auth API. The production site, deployed cabinet, bot, and DADA Cloud configuration remain unchanged.
 
 ## Identity model
 
@@ -49,6 +49,7 @@ Review and apply \`schema.sql\` manually to the dedicated PostgreSQL database. T
 7. Connect the cabinet using \`/auth/me\`; preserve the agreed behavior that successful login returns to the main page, not directly to the cabinet.
 8. Add automated tests, security review, rate limiting, operational monitoring and session cleanup before production.
 9. Bridge the existing bot SQLite profile/wallet records by Telegram ID in a staged migration. Do not replace or discard existing bot data.
+10. The cabinet preview still displays sample contest, wallet and advertising data after authentication; it is not connected to real bot records or payment operations.
 
 ## Security notes
 
