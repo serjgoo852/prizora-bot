@@ -60,7 +60,7 @@ def test_auth_proxy_does_not_log_oidc_callback_urls():
 
 def test_cabinet_profile_uses_verified_telegram_identity_not_demo_ids():
     cabinet = (ROOT / "cabinet-demo" / "index.html").read_text(encoding="utf-8")
-    assert 'telegramUsername: ""' in cabinet
+    assert 'telegramUsername:""' in cabinet
     assert 'state.telegramUsername = user.username' in cabinet
     assert 'esc(state.telegramUsername||"Подключён")' in cabinet
     assert 'value="100245"' not in cabinet
