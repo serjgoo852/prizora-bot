@@ -52,3 +52,8 @@ def test_miniapp_container_runs_api_and_proxies_auth_routes():
     assert "location ^~ /auth/" in nginx
     assert "proxy_pass http://127.0.0.1:8000;" in nginx
     assert "location = /healthz" in nginx
+
+def test_auth_proxy_does_not_log_oidc_callback_urls():
+    nginx = (ROOT / "miniapp" / "nginx.conf").read_text(encoding="utf-8")
+    auth_location = nginx.split("location ^~ /auth/", 1)[1].split("}", 1)[0]
+    assert "access_log off;" in auth_location
