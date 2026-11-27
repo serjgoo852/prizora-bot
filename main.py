@@ -25,6 +25,7 @@ import fontpkg
 
 import ads
 import admin
+import participant_portal
 
 from security import install_secret_redaction
 
@@ -1334,6 +1335,7 @@ def main_menu(language: str):
             InlineKeyboardButton(t["menu_formats"], callback_data="formats"),
             InlineKeyboardButton(t["menu_plans"], callback_data="plans"),
         ],
+        [InlineKeyboardButton({"ru": "👤 Кабинет участника", "en": "👤 Participant account", "de": "👤 Teilnehmerkonto"}.get(language, "👤 Participant account"), callback_data="participant:home")],
         [InlineKeyboardButton(t["menu_my_contests"], callback_data="mycontests")],
         [InlineKeyboardButton("💰 Мой баланс", callback_data="wallet")],
         [InlineKeyboardButton("✉️ Поддержка", callback_data="support")],
@@ -2470,6 +2472,68 @@ async def button_handler(
         except Exception:
             logging.exception("Ads payment review failed")
             await query.edit_message_text("Не удалось обработать оплату. Возможно, заявка уже проверена.")
+
+    elif data == "participant:home":
+        try:
+            overview = participant_portal.get_participant_overview(query.from_user.id)
+            profile = overview["profile"] or {}
+            name = profile.get("full_name") or query.from_user.full_name or str(query.from_user.id)
+            username = ("@" + profile["username"]) if profile.get("username") else "—"
+            joined = (profile.get("first_seen") or "—")[:10]
+            lang = current_language(context)
+            labels = {
+                "ru": ("👤 ЛИЧНЫЙ КАБИНЕТ УЧАСТНИКА", "Участник", "Telegram", "С нами с", "Участий", "Выигрышей", "📜 История участий", "Пока нет участий в конкурсах."),
+                "en": ("👤 PARTICIPANT ACCOUNT", "Participant", "Telegram", "Member since", "Entries", "Wins", "📜 Participation history", "You have not entered any contests yet."),
+                "de": ("👤 TEILNEHMERKONTO", "Teilnehmer", "Telegram", "Dabei seit", "Teilnahmen", "Gewinne", "📜 Teilnahmeverlauf", "Du hast bisher an keinen Wettbewerben teilgenommen."),
+            }
+            title, participant_label, telegram_label, since_label, entries_label, wins_label, history_label, empty_label = labels.get(lang, labels["en"])
+            body = (
+                f"{title}\n━━━━━━━━━━━━━━━━━━\n"
+                f"{participant_label}: {name}\n"
+                f"{telegram_label}: {username}\n"
+                f"{since_label}: {joined}\n\n"
+                f"🎟 {entries_label}: {overview['participations']}\n"
+                f"🏆 {wins_label}: {overview['wins']}"
+            )
+            if not overview["profile"]:
+                body += "\n\nПрофиль будет создан при следующем запуске PRIZORA."
+            keyboard = [[InlineKeyboardButton(history_label, callback_data="participant:history")],
+                        [InlineKeyboardButton(tr(context, "back_home"), callback_data="home")]]
+            await query.edit_message_text(body, reply_markup=InlineKeyboardMarkup(keyboard))
+        except sqlite3.Error:
+            logging.exception("Participant account lookup failed")
+            await query.edit_message_text(tr(context, "contest_not_found"))
+
+    elif data == "participant:history":
+        try:
+            overview = participant_portal.get_participant_overview(query.from_user.id, limit=12)
+            lang = current_language(context)
+            labels = {
+                "ru": ("📜 МОИ УЧАСТИЯ", "🏆 ВЫИГРЫШ", "Розыгрыш завершён — без выигрыша", "Розыгрыш ещё идёт", "Пока нет участий в конкурсах."),
+                "en": ("📜 MY ENTRIES", "🏆 WINNER", "Contest ended — no win", "Contest is still running", "You have not entered any contests yet."),
+                "de": ("📜 MEINE TEILNAHMEN", "🏆 GEWONNEN", "Wettbewerb beendet — kein Gewinn", "Wettbewerb läuft noch", "Du hast bisher an keinen Wettbewerben teilgenommen."),
+            }
+            title, won_label, lost_label, active_label, empty_label = labels.get(lang, labels["en"])
+            lines = [title, "━━━━━━━━━━━━━━━━━━"]
+            if not overview["recent"]:
+                lines.append(empty_label)
+            else:
+                for index, item in enumerate(overview["recent"], 1):
+                    if item["won"]:
+                        status = won_label
+                    elif item["drawn"]:
+                        status = lost_label
+                    else:
+                        status = active_label
+                    lines.append(f"{index}. 🎁 {item['prize_name'][:70]}\n   {item['destination_title'][:55]}\n   {status}")
+            keyboard = [
+                [InlineKeyboardButton({"ru": "‹ В личный кабинет", "en": "‹ Participant account", "de": "‹ Teilnehmerkonto"}.get(lang, "‹ Participant account"), callback_data="participant:home")],
+                [InlineKeyboardButton(tr(context, "back_home"), callback_data="home")],
+            ]
+            await query.edit_message_text("\n\n".join(lines), reply_markup=InlineKeyboardMarkup(keyboard))
+        except sqlite3.Error:
+            logging.exception("Participant history lookup failed")
+            await query.edit_message_text(tr(context, "contest_not_found"))
 
     elif data == "mycontests":
         await show_my_contests(query, context)
