@@ -33,7 +33,7 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: pytest -q auth_service/tests
-      - name: Build integrated Mini App and auth API container
+      - name: Build static Mini App container
         run: docker build -t prizora-mini-auth-check ./miniapp
       - name: Smoke-test integrated container routes
         run: |
@@ -44,7 +44,7 @@ jobs:
             sleep 1
           done
           curl -fsS http://127.0.0.1:8080/healthz
-          curl -fsS http://127.0.0.1:8080/auth/me | grep -q '"authenticated":false'
+          curl -fsS http://127.0.0.1:8080/ | grep -q 'PRIZORA'
       - name: Check browser authentication JavaScript
         run: |
           node --check miniapp/auth-client.js
