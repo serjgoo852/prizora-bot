@@ -56,3 +56,20 @@ def test_rejects_missing_bot_token():
     raw = make_init_data({"id": 123456789}, auth_date=1_700_000_000)
     with pytest.raises(ValueError, match="not configured"):
         _verify_mini_app_init_data(raw, "", now=1_700_000_100)
+
+
+from types import SimpleNamespace
+
+from fastapi import HTTPException
+from auth_service.main import _check_origin, settings
+
+
+def test_origin_check_requires_exact_allowlisted_origin(monkeypatch):
+    monkeypatch.setattr(settings, "allowed_origins", ["https://prizora.example"])
+    _check_origin(SimpleNamespace(headers={"origin": "https://prizora.example"}))
+    with pytest.raises(HTTPException) as missing:
+        _check_origin(SimpleNamespace(headers={}))
+    assert missing.value.status_code == 403
+    with pytest.raises(HTTPException) as wrong:
+        _check_origin(SimpleNamespace(headers={"origin": "https://attacker.example"}))
+    assert wrong.value.status_code == 403
