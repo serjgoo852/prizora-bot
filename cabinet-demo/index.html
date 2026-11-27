@@ -54,11 +54,11 @@ out+='<div class="grid stats">'+stat("Мои розыгрыши",state.myContest
 }
 if(state.page==="advertiser"){
 out=head("РЕКЛАМОДАТЕЛЬ","Рекламный кабинет","Заявки на размещение, условия и тарифы.",button("＋ Новая заявка","ad-new"));
-out+='<div class="grid stats">'+stat("Заявки",state.ads.length,"Ваши обращения","▧")+stat("На модерации",1,"Демо-статус","◷")+stat("Активные",0,"Размещения","◉")+stat("Тариф от","299 ₽","Пример тарифа","₽")+'</div><div class="card"><div class="section-title"><h2>Тарифы размещения</h2><span class="pill gold">Пример тарифов</span></div><div class="grid stats"><div class="card"><h2>7 дней</h2><div class="stat-num">299 ₽</div></div><div class="card"><h2>14 дней</h2><div class="stat-num">499 ₽</div></div><div class="card"><h2>30 дней</h2><div class="stat-num">999 ₽</div></div></div><div class="section-title"><h2>Мои заявки</h2></div>'+state.ads.map(a=>'<div class="rowitem"><div class="prizeicon">▧</div><div class="detail"><strong>'+esc(a.title)+'</strong><small>'+esc(a.period)+' · '+money(a.price)+'</small></div><span class="pill gold">'+esc(a.status)+'</span></div>').join("")+'<div class="notice">Статусы рекламных заявок загружаются из базы PRIZORA.</div></div>';
+out+='<div class="grid stats">'+stat("Заявки",state.ads.length,"Ваши обращения","▧")+stat("На модерации",state.ads.filter(a=>a.status==="pending_review").length,"Проверка заявок","◷")+stat("Активные",state.ads.filter(a=>a.status==="active").length,"Размещения","◉")+stat("Заявки",state.ads.length,"Всего рекламных заявок","▧")+'</div><div class="card"><div class="section-title"><h2>Мои рекламные заявки</h2><span class="pill gold">Данные PRIZORA</span></div>'+state.ads.map(a=>'<div class="rowitem"><div class="prizeicon">▧</div><div class="detail"><strong>'+esc(a.title)+'</strong><small>'+esc(a.period)+' · '+esc(a.price_label||"Стоимость уточняется")+'</small></div><span class="pill gold">'+esc(a.status)+'</span></div>').join("")+'<div class="notice">Статусы рекламных заявок загружаются из базы PRIZORA.</div></div>';
 }
 if(state.page==="profile"){
 out=head("АККАУНТ","Мой профиль","Данные подтверждённого Telegram-аккаунта.");
-out+='<div class="card" style="max-width:720px"><div class="formgrid"><div class="field"><label>Имя</label><input id="profileName" value="'+esc(state.name)+'"></div><div class="field"><label>Telegram</label><input value="'+esc(state.telegramUsername||"Подключён")+'" disabled></div></div><div class="notice">Имя и Telegram-профиль получены из подтверждённого аккаунта.</div>'+button("Сохранить профиль","profile-save")+'</div>';
+out+='<div class="card" style="max-width:720px"><div class="formgrid"><div class="field"><label>Имя</label><input id="profileName" value="'+esc(state.name)+'" disabled></div><div class="field"><label>Telegram</label><input value="'+esc(state.telegramUsername||"Подключён")+'" disabled></div></div><div class="notice">Имя и Telegram-профиль получены из подтверждённого аккаунта.</div>+'</div>';
 }
 if(state.page==="help"){
 out=head("ПОДДЕРЖКА","Помощь и условия","Информация для участника, организатора и рекламодателя.");
@@ -74,7 +74,7 @@ if(a.startsWith("go-")){go(a.slice(3));return}
 if(a==="new-contest"){toast("Создание конкурсов пока доступно в Telegram-боте");return}
 if(a==="ad-new"){toast("Оформление рекламных заявок будет открыто после подключения серверного процесса");return}
 if(a==="profile-save"){toast("Имя аккаунта подтверждается Telegram и здесь не редактируется");return}
-if(a==="contest-details"){const c=state.myContests.find(x=>x.id===Number(id));if(c){const list=(c.prizes||[]).map((p,i)=>(i+1)+". "+p.name+" — "+p.quantity+" шт.").join("\n");alert(c.title+"\n\nПризы:\n"+(list||c.prize)+"\n\nПобедителей: "+(c.winners||1)+"\nУчастники: "+(c.entries||0));}return}
+if(a==="contest-details"){const c=state.myContests.find(x=>String(x.id)===String(id));if(c){const list=(c.prizes||[]).map((p,i)=>(i+1)+". "+p.name+" — "+p.quantity+" шт.").join("\n");alert(c.title+"\n\nПризы:\n"+(list||c.prize)+"\n\nПобедителей: "+(c.winners||1)+"\nУчастники: "+(c.entries||0));}return}
 }
 function openForm(){
 const form=document.createElement("div");form.className="card";form.id="newForm";form.style.marginTop="18px";
