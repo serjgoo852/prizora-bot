@@ -39,7 +39,7 @@ CLOCK_SKEW_SECONDS = 30
 class Settings:
     database_url = os.getenv("DATABASE_URL", "")
     bot_token = os.getenv("TELEGRAM_BOT_TOKEN", "")
-    bot_id = os.getenv("TELEGRAM_BOT_ID", "").strip()
+    bot_id = os.getenv("TELEGRAM_BOT_ID", os.getenv("TELEGRAM_OIDC_CLIENT_ID", "")).strip()
     bot_sync_secret = os.getenv("BOT_SYNC_SECRET", "")
     oidc_client_id = os.getenv("TELEGRAM_OIDC_CLIENT_ID", "")
     oidc_client_secret = os.getenv("TELEGRAM_OIDC_CLIENT_SECRET", "")
