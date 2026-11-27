@@ -2,7 +2,7 @@
   "use strict";
 
   const configuredOrigin = (window.PRIZORA_AUTH_API_ORIGIN || document.querySelector('meta[name="prizora-auth-api-origin"]')?.content || "").trim();
-  const API_ORIGIN = configuredOrigin.replace(/\\/+$/, "");
+  const API_ORIGIN = configuredOrigin.replace(/\/+$/, "");
   const API = API_ORIGIN + "/auth";
   const BOT_ENTRY_URL = "https://t.me/Prizora_GlobalBot?start=website";
   const root = document.getElementById("prizora-auth-area");
