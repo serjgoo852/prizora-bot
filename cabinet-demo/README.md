@@ -1,11 +1,10 @@
-# PRIZORA Cabinet Preview
+# PRIZORA Cabinet
 
-Responsive participant and organizer cabinet prototype.
+Responsive participant and organizer cabinet interface.
 
-- This branch contains a preview integration with the shared Telegram auth API.
-- The cabinet checks the session on the main PRIZORA origin and remains behind an access gate when no authenticated Telegram session exists.
-- The API must allow this cabinet origin in `ALLOWED_ORIGINS` and return credentialed CORS responses.
-- The browser stores no Telegram identity or session token in local storage.
-- Cabinet data, contests, balances, advertising requests and payment actions remain demo-only and are not connected to production records.
-- The deployed demo app and its current branch are not changed by this repository branch.
-
+- The cabinet requires a server-verified Telegram session.
+- It requests the authenticated user's wallet balance, wallet transactions, created contests, joined contests, winners, advertising campaigns and support status from the shared bot API.
+- It uses the same API origin setting as the main Mini App homepage.
+- The cabinet does not store Telegram identity or session tokens in local storage.
+- Creating contests and submitting advertising requests remain routed through the existing Telegram bot until their web workflows are connected to the same database API.
+- No production app, bot records or Dada Cloud settings are changed by this branch.
