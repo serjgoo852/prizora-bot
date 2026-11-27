@@ -3633,8 +3633,11 @@ def start_web_api(bot_id: int | None = None):
         WEB_API_THREAD.start()
         logging.info("PRIZORA shared-database web API startup requested")
     except Exception:
-        logging.exception("PRIZORA shared-database web API failed to start")
-        raise
+        # The HTTP API is optional: a web-service failure must never prevent
+        # the Telegram bot itself from starting and serving existing users.
+        logging.exception(
+            "PRIZORA shared-database web API failed to start; Telegram bot will continue"
+        )
 
 
 def main():
