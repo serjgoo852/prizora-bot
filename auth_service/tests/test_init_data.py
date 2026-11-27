@@ -32,7 +32,7 @@ def make_third_party_init_data(user: dict, auth_date: int, bot_id: str, private_
         "auth_date": str(auth_date),
         "user": json.dumps(user, separators=(",", ":"), ensure_ascii=False),
     }
-    check_string = f"{bot_id}:WebAppData\\n" + "\\n".join(
+    check_string = f"{bot_id}:WebAppData\n" + "\n".join(
         f"{key}={fields[key]}" for key in sorted(fields)
     )
     signature = private_key.sign(check_string.encode("utf-8"))
