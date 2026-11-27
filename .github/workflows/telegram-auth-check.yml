@@ -1,0 +1,60 @@
+name: PRIZORA Telegram auth checks
+
+on:
+  push:
+    branches:
+      - "feature/telegram-unified-auth-*"
+    paths:
+      - "auth_service/**"
+      - "miniapp/**"
+      - "cabinet-demo/**"
+      - ".github/workflows/telegram-auth-check.yml"
+  pull_request:
+    paths:
+      - "auth_service/**"
+      - ".github/workflows/telegram-auth-check.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  auth-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r auth_service/requirements.txt pytest
+      - name: Run authentication unit tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: pytest -q auth_service/tests
+      - name: Build static Mini App container
+        run: docker build -t prizora-mini-auth-check ./miniapp
+      - name: Smoke-test integrated container routes
+        run: |
+          docker run -d --name prizora-auth-smoke -p 127.0.0.1:8080:8080 prizora-mini-auth-check
+          trap 'docker rm -f prizora-auth-smoke >/dev/null 2>&1 || true' EXIT
+          for attempt in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:8080/healthz >/dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8080/healthz
+          curl -fsS http://127.0.0.1:8080/ | grep -q 'PRIZORA'
+      - name: Check browser authentication JavaScript
+        run: |
+          node --check miniapp/auth-client.js
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          html = Path("cabinet-demo/index.html").read_text(encoding="utf-8")
+          match = re.search(r'<script id="prizora-cabinet-auth">(.*?)</script>', html, re.S)
+          if not match:
+              raise SystemExit("Cabinet auth script was not found")
+          Path("/tmp/prizora-cabinet-auth.js").write_text(match.group(1), encoding="utf-8")
+          PY
+          node --check /tmp/prizora-cabinet-auth.js
