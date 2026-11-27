@@ -33,6 +33,8 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: pytest -q auth_service/tests
+      - name: Build integrated Mini App and auth API container
+        run: docker build -t prizora-mini-auth-check ./miniapp
       - name: Check browser authentication JavaScript
         run: |
           node --check miniapp/auth-client.js
