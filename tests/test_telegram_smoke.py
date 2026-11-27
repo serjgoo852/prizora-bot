@@ -52,6 +52,7 @@ class TelegramPresentationSmokeTests(unittest.IsolatedAsyncioTestCase):
             message=SimpleNamespace(
                 reply_animation=reply_animation,
                 reply_text=reply_text,
+                chat=SimpleNamespace(type="private"),
             ),
             effective_user=user,
         )
@@ -63,7 +64,7 @@ class TelegramPresentationSmokeTests(unittest.IsolatedAsyncioTestCase):
         kwargs = reply_animation.await_args.kwargs
         self.assertIsInstance(kwargs["animation"], BytesIO)
         self.assertEqual(
-            kwargs["reply_markup"].inline_keyboard[0][0].url,
+            kwargs["reply_markup"].inline_keyboard[0][0].web_app.url,
             main.PRIZORA_SITE_URL,
         )
         callbacks = [
@@ -75,6 +76,12 @@ class TelegramPresentationSmokeTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("language", callbacks)
         self.assertEqual(main.admin.get_user_language(101), "ru")
 
+    async def test_group_presentation_keeps_regular_site_link(self):
+        markup = main.presentation_menu("ru", chat_type="group")
+        site_button = markup.inline_keyboard[0][0]
+        self.assertEqual(site_button.url, main.PRIZORA_SITE_URL)
+        self.assertIsNone(site_button.web_app)
+
     async def test_language_selection_replaces_gif_and_clears_language_prompt(self):
         main.PRESENTATION_GIF_CACHE["en"] = b"english-gif"
         edit_message_media = AsyncMock()
@@ -83,7 +90,7 @@ class TelegramPresentationSmokeTests(unittest.IsolatedAsyncioTestCase):
         query = SimpleNamespace(
             data="lang:en",
             from_user=user,
-            message=SimpleNamespace(animation=object()),
+            message=SimpleNamespace(animation=object(), chat=SimpleNamespace(type="private")),
             answer=answer,
             edit_message_media=edit_message_media,
         )
@@ -114,7 +121,7 @@ class TelegramPresentationSmokeTests(unittest.IsolatedAsyncioTestCase):
         reply_animation = AsyncMock()
         user = SimpleNamespace(id=109, language_code="de")
         update = SimpleNamespace(
-            message=SimpleNamespace(reply_animation=reply_animation),
+            message=SimpleNamespace(reply_animation=reply_animation, chat=SimpleNamespace(type="private")),
             effective_user=user,
         )
         context = SimpleNamespace(user_data={"language": "de"})
@@ -127,7 +134,7 @@ class TelegramPresentationSmokeTests(unittest.IsolatedAsyncioTestCase):
             b"cached-gif",
         )
         self.assertEqual(
-            reply_animation.await_args.kwargs["reply_markup"].inline_keyboard[0][0].url,
+            reply_animation.await_args.kwargs["reply_markup"].inline_keyboard[0][0].web_app.url,
             main.PRIZORA_SITE_URL,
         )
 
