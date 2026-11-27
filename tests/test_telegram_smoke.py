@@ -45,9 +45,14 @@ class TelegramPresentationSmokeTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_start_sends_animation_with_site_and_language_buttons(self):
         reply_animation = AsyncMock()
+        loading_message = SimpleNamespace(delete=AsyncMock(), edit_text=AsyncMock())
+        reply_text = AsyncMock(return_value=loading_message)
         user = SimpleNamespace(id=101, language_code="ru")
         update = SimpleNamespace(
-            message=SimpleNamespace(reply_animation=reply_animation),
+            message=SimpleNamespace(
+                reply_animation=reply_animation,
+                reply_text=reply_text,
+            ),
             effective_user=user,
         )
         context = SimpleNamespace(args=[], user_data={})
@@ -93,7 +98,7 @@ class TelegramPresentationSmokeTests(unittest.IsolatedAsyncioTestCase):
         media = edit_message_media.await_args.kwargs["media"]
         self.assertIsInstance(media, main.InputMediaAnimation)
         self.assertEqual(media.media.input_file_content, b"english-gif")
-        self.assertEqual(media.caption, "")
+        self.assertEqual(media.caption, main.presentation_caption("en"))
         self.assertEqual(context.user_data["language"], "en")
         self.assertEqual(main.admin.get_user_language(111), "en")
         callbacks = [
