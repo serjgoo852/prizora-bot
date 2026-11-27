@@ -47,7 +47,7 @@ def test_homepage_container_is_static_and_healthcheck_is_local():
     dockerfile = (ROOT / "miniapp" / "Dockerfile").read_text(encoding="utf-8")
     nginx = (ROOT / "miniapp" / "nginx.conf").read_text(encoding="utf-8")
     assert "FROM nginx:" in dockerfile
-    assert "nginx -g" in dockerfile
+    assert 'CMD ["nginx", "-g", "daemon off;"]' in dockerfile
     assert "location = /healthz" in nginx
     assert 'return 200 "ok";' in nginx
     assert "location ^~ /auth/" not in nginx
