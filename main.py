@@ -10,7 +10,7 @@ import math
 from io import BytesIO
 from datetime import datetime, timedelta, timezone
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaAnimation
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -1640,8 +1640,8 @@ def build_prizora_wheel_animation(language: str = "ru") -> BytesIO:
 PRESENTATION_GIF_CACHE = {}
 
 
-async def send_prizora_presentation(message, context, language: str):
-    # Send immutable pre-rendered bytes; never render 40 GIF frames during /start.
+async def get_prizora_presentation_gif(language: str) -> bytes:
+    # Cache immutable pre-rendered bytes; never render 40 GIF frames in a callback.
     gif_bytes = PRESENTATION_GIF_CACHE.get(language)
     if gif_bytes is None:
         logging.warning("PRIZORA presentation cache miss for language=%s", language)
@@ -1649,6 +1649,11 @@ async def send_prizora_presentation(message, context, language: str):
             lambda: build_prizora_wheel_animation(language).getvalue()
         )
         PRESENTATION_GIF_CACHE[language] = gif_bytes
+    return gif_bytes
+
+
+async def send_prizora_presentation(message, context, language: str):
+    gif_bytes = await get_prizora_presentation_gif(language)
     animation = BytesIO(gif_bytes)
     animation.name = "prizora-premium-wheel.gif"
     await message.reply_animation(
@@ -2134,8 +2139,14 @@ async def button_handler(
         admin.set_user_language(query.from_user.id, selected_language)
         language = selected_language
         if getattr(query.message, "animation", None):
-            await query.edit_message_reply_markup(
-                reply_markup=presentation_menu(language)
+            # Replace the GIF itself, not only its buttons. Otherwise the old
+            # language remains visible and the selector caption can stay in place.
+            gif_bytes = await get_prizora_presentation_gif(language)
+            animation = BytesIO(gif_bytes)
+            animation.name = "prizora-premium-wheel.gif"
+            await query.edit_message_media(
+                media=InputMediaAnimation(media=animation, caption=""),
+                reply_markup=presentation_menu(language),
             )
         else:
             await query.message.delete()
