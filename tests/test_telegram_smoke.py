@@ -76,24 +76,30 @@ class TelegramPresentationSmokeTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("language", callbacks)
         self.assertEqual(main.admin.get_user_language(101), "ru")
 
-    async def test_contest_deep_link_entry_syncs_telegram_profile(self):
-        sync_profile = AsyncMock(return_value=True)
-        original = main.auth_bridge.sync_telegram_user
-        main.auth_bridge.sync_telegram_user = sync_profile
-        try:
-            user = SimpleNamespace(id=303, username="contest_user", full_name="Contest User")
-            reply_text = AsyncMock()
-            update = SimpleNamespace(
-                effective_user=user,
-                message=SimpleNamespace(reply_text=reply_text),
-            )
-            context = SimpleNamespace(args=[], user_data={})
+    async def test_contest_deep_link_entry_registers_local_profile(self):
+        user = SimpleNamespace(
+            id=303,
+            username="contest_user",
+            full_name="Contest User",
+            language_code="ru",
+        )
+        reply_text = AsyncMock()
+        update = SimpleNamespace(
+            effective_user=user,
+            message=SimpleNamespace(reply_text=reply_text),
+        )
+        context = SimpleNamespace(args=[], user_data={})
 
-            await main.handle_join_start(update, context)
+        await main.handle_join_start(update, context)
 
-            sync_profile.assert_awaited_once_with(user)
-        finally:
-            main.auth_bridge.sync_telegram_user = original
+        with main.admin._connect() as db:
+            profile = db.execute(
+                "SELECT username, full_name FROM user_profiles WHERE user_id=?",
+                (303,),
+            ).fetchone()
+        self.assertIsNotNone(profile)
+        self.assertEqual(profile["username"], "contest_user")
+        self.assertEqual(profile["full_name"], "Contest User")
 
     async def test_group_presentation_keeps_regular_site_link(self):
         markup = main.presentation_menu("ru", chat_type="group")
