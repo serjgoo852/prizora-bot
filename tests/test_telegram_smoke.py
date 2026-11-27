@@ -84,6 +84,7 @@ class TelegramPresentationSmokeTests(unittest.IsolatedAsyncioTestCase):
         )
         update = SimpleNamespace(callback_query=query)
         context = SimpleNamespace(user_data={"language": "ru", "suggested_language": "ru"})
+        main.admin.register_user(user)
 
         await main.button_handler(update, context)
 
