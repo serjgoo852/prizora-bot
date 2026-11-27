@@ -7,6 +7,8 @@ from io import BytesIO
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
+from PIL import ImageChops, ImageStat
+
 _test_dir = tempfile.TemporaryDirectory(prefix="prizora-telegram-smoke-")
 os.environ["DATABASE_PATH"] = os.path.join(_test_dir.name, "prizora-test.sqlite3")
 os.environ["ADS_DATABASE_PATH"] = os.path.join(_test_dir.name, "prizora-ads-test.sqlite3")
@@ -37,8 +39,8 @@ class TelegramPresentationSmokeTests(unittest.IsolatedAsyncioTestCase):
             first = gif.convert("RGB").crop((290, 390, 430, 480))
             gif.seek(20)
             halfway = gif.convert("RGB").crop((290, 390, 430, 480))
-        difference = main.ImageChops.difference(first, halfway)
-        channel_means = main.ImageStat.Stat(difference).mean
+        difference = ImageChops.difference(first, halfway)
+        channel_means = ImageStat.Stat(difference).mean
         self.assertLess(max(channel_means), 1.5)
 
     async def test_start_sends_animation_with_site_and_language_buttons(self):
