@@ -139,8 +139,8 @@ def _verify_mini_app_init_data(
             if key not in {"hash", "signature"}
         }
         check_string = (
-            f"{bot_id}:WebAppData\\n"
-            + "\\n".join(f"{key}={third_party_fields[key]}" for key in sorted(third_party_fields))
+            f"{bot_id}:WebAppData\n"
+            + "\n".join(f"{key}={third_party_fields[key]}" for key in sorted(third_party_fields))
         )
         try:
             Ed25519PublicKey.from_public_bytes(TELEGRAM_WEBAPP_PUBLIC_KEY).verify(
@@ -154,7 +154,7 @@ def _verify_mini_app_init_data(
     # not include Telegram's third-party signature field.
     elif bot_token and received_hash and re.fullmatch(r"[0-9a-fA-F]{64}", received_hash):
         hmac_fields = {key: value for key, value in data.items() if key != "hash"}
-        check_string = "\\n".join(f"{key}={hmac_fields[key]}" for key in sorted(hmac_fields))
+        check_string = "\n".join(f"{key}={hmac_fields[key]}" for key in sorted(hmac_fields))
         secret_key = hmac.new(b"WebAppData", bot_token.encode("utf-8"), hashlib.sha256).digest()
         calculated_hash = hmac.new(secret_key, check_string.encode("utf-8"), hashlib.sha256).hexdigest()
         if not hmac.compare_digest(calculated_hash, received_hash.lower()):
