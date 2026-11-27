@@ -73,3 +73,20 @@ def test_origin_check_requires_exact_allowlisted_origin(monkeypatch):
     with pytest.raises(HTTPException) as wrong:
         _check_origin(SimpleNamespace(headers={"origin": "https://attacker.example"}))
     assert wrong.value.status_code == 403
+
+
+def test_bot_sync_requires_configured_bearer_secret(monkeypatch):
+    from auth_service.main import _require_bot_sync_secret
+
+    monkeypatch.setattr(settings, "bot_sync_secret", "s" * 40)
+    _require_bot_sync_secret(SimpleNamespace(headers={"authorization": "Bearer " + "s" * 40}))
+    with pytest.raises(HTTPException) as missing:
+        _require_bot_sync_secret(SimpleNamespace(headers={}))
+    assert missing.value.status_code == 401
+    with pytest.raises(HTTPException) as wrong:
+        _require_bot_sync_secret(SimpleNamespace(headers={"authorization": "Bearer wrong"}))
+    assert wrong.value.status_code == 401
+    monkeypatch.setattr(settings, "bot_sync_secret", "")
+    with pytest.raises(HTTPException) as unconfigured:
+        _require_bot_sync_secret(SimpleNamespace(headers={"authorization": "Bearer anything"}))
+    assert unconfigured.value.status_code == 503
