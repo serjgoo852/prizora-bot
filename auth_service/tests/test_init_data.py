@@ -5,7 +5,7 @@ from urllib.parse import urlencode
 
 import pytest
 
-from auth_service.main import _verify_mini_app_init_data
+from main import _verify_mini_app_init_data
 
 
 BOT_TOKEN = "test-token-not-for-production"
