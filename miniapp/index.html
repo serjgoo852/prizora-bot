@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 
-<html lang="ru"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/><meta content="#080706" name="theme-color"/><meta name="prizora-auth-api-origin" content=""/><title>PRIZORA — розыгрыши. доверие. победа.</title>
+<html lang="ru"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/><meta content="#080706" name="theme-color"/><meta name="prizora-auth-api-origin" content="https://prizora-bot-56941e.apps.dada-tuda.ru"/><title>PRIZORA — розыгрыши. доверие. победа.</title>
 
 
 
@@ -2857,7 +2857,7 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 <div class="pro-contest-foot"><span>✦ PRIZORA PRO</span><span>Листай, чтобы увидеть другие призы</span></div>
 </section>
 <div class="section-head"><h2>⭐ Преимущества PRIZORA</h2></div><section class="benefits" id="prizora-benefits" aria-label="Преимущества PRIZORA"><div class="benefit-item benefit-shield"><b aria-hidden="true">🛡</b><span>Честные розыгрыши</span></div><div class="benefit-item benefit-lightning"><b aria-hidden="true">⚡</b><span>Против накруток</span></div><div class="benefit-item benefit-diamond"><b aria-hidden="true">💎</b><span>Прозрачные результаты</span></div><div class="benefit-item benefit-gift"><b aria-hidden="true">🎁</b><span>Быстрая поддержка</span></div></section>
-</main><footer class="bottom"><nav><a class="active" href="#"><b>⌂</b>Главная</a><a href="#contests"><b>🏆</b>Конкурсы</a><a href="https://prizora-cabinet-demo-4b3ed8.apps.dada-tuda.ru/"><b>♛</b>Профиль</a><a href="#menu"><b>☰</b>Меню</a></nav></footer>
+</main><footer class="bottom"><nav><a class="active" href="#"><b>⌂</b>Главная</a><a href="#contests"><b>🏆</b>Конкурсы</a><a href="#menu"><b>♛</b>Профиль</a><a href="#menu"><b>☰</b>Меню</a></nav></footer>
 <script>
 (()=>{
  const track=document.getElementById('slides');
@@ -3007,6 +3007,13 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
  if(menuPanel&&menuNavs.length){
    const openMenu=e=>{
      e.preventDefault();
+     if(menuPanel.dataset.authenticated!=="true"){
+       const authArea=document.getElementById('prizora-auth-area');
+       const authStatus=authArea&&authArea.querySelector('.prizora-auth-status');
+       if(authStatus)authStatus.textContent='Чтобы открыть личный кабинет, сначала войдите через Telegram.';
+       if(authArea)authArea.scrollIntoView({behavior:'smooth',block:'center'});
+       return;
+     }
      menuPanel.hidden=false;
      cabinetPanels.forEach(panel=>panel.hidden=true);
      menuNavs.forEach(a=>a.classList.toggle('active',a===e.currentTarget));
