@@ -5,6 +5,7 @@ import hashlib
 import hmac
 import json
 import os
+import re
 import secrets
 import time
 from datetime import datetime, timedelta, timezone
@@ -90,7 +91,7 @@ def _verify_mini_app_init_data(raw: str, bot_token: str, now: int | None = None)
             raise ValueError("Duplicate initData field")
         data[key] = value
     received_hash = data.pop("hash", None)
-    if not received_hash or len(received_hash) != 64:
+    if not received_hash or not re.fullmatch(r"[0-9a-fA-F]{64}", received_hash):
         raise ValueError("Missing or invalid initData hash")
     check_string = "\n".join(f"{key}={data[key]}" for key in sorted(data))
     secret_key = hmac.new(b"WebAppData", bot_token.encode("utf-8"), hashlib.sha256).digest()
@@ -105,7 +106,7 @@ def _verify_mini_app_init_data(raw: str, bot_token: str, now: int | None = None)
     current = int(time.time()) if now is None else now
     if auth_date > current + CLOCK_SKEW_SECONDS or current - auth_date > MINI_APP_MAX_AGE_SECONDS:
         raise ValueError("Telegram initData is expired")
-    if not isinstance(user, dict) or not isinstance(user.get("id"), int) or user["id"] <= 0:
+    if not isinstance(user, dict) or isinstance(user.get("id"), bool) or not isinstance(user.get("id"), int) or user["id"] <= 0:
         raise ValueError("Telegram user ID is invalid")
     return {
         "telegram_id": user["id"],
