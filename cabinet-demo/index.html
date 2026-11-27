@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#101018">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#101018"><meta name="prizora-auth-api-origin" content="">
 <title>PRIZORA — личный кабинет</title>
 <style>
 :root{--bg:#101018;--panel:#191923;--panel2:#22212d;--line:#343240;--gold:#e9bd67;--gold2:#f7d995;--text:#f4f1ea;--muted:#aaa7b5;--green:#75d6a5;--red:#ee9292;--blue:#9dbbf0;--r:18px}
@@ -100,7 +100,10 @@ document.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>go(b.dataset.p
 </script>
 <script id="prizora-cabinet-auth">
 (() => {
-  const AUTH_API = "https://prizora-mini-960242.apps.dada-tuda.ru/auth";
+  const configuredOrigin = (window.PRIZORA_AUTH_API_ORIGIN || document.querySelector('meta[name="prizora-auth-api-origin"]')?.content || "").trim();
+  const API_ORIGIN = configuredOrigin.replace(/\/+$/, "");
+  const AUTH_API = API_ORIGIN + "/auth";
+  const DATA_API = API_ORIGIN + "/api";
   const gate = document.getElementById("prizora-cabinet-auth-gate");
   const message = document.getElementById("prizora-auth-message");
   const label = document.getElementById("telegramAccountLabel");
@@ -123,14 +126,64 @@ document.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>go(b.dataset.p
         if (label) label.textContent = "Требуется вход через Telegram";
         return;
       }
+      const cabinetResponse = await fetch(DATA_API + "/cabinet", {
+        method: "GET",
+        mode: "cors",
+        credentials: "include",
+        cache: "no-store",
+        headers: { "Accept": "application/json" }
+      });
+      if (!cabinetResponse.ok) throw new Error("cabinet_api_unavailable");
+      const data = await cabinetResponse.json();
       const user = result.user;
       const name = user.display_name || user.username || user.first_name || "Пользователь PRIZORA";
+      const joined = Array.isArray(data.joined_contests) ? data.joined_contests : [];
+      const owned = Array.isArray(data.my_contests) ? data.my_contests : [];
+      const campaigns = Array.isArray(data.ad_campaigns) ? data.ad_campaigns : [];
       state.name = name;
       state.telegramUsername = user.username ? "@" + user.username : "Подключён";
+      state.balance = Number(data.wallet?.balance_kopecks || 0) / 100;
+      state.entries = joined.length;
+      state.wins = joined.filter(contest => {
+        try {
+          return JSON.parse(contest.winners_json || "[]").some(winner => Number(winner.user_id) === Number(user.telegram_id));
+        } catch (_) { return false; }
+      }).length;
+      state.contests = joined.map(contest => ({
+        id: contest.contest_id,
+        title: contest.prize_name,
+        prize: contest.prize_name,
+        host: "PRIZORA",
+        date: contest.joined_at,
+        status: contest.drawn_at ? "Завершён" : "Участие открыто",
+        state: (() => {
+          try {
+            return JSON.parse(contest.winners_json || "[]").some(winner => Number(winner.user_id) === Number(user.telegram_id)) ? "win" : "entered";
+          } catch (_) { return "entered"; }
+        })()
+      }));
+      state.myContests = owned.map(contest => ({
+        id: contest.contest_id,
+        title: contest.prize_name,
+        prize: contest.prize_name,
+        date: contest.created_at,
+        status: contest.drawn_at ? "Завершён" : "Опубликован",
+        entries: Number(contest.participant_count || 0),
+        limit: Number(contest.participant_limit || 0),
+        winners: Number(contest.winner_count || 0),
+        prizes: []
+      }));
+      state.ads = campaigns.map(campaign => ({
+        id: campaign.campaign_id,
+        title: campaign.title,
+        period: Number(campaign.requested_days || 0) + " дней",
+        price: "—",
+        status: campaign.status
+      }));
       if (nameNode) nameNode.textContent = name;
       render();
       if (avatar) avatar.textContent = Array.from(name)[0] || "P";
-      if (label) label.textContent = "Аккаунт Telegram подключён · демонстрационные данные";
+      if (label) label.textContent = "Аккаунт Telegram подключён";
       if (gate) gate.hidden = true;
     } catch (_) {
       message.textContent = "Сервис авторизации пока недоступен. Кабинет откроется после подключения API.";
