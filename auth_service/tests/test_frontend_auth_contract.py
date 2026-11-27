@@ -57,3 +57,12 @@ def test_auth_proxy_does_not_log_oidc_callback_urls():
     nginx = (ROOT / "miniapp" / "nginx.conf").read_text(encoding="utf-8")
     auth_location = nginx.split("location ^~ /auth/", 1)[1].split("}", 1)[0]
     assert "access_log off;" in auth_location
+
+def test_cabinet_profile_uses_verified_telegram_identity_not_demo_ids():
+    cabinet = (ROOT / "cabinet-demo" / "index.html").read_text(encoding="utf-8")
+    assert 'telegramUsername: ""' in cabinet
+    assert 'state.telegramUsername = user.username' in cabinet
+    assert 'esc(state.telegramUsername||"Подключён")' in cabinet
+    assert 'value="100245"' not in cabinet
+    assert '@demo_user' not in cabinet
+    assert 'Telegram ID: ' not in cabinet
