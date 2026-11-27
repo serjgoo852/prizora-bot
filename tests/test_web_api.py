@@ -2,8 +2,12 @@ import hashlib
 import hmac
 import json
 import sqlite3
+import sys
+from pathlib import Path
 from types import SimpleNamespace
 from urllib.parse import urlencode
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import admin
 import web_api
