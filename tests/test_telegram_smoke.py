@@ -70,6 +70,40 @@ class TelegramPresentationSmokeTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("language", callbacks)
         self.assertEqual(main.admin.get_user_language(101), "ru")
 
+    async def test_language_selection_replaces_gif_and_clears_language_prompt(self):
+        main.PRESENTATION_GIF_CACHE["en"] = b"english-gif"
+        edit_message_media = AsyncMock()
+        answer = AsyncMock()
+        user = SimpleNamespace(id=111, language_code="ru")
+        query = SimpleNamespace(
+            data="lang:en",
+            from_user=user,
+            message=SimpleNamespace(animation=object()),
+            answer=answer,
+            edit_message_media=edit_message_media,
+        )
+        update = SimpleNamespace(callback_query=query)
+        context = SimpleNamespace(user_data={"language": "ru", "suggested_language": "ru"})
+        main.admin.register_user(user)
+
+        await main.button_handler(update, context)
+
+        answer.assert_awaited_once()
+        edit_message_media.assert_awaited_once()
+        media = edit_message_media.await_args.kwargs["media"]
+        self.assertIsInstance(media, main.InputMediaAnimation)
+        self.assertEqual(media.media.input_file_content, b"english-gif")
+        self.assertEqual(media.caption, "")
+        self.assertEqual(context.user_data["language"], "en")
+        self.assertEqual(main.admin.get_user_language(111), "en")
+        callbacks = [
+            button.callback_data
+            for row in edit_message_media.await_args.kwargs["reply_markup"].inline_keyboard
+            for button in row
+            if button.callback_data is not None
+        ]
+        self.assertIn("language", callbacks)
+
     async def test_help_reuses_presentation_without_rebuilding_cached_gif(self):
         main.PRESENTATION_GIF_CACHE["de"] = b"cached-gif"
         reply_animation = AsyncMock()
