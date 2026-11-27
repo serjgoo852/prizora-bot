@@ -1,7 +1,10 @@
 (() => {
   "use strict";
 
-  const API = "/auth";
+  const configuredOrigin = (window.PRIZORA_AUTH_API_ORIGIN || document.querySelector('meta[name="prizora-auth-api-origin"]')?.content || "").trim();
+  const API_ORIGIN = configuredOrigin.replace(/\\/+$/, "");
+  const API = API_ORIGIN + "/auth";
+  const BOT_ENTRY_URL = "https://t.me/Prizora_GlobalBot?start=website";
   const root = document.getElementById("prizora-auth-area");
   if (!root) return;
 
@@ -12,8 +15,10 @@
 
   const action = document.createElement("a");
   action.className = "prizora-auth-button";
-  action.href = API + "/telegram/start";
-  action.textContent = "Войти через Telegram";
+  action.href = BOT_ENTRY_URL;
+  action.target = "_blank";
+  action.rel = "noopener noreferrer";
+  action.textContent = "Открыть PRIZORA в Telegram";
   action.hidden = true;
 
   root.append(status, action);
@@ -25,7 +30,7 @@
   async function getCurrentSession() {
     const response = await fetch(API + "/me", {
       method: "GET",
-      credentials: "same-origin",
+      credentials: "include",
       headers: { "Accept": "application/json" },
       cache: "no-store"
     });
@@ -102,7 +107,7 @@
       // The public page remains usable if the auth API is not deployed yet.
     }
 
-    setStatus("Войдите через Telegram, чтобы использовать единый аккаунт PRIZORA.");
+    setStatus("Откройте PRIZORA через Telegram — аккаунт подключится автоматически.");
     showLogin();
   }
 
