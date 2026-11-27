@@ -4,9 +4,15 @@ on:
   push:
     branches:
       - feature/browser-login-ui-2026-11-28
+      - feature/cabinet-api-integration-2026-11-28
+    paths:
+      - "miniapp/auth-client.js"
+      - "miniapp/index.html"
+      - ".github/workflows/miniapp-auth-check.yml"
   pull_request:
     branches:
       - feature/telegram-unified-auth-2026-11-27
+      - feature/browser-login-ui-2026-11-28
     paths:
       - "miniapp/auth-client.js"
       - "miniapp/index.html"
