@@ -10,7 +10,7 @@ import math
 from io import BytesIO
 from datetime import datetime, timedelta, timezone
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaAnimation
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaAnimation, WebAppInfo
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -1351,15 +1351,25 @@ def main_menu(language: str):
     return InlineKeyboardMarkup(keyboard)
 
 
-def presentation_menu(language: str):
+def presentation_menu(language: str, chat_type: str = "private"):
     labels = {
         "ru": ("🌐 Перейти на сайт PRIZORA", "🌍 Выбрать язык"),
         "en": ("🌐 Open PRIZORA website", "🌍 Choose language"),
         "de": ("🌐 PRIZORA-Website öffnen", "🌍 Sprache wählen"),
     }
     site_label, language_label = labels.get(language, labels["en"])
+    if chat_type == "private":
+        # A Web App button opens PRIZORA inside Telegram and supplies signed
+        # WebApp.initData, so the site can authenticate the user automatically.
+        site_button = InlineKeyboardButton(
+            site_label,
+            web_app=WebAppInfo(url=PRIZORA_SITE_URL),
+        )
+    else:
+        # Telegram Web App buttons are restricted to private chats.
+        site_button = InlineKeyboardButton(site_label, url=PRIZORA_SITE_URL)
     keyboard = [
-        [InlineKeyboardButton(site_label, url=PRIZORA_SITE_URL)],
+        [site_button],
         [InlineKeyboardButton(language_label, callback_data="language")],
     ]
     return InlineKeyboardMarkup(keyboard)
@@ -1689,7 +1699,7 @@ async def send_prizora_presentation(message, context, language: str):
     await message.reply_animation(
         animation=animation,
         caption=presentation_caption(language),
-        reply_markup=presentation_menu(language),
+        reply_markup=presentation_menu(language, getattr(getattr(message, "chat", None), "type", "private")),
     )
 
 
@@ -2194,7 +2204,7 @@ async def button_handler(
             animation.name = "prizora-premium-wheel.gif"
             await query.edit_message_media(
                 media=InputMediaAnimation(media=animation, caption=presentation_caption(language)),
-                reply_markup=presentation_menu(language),
+                reply_markup=presentation_menu(language, getattr(getattr(query.message, "chat", None), "type", "private")),
             )
         else:
             await query.message.delete()
