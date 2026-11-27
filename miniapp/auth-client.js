@@ -41,7 +41,7 @@
   async function signInMiniApp(initData) {
     const response = await fetch(API + "/telegram/miniapp", {
       method: "POST",
-      credentials: "same-origin",
+      credentials: "include",
       cache: "no-store",
       headers: { "Content-Type": "application/json", "Accept": "application/json" },
       body: JSON.stringify({ init_data: initData })
