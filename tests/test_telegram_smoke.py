@@ -49,12 +49,14 @@ class TelegramPresentationSmokeTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_start_sends_animation_with_site_and_language_buttons(self):
         reply_animation = AsyncMock()
+        reply_photo = AsyncMock()
         loading_message = SimpleNamespace(delete=AsyncMock(), edit_text=AsyncMock())
         reply_text = AsyncMock(return_value=loading_message)
         user = SimpleNamespace(id=101, language_code="ru")
         update = SimpleNamespace(
             message=SimpleNamespace(
                 reply_animation=reply_animation,
+                reply_photo=reply_photo,
                 reply_text=reply_text,
                 chat=SimpleNamespace(type="private"),
             ),
@@ -64,6 +66,7 @@ class TelegramPresentationSmokeTests(unittest.IsolatedAsyncioTestCase):
 
         await main.start(update, context)
 
+        reply_photo.assert_awaited_once()
         reply_animation.assert_awaited_once()
         kwargs = reply_animation.await_args.kwargs
         self.assertIsInstance(kwargs["animation"], BytesIO)
@@ -148,15 +151,17 @@ class TelegramPresentationSmokeTests(unittest.IsolatedAsyncioTestCase):
     async def test_help_reuses_presentation_without_rebuilding_cached_gif(self):
         main.PRESENTATION_GIF_CACHE["de"] = b"cached-gif"
         reply_animation = AsyncMock()
+        reply_photo = AsyncMock()
         user = SimpleNamespace(id=109, language_code="de")
         update = SimpleNamespace(
-            message=SimpleNamespace(reply_animation=reply_animation, chat=SimpleNamespace(type="private")),
+            message=SimpleNamespace(reply_animation=reply_animation, reply_photo=reply_photo, chat=SimpleNamespace(type="private")),
             effective_user=user,
         )
         context = SimpleNamespace(user_data={"language": "de"})
 
         await main.help_command(update, context)
 
+        reply_photo.assert_awaited_once()
         reply_animation.assert_awaited_once()
         self.assertEqual(
             reply_animation.await_args.kwargs["animation"].getvalue(),
