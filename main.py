@@ -1697,6 +1697,14 @@ def presentation_caption(language: str) -> str:
 
 
 async def send_prizora_presentation(message, context, language: str):
+    # Keep the approved static PRIZORA artwork above the existing animated wheel.
+    # The inline website/language buttons remain attached to the animation below.
+    banner_path = os.path.join(
+        os.path.dirname(__file__), "assets", "prizora-presentation-banner.jpg"
+    )
+    with open(banner_path, "rb") as banner:
+        await message.reply_photo(photo=banner)
+
     gif_bytes = await get_prizora_presentation_gif(language)
     animation = BytesIO(gif_bytes)
     animation.name = "prizora-premium-wheel.gif"
