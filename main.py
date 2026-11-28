@@ -1702,11 +1702,8 @@ async def send_prizora_presentation(message, context, language: str):
     banner_path = os.path.join(
         os.path.dirname(__file__), "assets", "prizora-presentation-banner.jpg"
     )
-    try:
-        with open(banner_path, "rb") as banner:
-            await message.reply_photo(photo=banner)
-    except Exception:
-        logging.exception("Could not send the PRIZORA presentation banner")
+    with open(banner_path, "rb") as banner:
+        await message.reply_photo(photo=banner)
 
     gif_bytes = await get_prizora_presentation_gif(language)
     animation = BytesIO(gif_bytes)
